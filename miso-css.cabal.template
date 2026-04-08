@@ -32,6 +32,7 @@ common base
   default-extensions:
     DefaultSignatures
     NoImplicitPrelude
+    OverloadedRecordDot
     OverloadedStrings
     TemplateHaskell
   build-depends:
@@ -45,7 +46,11 @@ library
     Miso.Css
   other-modules:
     Miso.Css.Escape
+    Miso.Css.Gen
     Miso.Css.IncludeCss
+    Miso.Css.Linear
+    Miso.Css.Parser
+    Miso.Css.Prelude
     Miso.Css.Qq
     Miso.Css.Style
   build-depends:
@@ -53,6 +58,11 @@ library
     , containers         < 1
     , css-syntax         < 1
     , filepath           < 2
+    , miso               >= 1.9 && < 2
+    , singletons         < 4
+    , singletons-base    < 4
+    , singletons-th      < 4
+    , tagged             < 1
     , template-haskell   < 3
     , text               < 3
 
@@ -70,7 +80,7 @@ test-suite test
     test
   ghc-options: -Wall -rtsopts -threaded -main-is Driver
   build-depends:
-    , css-class-bindings
+    , miso-css
     , QuickCheck
     , tasty
     , tasty-discover

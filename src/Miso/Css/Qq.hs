@@ -15,8 +15,6 @@ import Data.String ( IsString )
 import Data.Text ( Text, pack, unpack )
 import Language.Haskell.TH.Quote ( QuasiQuoter(..) )
 import Language.Haskell.TH.Syntax
-
-
 import Prelude
 
 data CssName = CssClassName Text | CssId Text deriving (Show, Eq, Ord)
