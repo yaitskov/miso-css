@@ -9,12 +9,13 @@
 
 module Miso.Css.Style where
 
-import Data.Tagged
-import Data.Typeable
+import Data.Tagged ( Tagged(Tagged) )
 import Data.Singletons.Base.TH
-import GHC.TypeLits
+import Data.String ( IsString(..) )
+import GHC.TypeLits ( KnownSymbol, Symbol, symbolVal )
 import Miso
-import Miso.Html
+    ( ms, vtext, MisoString, Attribute(ClassList), View(VNode) )
+import Miso.Html ( nodeHtml )
 import Prelude
 
 $(promote [d|
@@ -91,8 +92,10 @@ $(promote
 
 data ElementStructure = Atomic | Composite
 
+type CD = "CDATA"
+
 data E (en :: Symbol) (es :: ElementStructure) (cls :: [Symbol]) (l :: [[[Symbol]]]) where
-  CDataE :: MisoString -> E "CDATA" Atomic '[] '[]
+  CDataE :: MisoString -> E CD Atomic '[] '[]
   NilE :: KnownSymbol en => Proxy en -> E en Composite '[] '[]
   AppClsE :: forall p c en cls eacs.
     (KnownSymbol en, KnownSymbol c) =>
@@ -103,6 +106,9 @@ data E (en :: Symbol) (es :: ElementStructure) (cls :: [Symbol]) (l :: [[[Symbol
     E ce cs ccls ceacs ->
     E pe Composite pcls peacs ->
     E pe Composite pcls (AppendChild ceacs pcls peacs)
+
+instance IsString (E CD Atomic '[] '[]) where
+  fromString = CDataE . ms
 
 injectClass :: MisoString -> View model action -> View model action
 injectClass cn = \case
@@ -122,7 +128,7 @@ data Child
 
 appChild :: Tagged Child (View model action) -> View model action -> View model action
 appChild (Tagged c) = \case
-  VNode ns tg atrs children -> VNode ns tg atrs (c : children)
+  VNode ns tg atrs children -> VNode ns tg atrs $ children <> [c]
   o -> o
 
 eToView :: E en es cls eacs -> View model action
@@ -131,3 +137,67 @@ eToView = \case
   NilE enp -> nodeHtml (ms $ symbolVal enp) [] []
   AppClsE orCls e -> injectClass (className orCls) (eToView e)
   AppendChildE ce pe -> appChild (Tagged @Child (eToView ce)) (eToView pe)
+
+toView :: E en es cls '[] -> View model action
+toView = eToView
+
+(=.) :: (KnownSymbol en, KnownSymbol c) =>
+  E en Composite cls eacs ->
+  OrClass p c ->
+  E en Composite (c:cls) (ApplyClass p c eacs)
+e =. c = AppClsE c e
+
+infixl 3 =.
+
+(</) ::
+  E pen Composite pcls peacs ->
+  E cen cs ccls ceacs ->
+  E pen Composite pcls (AppendChild ceacs pcls peacs)
+p </ c = AppendChildE c p
+
+infixl 2 </
+
+(<@) ::
+  E pen Composite pcls peacs ->
+  E CD Atomic '[] '[] ->
+  E pen Composite pcls peacs
+(<@) = (</)
+
+infixl 2 <@
+
+
+div_ :: E "div" Composite '[] '[]
+div_ = NilE (Proxy @"div")
+
+p_ :: E "p" Composite '[] '[]
+p_ = NilE (Proxy @"p")
+
+b_ :: E "b" Composite '[] '[]
+b_ = NilE (Proxy @"b")
+
+i_ :: E "i" Composite '[] '[]
+i_ = NilE (Proxy @"i")
+
+th_ :: E "th" Composite '[] '[]
+th_ = NilE (Proxy @"th")
+
+td_ :: E "td" Composite '[] '[]
+td_ = NilE (Proxy @"td")
+
+table_ :: E "table" Composite '[] '[]
+table_ = NilE (Proxy @"table")
+
+tr_ :: E "tr" Composite '[] '[]
+tr_ = NilE (Proxy @"tr")
+
+h1_ :: E "h1" Composite '[] '[]
+h1_ = NilE (Proxy @"h1")
+
+img_ :: E "img" Composite '[] '[]
+img_ = NilE (Proxy @"img")
+
+br_ :: E "br" Composite '[] '[]
+br_ = NilE (Proxy @"br")
+
+hr_ :: E "hr" Composite '[] '[]
+hr_ = NilE (Proxy @"hr")

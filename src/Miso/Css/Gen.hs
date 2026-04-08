@@ -1,14 +1,11 @@
 module Miso.Css.Gen where
 
 import Data.Map.Strict qualified as M
-import Data.Text ( Text, pack, unpack )
-import Language.Haskell.TH.Quote
-import Language.Haskell.TH.Syntax
 
-import Miso.Css.Linear
+import Language.Haskell.TH.Syntax
 import Miso.Css.Prelude
 import Miso.Css.Parser
-import Miso.Css.Style
+
 
 {-
 list of selectors show be
