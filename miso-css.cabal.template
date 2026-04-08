@@ -44,7 +44,6 @@ library
   hs-source-dirs: src
   exposed-modules:
     Miso.Css
-  other-modules:
     Miso.Css.Escape
     Miso.Css.Gen
     Miso.Css.IncludeCss
@@ -75,11 +74,14 @@ test-suite test
     Miso.Css.Test.IncludeCssAsserts
     Miso.Css.Test.QqDefs
     Miso.Css.Test.QqAsserts
+    Miso.Css.Test.Style
     Discovery
   hs-source-dirs:
     test
   ghc-options: -Wall -rtsopts -threaded -main-is Driver
   build-depends:
+    , bytestring
+    , miso
     , miso-css
     , QuickCheck
     , tasty

@@ -6,26 +6,16 @@
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE TypeAbstractions #-}
--- {-# LANGUAGE ScopedTypeVariables #-}
 
 module Miso.Css.Style where
 
--- import Data.Proxy ( Proxy(..) )
--- import Data.Singletons ( Proxy(..) )
--- import Data.Singletons.TH
--- import Data.Type.Equality
--- import System.FilePath (replaceBaseName)
 import Data.Tagged
 import Data.Typeable
 import Data.Singletons.Base.TH
-import Data.Text ( Text )
-import GHC.TypeLits -- ( KnownSymbol, Symbol, symbolVa )
+import GHC.TypeLits
 import Miso
-import Miso.Types
 import Miso.Html
-import Miso.Html.Element
 import Prelude
-import Unsafe.Coerce ( unsafeCoerce )
 
 $(promote [d|
   append :: [a] -> [a] -> [a]
@@ -57,26 +47,6 @@ data OrClass
     TopOrClass :: KnownSymbol c => Proxy c -> OrClass '[] c
     AddAncestorBranch :: AncestorClasses ac -> OrClass bs c -> OrClass (ac ': bs) c
 
-data CssClass (p :: [Symbol]) (c :: Symbol) where
-  TopCssClass :: KnownSymbol c => Proxy c -> CssClass '[] c
-  ScopedCssClass :: KnownSymbol s => Proxy s -> CssClass p c -> CssClass (s : p) c
-
-topClass :: KnownSymbol c => CssClass p c -> Proxy c
-topClass (TopCssClass c) = c
-topClass (ScopedCssClass _ s) = topClass s
-
-
-data N (l :: [Symbol]) where
-  NilN :: () -> N '[]
-  ConsN :: KnownSymbol x => Proxy x -> N l -> N (x : l)
-
-cssClassToN :: CssClass p c -> N p
-cssClassToN (TopCssClass _) = NilN ()
-cssClassToN (ScopedCssClass p s) = ConsN p (cssClassToN s)
-
-appN :: N a -> N b -> N (Append a b)
-appN (NilN ()) b = b
-appN (ConsN x t) b = ConsN x (appN t b)
 
 $(promote
   [d|
@@ -86,11 +56,6 @@ $(promote
       | c == h = t
       | otherwise = l
     |])
--- type ApplyClassToBranch :: Symbol -> [Symbol] -> [Symbol]
--- type family ApplyClassToBranch c b where
---   ApplyClassToBranch _ '[] = '[]
---   ApplyClassToBranch c (c ': b') = b'
---   ApplyClassToBranch _ b = b
 
 $(promote
  [d|
@@ -103,12 +68,7 @@ $(promote
    applyClassToElem :: Eq a => a -> [[a]] -> [[a]]
    applyClassToElem c bs = applyClassToElem' [] c bs
    |])
--- type ApplyClassToElem :: Symbol -> [[Symbol]] -> [[Symbol]]
--- type family ApplyClassToElem c ac where
---   ApplyClassToElem c '[] = '[]
---   ApplyClassToElem c (b ': bs) = ApplyClassToBranch c b ': ApplyClassToElem c bs
--- applyClass prenet acs and apply applyClassToElem to every eacs
--- empty remove elem
+
 $(promote
  [d|
    applyClass :: Eq a => [[a]] -> a -> [[[a]]] -> [[[a]]]
@@ -119,9 +79,6 @@ $(promote
        [] -> applyClass acs c eacs
        h' -> h' : applyClass acs c eacs
    |])
--- type family ApplyClass acs c eacs where
---   ApplyClass acs c [] = [acs]
---   ApplyClass acs c (e : eacs') = ApplyClassToElem c e ':
 
 $(promote
  [d|
@@ -132,28 +89,11 @@ $(promote
      appendChild (applyClass [] pclsH ceacs) pcls' peacs
    |])
 
--- div_ :: forall p c n. KnownSymbol c => CssClass p c -> N n -> N (Elem' n p c)
--- div_ css (NilN ()) = cssClassToN css
--- div_ css n@(ConsN h t) =
---   case sameSymbol (topClass css) h of
---     Just Refl -> appN t (cssClassToN css)
---     Nothing ->   unsafeCoerce $ appN n (cssClassToN css)
-
--- .icon-text .icon {
-iconText :: CssClass '[] "icon-text"
-iconText = TopCssClass (Proxy @"icon-text")
-icon :: CssClass '["icon-text"] "icon"
-icon = ScopedCssClass (Proxy @"icon-text") $ TopCssClass (Proxy @"icon")
-
--- view :: N '[]
--- view =
---   div_ iconText $  div_ icon (NilN ())
-
 data ElementStructure = Atomic | Composite
 
 data E (en :: Symbol) (es :: ElementStructure) (cls :: [Symbol]) (l :: [[[Symbol]]]) where
   CDataE :: MisoString -> E "CDATA" Atomic '[] '[]
-  NilE :: KnownSymbol en => Proxy en -> E  en Atomic '[] '[]
+  NilE :: KnownSymbol en => Proxy en -> E en Composite '[] '[]
   AppClsE :: forall p c en cls eacs.
     (KnownSymbol en, KnownSymbol c) =>
     OrClass p c ->
@@ -179,6 +119,7 @@ className _ =
   ms $ symbolVal $ Proxy @c
 
 data Child
+
 appChild :: Tagged Child (View model action) -> View model action -> View model action
 appChild (Tagged c) = \case
   VNode ns tg atrs children -> VNode ns tg atrs (c : children)
