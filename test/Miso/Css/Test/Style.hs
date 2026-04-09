@@ -6,12 +6,15 @@ module Miso.Css.Test.Style where
 import Data.Proxy ( Proxy(Proxy) )
 import Data.ByteString.Lazy qualified as L
 import Data.ByteString.Char8 qualified as C8
-import Miso.Css.Style
+import Miso.Css.Operator
 import Miso.Css.Prelude
+import Miso.Css.Style
+import Miso.Css.Tags
 import Miso.Html ( ToHtml(toHtml) )
 import Miso.Html qualified as MH
 import Test.Tasty ( testGroup, TestTree )
 import Test.Tasty.HUnit ( testCase, (@?=) )
+
 
 test_style :: TestTree
 test_style =
