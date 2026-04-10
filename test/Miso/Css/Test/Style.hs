@@ -24,30 +24,32 @@ test_style =
   , testGroup "eToView"
     [ testGroup "empty eacs"
       [ testGroup "bitter"
-        [ "cdata hello" `go` CDataE "cdata hello"
-        -- No instance for ‘ghc-internal-9.1202.0:GHC.Internal.Data.String.IsString
-        --                      (E en0 es0 cls0 '[])’
-        --                        arising from the literal ‘"cdata hello"’
-        -- , "cdata hello" `go` "cdata hello"
-        , "<div></div>" `go` NilE (Proxy @"div")
-        , """<div class="c"></div>""" `go`
-          AppClsE (TopOrClass (Proxy @"c")) (NilE (Proxy @"div"))
-        , """<div class="c">cd</div>""" `go`
-          AppendChildE
-            (CDataE "cd")
-            (AppClsE (TopOrClass (Proxy @"c"))
-              (NilE (Proxy @"div")))
-        , """<div class="c"><br/></div>""" `go`
-          AppendChildE
-            (NilE $ Proxy @"br")
-            (AppClsE (TopOrClass (Proxy @"c"))
-              (NilE (Proxy @"div")))
-        , """<div class="a"><div class="b"></div></div>""" `go`
-          AppendChildE
-            (AppClsE (TopOrClass (Proxy @"b"))
-              (NilE $ Proxy @"div"))
-            (AppClsE (TopOrClass (Proxy @"a"))
-              (NilE (Proxy @"div")))
+        [ testGroup "class"
+          [ "cdata hello" `go` CDataE "cdata hello"
+          -- No instance for ‘ghc-internal-9.1202.0:GHC.Internal.Data.String.IsString
+          --                      (E en0 es0 cls0 '[])’
+          --                        arising from the literal ‘"cdata hello"’
+          -- , "cdata hello" `go` "cdata hello"
+          , "<div></div>" `go` NilE (Proxy @"div")
+          , """<div class="c"></div>""" `go`
+            AppClsE (TopOrClass (Proxy @"c")) (NilE (Proxy @"div"))
+          , """<div class="c">cd</div>""" `go`
+            AppendChildE
+              (CDataE "cd")
+              (AppClsE (TopOrClass (Proxy @"c"))
+                (NilE (Proxy @"div")))
+          , """<div class="c"><br/></div>""" `go`
+            AppendChildE
+              (NilE $ Proxy @"br")
+              (AppClsE (TopOrClass (Proxy @"c"))
+                (NilE (Proxy @"div")))
+          , """<div class="a"><div class="b"></div></div>""" `go`
+            AppendChildE
+              (AppClsE (TopOrClass (Proxy @"b"))
+                (NilE $ Proxy @"div"))
+              (AppClsE (TopOrClass (Proxy @"a"))
+                (NilE (Proxy @"div")))
+          ]
         ]
       , testGroup "sweet"
         [ go "<div> </div>" $ div_ <@ ""
@@ -64,42 +66,59 @@ test_style =
         ]
       ]
     , testGroup "non-empty-eacs"
-      [ """<div class="a"><div class="b"></div></div>""" `go`
-        AppendChildE
-        (AppClsE
-          (AddAncestorBranch
-            (AddAncestor (Proxy @"a") CssOrphan)
-            (TopOrClass (Proxy @"b")))
-          (NilE (Proxy @"div")))
-        (AppClsE (TopOrClass (Proxy @"a"))
-          (NilE (Proxy @"div")))
-      , """<div class="a"><div class="b"><div class="c"></div></div></div>""" `go`
-        AppendChildE
-        (AppendChildE
-         (AppClsE
-           (AddAncestorBranch
-             (AddAncestor (Proxy @"b") (AddAncestor (Proxy @"a") CssOrphan))
-             (TopOrClass (Proxy @"c")))
+      [ testGroup "bitter"
+        [ """<div class="a"><div class="b"></div></div>""" `go`
+          AppendChildE
+          (AppClsE
+            (AddAncestorBranch
+              (AddAncestor (Proxy @"a") CssOrphan)
+              (TopOrClass (Proxy @"b")))
+            (NilE (Proxy @"div")))
+          (AppClsE (TopOrClass (Proxy @"a"))
+            (NilE (Proxy @"div")))
+        , """<div class="a"><div class="b"><div class="c"></div></div></div>""" `go`
+          AppendChildE
+          (AppendChildE
+           (AppClsE
+             (AddAncestorBranch
+               (AddAncestor (Proxy @"b") (AddAncestor (Proxy @"a") CssOrphan))
+               (TopOrClass (Proxy @"c")))
+             (NilE (Proxy @"div")))
+           (AppClsE (TopOrClass (Proxy @"b"))
+             (NilE (Proxy @"div"))))
+          (AppClsE (TopOrClass (Proxy @"a"))
            (NilE (Proxy @"div")))
-         (AppClsE (TopOrClass (Proxy @"b"))
-           (NilE (Proxy @"div"))))
-        (AppClsE (TopOrClass (Proxy @"a"))
-         (NilE (Proxy @"div")))
-      , """<div class="a"><div class="b"><div class="c"></div></div></div>""" `go`
-        AppendChildE
-        (AppendChildE
-         (AppClsE
-           (AddAncestorBranch
-             (AddAncestor (Proxy @"b") (AddAncestor (Proxy @"a") CssOrphan))
-             (TopOrClass (Proxy @"c")))
+        , """<div class="a"><div class="b"><div class="c"></div></div></div>""" `go`
+          AppendChildE
+          (AppendChildE
+           (AppClsE
+             (AddAncestorBranch
+               (AddAncestor (Proxy @"b") (AddAncestor (Proxy @"a") CssOrphan))
+               (TopOrClass (Proxy @"c")))
+             (NilE (Proxy @"div")))
+           (AppClsE
+            (AddAncestorBranch
+             (AddAncestor (Proxy @"a") CssOrphan)
+              (TopOrClass (Proxy @"b")))
+             (NilE (Proxy @"div"))))
+          (AppClsE (TopOrClass (Proxy @"a"))
            (NilE (Proxy @"div")))
-         (AppClsE
-          (AddAncestorBranch
-           (AddAncestor (Proxy @"a") CssOrphan)
-            (TopOrClass (Proxy @"b")))
-           (NilE (Proxy @"div"))))
-        (AppClsE (TopOrClass (Proxy @"a"))
-         (NilE (Proxy @"div")))
+        ]
+      , testGroup "sweet"
+        [ testGroup "tag"
+          [
+          ]
+        , testGroup "class"
+          [ go """<div class="a"><div class="b"></div></div>""" $
+            div_ =. a </ (div_ =. ab)
+          , go """<div class="a"><div class="b"><div class="c"></div></div></div>""" $
+            div_ =. a </ (div_ =. ab </ div_ =. abc)
+          , go """<div class="a"><div class="b"></div><div class="c"></div></div>""" $
+            div_ =. a </ div_ =. ab </ div_ =. ac
+          , go """<div class="a"><div class="b"><div class="c"></div></div></div>""" $
+            div_ =. a </ (div_ =. ab </ div_ =. ac)
+          ]
+        ]
       ]
     ]
   ]
@@ -111,3 +130,10 @@ test_style =
     a = TopOrClass (Proxy @"a")
     b = TopOrClass (Proxy @"b")
     c = TopOrClass (Proxy @"c")
+    pa = Proxy @"a"
+    pb = Proxy @"b"
+    ac = AddAncestorBranch (AddAncestor pa CssOrphan) c
+    ab = AddAncestorBranch (AddAncestor pa CssOrphan) b
+    abc = AddAncestorBranch
+            (AddAncestor pb (AddAncestor pa CssOrphan))
+            c
