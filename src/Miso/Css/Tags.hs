@@ -39,3 +39,9 @@ br_ = NilE (Proxy @"br")
 
 hr_ :: E "hr" Composite '[] '[]
 hr_ = NilE (Proxy @"hr")
+
+ul_ :: E "ul" Composite '[] '[]
+ul_ = NilE (Proxy @"ul")
+
+li_ :: E "li" Composite '[] '[]
+li_ = NilE (Proxy @"li")

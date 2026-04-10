@@ -14,7 +14,7 @@ infixl 3 =.
 (</) ::
   E pen Composite pcls peacs ->
   E cen cs ccls ceacs ->
-  E pen Composite pcls (AppendChild ceacs (SymsToSubSeg pcls) peacs)
+  E pen Composite pcls (AppendChild ceacs (T pen : SymsToSubSeg pcls) peacs)
 p </ c = AppendChildE c p
 
 infixl 2 </

@@ -32,9 +32,9 @@ type family Elem' n p c where
   Elem' (c ': n) p c  = Append n p
   Elem' m     p c     = Append m p
 
-newtype SubSeg
+data SubSeg
   = C Symbol -- ^ Element Class
-  -- | T Symbol -- ^ Element Name (Tag)
+  | T Symbol -- ^ Element Name (Tag)
   -- | I Symbol -- ^ Element Id
   deriving (Show, Eq, Ord)
 promoteEqInstance ''SubSeg
@@ -42,6 +42,7 @@ promoteEqInstance ''SubSeg
 data AncestorClasses (p :: [SubSeg]) where
   CssOrphan :: AncestorClasses '[]
   AddAncestor :: KnownSymbol a => Proxy a -> AncestorClasses ac -> AncestorClasses (C a ': ac)
+  AddTagAncestor :: KnownSymbol a => Proxy a -> AncestorClasses ac -> AncestorClasses (T a ': ac)
 
 -- | 'OrClass' describes all posible selector prefixes
 -- possible for the last selector segment
@@ -116,7 +117,7 @@ data E (en :: Symbol) (es :: ElementStructure) (cls :: [Symbol]) (l :: [[[SubSeg
   AppendChildE ::
     E ce cs ccls ceacs ->
     E pe Composite pcls peacs ->
-    E pe Composite pcls (AppendChild ceacs (SymsToSubSeg pcls) peacs)
+    E pe Composite pcls (AppendChild ceacs (T pe : SymsToSubSeg pcls) peacs)
 
 instance IsString (E CD Atomic '[] '[]) where
   fromString = CDataE . ms

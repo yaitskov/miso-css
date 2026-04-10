@@ -106,7 +106,8 @@ test_style =
         ]
       , testGroup "sweet"
         [ testGroup "tag"
-          [
+          [ go """<ul><li class="a"></li></ul>""" $
+            ul_ </ li_ =. ul_a
           ]
         , testGroup "class"
           [ go """<div class="a"><div class="b"></div></div>""" $
@@ -130,6 +131,7 @@ test_style =
     a = TopOrClass (Proxy @"a")
     b = TopOrClass (Proxy @"b")
     c = TopOrClass (Proxy @"c")
+    ul_a = AddAncestorBranch (AddTagAncestor (Proxy @"ul") CssOrphan) a
     pa = Proxy @"a"
     pb = Proxy @"b"
     ac = AddAncestorBranch (AddAncestor pa CssOrphan) c
