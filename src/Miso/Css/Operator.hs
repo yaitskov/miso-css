@@ -6,7 +6,7 @@ import Miso.Css.Style
 (=.) :: (KnownSymbol en, KnownSymbol c) =>
   E en Composite cls eacs ->
   OrClass p c ->
-  E en Composite (c:cls) (ApplyClass p c eacs)
+  E en Composite (c:cls) (ApplyClass p (C c) eacs)
 e =. c = AppClsE c e
 
 infixl 3 =.
@@ -14,7 +14,7 @@ infixl 3 =.
 (</) ::
   E pen Composite pcls peacs ->
   E cen cs ccls ceacs ->
-  E pen Composite pcls (AppendChild ceacs pcls peacs)
+  E pen Composite pcls (AppendChild ceacs (SymsToSubSeg pcls) peacs)
 p </ c = AppendChildE c p
 
 infixl 2 </

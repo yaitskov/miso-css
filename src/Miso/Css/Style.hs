@@ -32,14 +32,21 @@ type family Elem' n p c where
   Elem' (c ': n) p c  = Append n p
   Elem' m     p c     = Append m p
 
-data AncestorClasses (p :: [Symbol]) where
+newtype SubSeg
+  = C Symbol -- ^ Element Class
+  -- | T Symbol -- ^ Element Name (Tag)
+  -- | I Symbol -- ^ Element Id
+  deriving (Show, Eq, Ord)
+promoteEqInstance ''SubSeg
+
+data AncestorClasses (p :: [SubSeg]) where
   CssOrphan :: AncestorClasses '[]
-  AddAncestor :: KnownSymbol a => Proxy a -> AncestorClasses ac -> AncestorClasses (a ': ac)
+  AddAncestor :: KnownSymbol a => Proxy a -> AncestorClasses ac -> AncestorClasses (C a ': ac)
 
 -- | 'OrClass' describes all posible selector prefixes
 -- possible for the last selector segment
 data OrClass
-       (p :: [[Symbol]]) --
+       (p :: [[SubSeg]]) --
        (c :: Symbol)
        -- value for tag class ie .a.b => <div class="a b">
        -- how to express that it is applicable only to tag X?
@@ -47,7 +54,6 @@ data OrClass
   where
     TopOrClass :: KnownSymbol c => Proxy c -> OrClass '[] c
     AddAncestorBranch :: AncestorClasses ac -> OrClass bs c -> OrClass (ac ': bs) c
-
 
 $(promote
   [d|
@@ -90,22 +96,27 @@ $(promote
      appendChild (applyClass [] pclsH ceacs) pcls' peacs
    |])
 
+-- promoting not working
+type family SymsToSubSeg l where
+  SymsToSubSeg '[] = '[]
+  SymsToSubSeg (h : l) = C h : SymsToSubSeg l
+
 data ElementStructure = Atomic | Composite
 
 type CD = "CDATA"
 
-data E (en :: Symbol) (es :: ElementStructure) (cls :: [Symbol]) (l :: [[[Symbol]]]) where
+data E (en :: Symbol) (es :: ElementStructure) (cls :: [Symbol]) (l :: [[[SubSeg]]]) where
   CDataE :: MisoString -> E CD Atomic '[] '[]
   NilE :: KnownSymbol en => Proxy en -> E en Composite '[] '[]
   AppClsE :: forall p c en cls eacs.
     (KnownSymbol en, KnownSymbol c) =>
     OrClass p c ->
     E en Composite cls eacs ->
-    E en Composite (c : cls) (ApplyClass p c eacs)
+    E en Composite (c : cls) (ApplyClass p (C c) eacs)
   AppendChildE ::
     E ce cs ccls ceacs ->
     E pe Composite pcls peacs ->
-    E pe Composite pcls (AppendChild ceacs pcls peacs)
+    E pe Composite pcls (AppendChild ceacs (SymsToSubSeg pcls) peacs)
 
 instance IsString (E CD Atomic '[] '[]) where
   fromString = CDataE . ms
