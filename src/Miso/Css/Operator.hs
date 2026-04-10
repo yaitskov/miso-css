@@ -14,19 +14,24 @@ e =. c = AppClsE c e
 
 infixl 3 =.
 
-(=#) :: (KnownSymbol en, KnownSymbol ei) =>
+(=#) ::
+  ( KnownSymbol en
+  , KnownSymbol ei
+  , FindDup (AppendUniq ei kids) ~ Nothing
+  ) =>
   E en Composite Nothing kids cls eacs ->
   Proxy ei ->
   E
     en
     Composite
     (Just ei)
-    (appendUniq ei kids)
+    (AppendUniq ei kids)
     cls
     eacs -- (ApplyClass '[] (I ei) eacs)
 e =# i = IdE i e
 
 (</) ::
+  (FindDup (MergeUniq cKids pKids) ~ Nothing) =>
   E pen Composite pi pKids pcls peacs ->
   E cen cs ci cKids ccls ceacs ->
   E pen Composite pi
@@ -43,6 +48,7 @@ p </ c = AppendChildE c p
 infixl 2 </
 
 (<@) ::
+  (FindDup kids ~ Nothing) =>
   E pen Composite pi kids pcls peacs ->
   E CD Atomic Nothing '[] '[] '[] ->
   E

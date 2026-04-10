@@ -6,11 +6,11 @@ module Miso.Css.Test.Style where
 import Data.Proxy ( Proxy(Proxy) )
 import Data.ByteString.Lazy qualified as L
 import Data.ByteString.Char8 qualified as C8
-import Miso.Css.Miso
-import Miso.Css.Operator
+import Miso.Css.Miso ( toView )
+import Miso.Css.Operator ( (<@), (=.), (</), (=#) )
 import Miso.Css.Prelude
 import Miso.Css.Style
-import Miso.Css.Tags
+import Miso.Css.Tags ( div_, hr_, ul_, li_ )
 import Miso.Html ( ToHtml(toHtml) )
 import Miso.Html qualified as MH
 import Test.Tasty ( testGroup, TestTree )
@@ -113,6 +113,8 @@ test_style =
         , testGroup "id"
           [ go """<div id="a"></div>""" $ div_ =# pa
           , go """<div id="a"><div id="b"></div></div>""" $ div_ =# pa </ div_ =# pb
+          -- Should Not Check due to duplicated ID
+          -- , go """<div id="b"><div id="b"></div></div>""" $ div_ =# pb </ div_ =# pb
           ]
         , testGroup "id+class"
           [ go """<div id="a" class="a"></div>""" $ div_ =# pa =. a
@@ -137,7 +139,7 @@ test_style =
     go :: L.ByteString -> E en es ei kids cls '[] -> TestTree
     go ex el =
       testCase (C8.unpack $ C8.toStrict ex) do
-        toHtml (eToView el) @?= ex
+        toHtml (toView el) @?= ex
     a = TopOrClass (Proxy @"a")
     b = TopOrClass (Proxy @"b")
     c = TopOrClass (Proxy @"c")

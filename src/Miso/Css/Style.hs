@@ -9,18 +9,18 @@
 
 module Miso.Css.Style where
 
-import Data.Function.Singletons
+-- import Data.Function.Singletons
+import Data.Maybe.Singletons
 import Data.List.Singletons
 import Data.Singletons
 import Data.Singletons.Base.TH
 import Data.String ( IsString(..) )
 -- import Data.Type.Set qualified as TS -- hiding (Proxy)
+-- import GHC.TypeError
 import GHC.TypeLits ( KnownSymbol, Symbol )
 import Miso ( MisoString, ms )
-
-
 import Prelude
-import Text.Show.Singletons
+-- import Text.Show.Singletons
 
 $(promote [d|
   append :: [a] -> [a] -> [a]
@@ -111,18 +111,54 @@ $(promote
 
 $(promote
  [d|
-  appendUniq :: (Show a, Eq a) => a -> [a] -> [a]
-  appendUniq x [] = [x]
-  appendUniq x (h:t)
-   | x == h = error ("Duplcated on unique list: "  <> show_ x )
-   | otherwise = h : appendUniq x t
+  findDup :: Eq a => [a] -> Maybe a
+  findDup [] = Nothing
+  findDup (h : t) =
+    if h `elem` t
+      then Just h
+      else findDup t
    |])
 
-$(promote
- [d|
-  mergeUniq :: (Show a, Eq a) => [a] -> [a] -> [a]
-  mergeUniq a l = foldl (flip appendUniq) l a
-   |])
+type AppendUniq x l = x : l
+-- type AppendUniq :: Symbol -> [Symbol] -> [Symbol]
+-- type family AppendUniq x l where
+--   AppendUniq x '[] = '[x]
+--   AppendUniq x (x:_) =
+--     TypeError (Text "HTML element id " :<>: ShowType x :<>: Text " is used more than once")  -- <> show_ x )
+--   AppendUniq x (h:t) = h : AppendUniq x t
+
+-- type family AppendUniq x l where
+--   AppendUniq x '[] = '[x]
+--   AppendUniq x (h:t) = If (x == h)
+--     (TypeError (Text "HTML element id is used more than once: " :<>: ShowType x))
+--     (h : AppendUniq x t)
+
+-- $(promote
+--  [d|
+--   appendUniq :: (Show a, Eq a) => a -> [a] -> [a]
+--   appendUniq x [] = [x]
+--   appendUniq x (h:t)
+--    | x == h = error ("Duplcated on unique list: "  <> show_ x )
+--    | otherwise = h : appendUniq x t
+--    |])
+
+type MergeUniq a b = Append a b
+-- type MergeUniq :: [Symbol] -> [Symbol] -> [Symbol]
+-- type family MergeUniq a b where
+--   MergeUniq '[] b = b
+--   MergeUniq a '[] = a
+--   MergeUniq (ha:ta) b = MergeUniq ta (AppendUniq ha b)
+
+-- type family HeadN x where
+--   HeadN '[] = "Nil"
+--   HeadN (h:_) = h
+
+
+-- $(promote
+--  [d|
+--   mergeUniq :: (Show a, Eq a) => [a] -> [a] -> [a]
+--   mergeUniq a l = foldl (flip appendUniq) l a
+--    |])
 
 -- promoting not working
 type family SymsToSubSeg l where
@@ -144,18 +180,23 @@ data E
      (cls :: [Symbol])
      (l :: [[[SubSeg]]])
   where
-    CDataE :: MisoString -> E CD Atomic Nothing (UnSet '[]) '[] '[]
-    NilE :: KnownSymbol en => Proxy en -> E en Composite Nothing (UnSet '[]) '[] '[]
-    IdE :: KnownSymbol ei =>
+    CDataE ::
+      MisoString ->
+      E CD Atomic Nothing (UnSet '[]) '[] '[]
+    NilE :: KnownSymbol en =>
+      Proxy en ->
+      E en Composite Nothing (UnSet '[]) '[] '[]
+    IdE :: (KnownSymbol ei, FindDup (AppendUniq ei kids) ~ Nothing) =>
       Proxy ei ->
       E en Composite Nothing kids cls eacs ->
-      E en Composite (Just ei) (appendUniq ei kids) cls eacs
+      E en Composite (Just ei) (AppendUniq ei kids) cls eacs
     AppClsE :: forall p c en cls eacs ei kIds.
       (KnownSymbol en, KnownSymbol c) =>
       OrClass p c ->
       E en Composite ei kIds cls eacs ->
       E en Composite ei kIds (c : cls) (ApplyClass p (C c) eacs)
     AppendChildE ::
+      (FindDup (MergeUniq ckIds pkIds) ~ Nothing) =>
       E ce cs ci ckIds ccls ceacs ->
       E pe Composite pi pkIds pcls peacs ->
       E pe Composite pi
