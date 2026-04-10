@@ -9,14 +9,18 @@
 
 module Miso.Css.Style where
 
-import Data.Tagged ( Tagged(Tagged) )
+import Data.Function.Singletons
+import Data.List.Singletons
+import Data.Singletons
 import Data.Singletons.Base.TH
 import Data.String ( IsString(..) )
-import GHC.TypeLits ( KnownSymbol, Symbol, symbolVal )
-import Miso
-    ( ms, vtext, MisoString, Attribute(ClassList), View(VNode) )
-import Miso.Html ( nodeHtml )
+-- import Data.Type.Set qualified as TS -- hiding (Proxy)
+import GHC.TypeLits ( KnownSymbol, Symbol )
+import Miso ( MisoString, ms )
+
+
 import Prelude
+import Text.Show.Singletons
 
 $(promote [d|
   append :: [a] -> [a] -> [a]
@@ -35,7 +39,7 @@ type family Elem' n p c where
 data SubSeg
   = C Symbol -- ^ Element Class
   | T Symbol -- ^ Element Name (Tag)
-  -- | I Symbol -- ^ Element Id
+  | I Symbol -- ^ Element Id
   deriving (Show, Eq, Ord)
 promoteEqInstance ''SubSeg
 
@@ -43,6 +47,7 @@ data AncestorClasses (p :: [SubSeg]) where
   CssOrphan :: AncestorClasses '[]
   AddAncestor :: KnownSymbol a => Proxy a -> AncestorClasses ac -> AncestorClasses (C a ': ac)
   AddTagAncestor :: KnownSymbol a => Proxy a -> AncestorClasses ac -> AncestorClasses (T a ': ac)
+  AddIdAncestor :: KnownSymbol a => Proxy a -> AncestorClasses ac -> AncestorClasses (I a ': ac)
 
 -- | 'OrClass' describes all posible selector prefixes
 -- possible for the last selector segment
@@ -91,10 +96,32 @@ $(promote
 $(promote
  [d|
   appendChild :: Eq a => [[[a]]] -> [a] -> [[[a]]] -> [[[a]]]
-  appendChild [] _ peacs = peacs
   appendChild ceacs [] peacs = ceacs `append` peacs
   appendChild ceacs (pclsH : pcls') peacs =
      appendChild (applyClass [] pclsH ceacs) pcls' peacs
+  appendChild [] _ peacs = peacs
+   |])
+
+$(promote
+ [d|
+  prependMb :: Eq a => Maybe a -> [a] -> [a]
+  prependMb Nothing l = l
+  prependMb (Just x) l = x : l
+   |])
+
+$(promote
+ [d|
+  appendUniq :: (Show a, Eq a) => a -> [a] -> [a]
+  appendUniq x [] = [x]
+  appendUniq x (h:t)
+   | x == h = error ("Duplcated on unique list: "  <> show_ x )
+   | otherwise = h : appendUniq x t
+   |])
+
+$(promote
+ [d|
+  mergeUniq :: (Show a, Eq a) => [a] -> [a] -> [a]
+  mergeUniq a l = foldl (flip appendUniq) l a
    |])
 
 -- promoting not working
@@ -106,49 +133,40 @@ data ElementStructure = Atomic | Composite
 
 type CD = "CDATA"
 
-data E (en :: Symbol) (es :: ElementStructure) (cls :: [Symbol]) (l :: [[[SubSeg]]]) where
-  CDataE :: MisoString -> E CD Atomic '[] '[]
-  NilE :: KnownSymbol en => Proxy en -> E en Composite '[] '[]
-  AppClsE :: forall p c en cls eacs.
-    (KnownSymbol en, KnownSymbol c) =>
-    OrClass p c ->
-    E en Composite cls eacs ->
-    E en Composite (c : cls) (ApplyClass p (C c) eacs)
-  AppendChildE ::
-    E ce cs ccls ceacs ->
-    E pe Composite pcls peacs ->
-    E pe Composite pcls (AppendChild ceacs (T pe : SymsToSubSeg pcls) peacs)
+type UniqueSet = [ Symbol ]
+type UnSet x = x
 
-instance IsString (E CD Atomic '[] '[]) where
-  fromString = CDataE . ms
-
-injectClass :: MisoString -> View model action -> View model action
-injectClass cn = \case
-  VNode ns tg atrs children -> VNode ns tg (injClass atrs) children
-  o -> o
+data E
+     (en :: Symbol)
+     (es :: ElementStructure)
+     (ei :: Maybe Symbol)
+     (knownIds :: UniqueSet)
+     (cls :: [Symbol])
+     (l :: [[[SubSeg]]])
   where
-    injClass = \case
-      [] -> [ClassList [cn]]
-      ClassList cls : atrs' -> ClassList (cn : cls) : atrs'
-      o : atrs' -> o : injClass atrs'
+    CDataE :: MisoString -> E CD Atomic Nothing (UnSet '[]) '[] '[]
+    NilE :: KnownSymbol en => Proxy en -> E en Composite Nothing (UnSet '[]) '[] '[]
+    IdE :: KnownSymbol ei =>
+      Proxy ei ->
+      E en Composite Nothing kids cls eacs ->
+      E en Composite (Just ei) (appendUniq ei kids) cls eacs
+    AppClsE :: forall p c en cls eacs ei kIds.
+      (KnownSymbol en, KnownSymbol c) =>
+      OrClass p c ->
+      E en Composite ei kIds cls eacs ->
+      E en Composite ei kIds (c : cls) (ApplyClass p (C c) eacs)
+    AppendChildE ::
+      E ce cs ci ckIds ccls ceacs ->
+      E pe Composite pi pkIds pcls peacs ->
+      E pe Composite pi
+      (MergeUniq ckIds pkIds)
+      pcls
+      (AppendChild
+       ceacs
+       (PrependMb
+        (Fmap (TyCon I) pi)
+        (T pe : SymsToSubSeg pcls))
+       peacs)
 
-className :: forall p c. KnownSymbol c => OrClass p c -> MisoString
-className _ =
-  ms $ symbolVal $ Proxy @c
-
-data Child
-
-appChild :: Tagged Child (View model action) -> View model action -> View model action
-appChild (Tagged c) = \case
-  VNode ns tg atrs children -> VNode ns tg atrs $ children <> [c]
-  o -> o
-
-eToView :: E en es cls eacs -> View model action
-eToView = \case
-  CDataE txt -> vtext txt
-  NilE enp -> nodeHtml (ms $ symbolVal enp) [] []
-  AppClsE orCls e -> injectClass (className orCls) (eToView e)
-  AppendChildE ce pe -> appChild (Tagged @Child (eToView ce)) (eToView pe)
-
-toView :: E en es cls '[] -> View model action
-toView = eToView
+instance IsString (E CD Atomic Nothing (UnSet '[]) '[] '[]) where
+  fromString = CDataE . ms
