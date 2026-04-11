@@ -10,7 +10,7 @@ import Miso.Css.Miso ( toView )
 import Miso.Css.Operator ( (<@), (=.), (</), (=#) )
 import Miso.Css.Prelude
 import Miso.Css.Style
-import Miso.Css.Tags ( div_, hr_, ul_, li_ )
+import Miso.Css.Tags ( div_, hr_, li_, ul_ )
 import Miso.Html ( ToHtml(toHtml) )
 import Miso.Html qualified as MH
 import Test.Tasty ( testGroup, TestTree )
@@ -70,45 +70,28 @@ test_style =
       [ testGroup "bitter"
         [ """<div class="a"><div class="b"></div></div>""" `go`
           AppendChildE
-          (AppClsE
-            (AddAncestorBranch
-              (AddAncestor (Proxy @"a") CssOrphan)
-              (TopOrClass (Proxy @"b")))
-            (NilE (Proxy @"div")))
-          (AppClsE (TopOrClass (Proxy @"a"))
-            (NilE (Proxy @"div")))
+          (AppClsE ab (NilE (Proxy @"div")))
+          (AppClsE a  (NilE (Proxy @"div")))
         , """<div class="a"><div class="b"><div class="c"></div></div></div>""" `go`
           AppendChildE
           (AppendChildE
-           (AppClsE
-             (AddAncestorBranch
-               (AddAncestor (Proxy @"b") (AddAncestor (Proxy @"a") CssOrphan))
-               (TopOrClass (Proxy @"c")))
-             (NilE (Proxy @"div")))
-           (AppClsE (TopOrClass (Proxy @"b"))
-             (NilE (Proxy @"div"))))
-          (AppClsE (TopOrClass (Proxy @"a"))
-           (NilE (Proxy @"div")))
+           (AppClsE abc (NilE (Proxy @"div")))
+           (AppClsE b   (NilE (Proxy @"div"))))
+          (AppClsE a (NilE (Proxy @"div")))
         , """<div class="a"><div class="b"><div class="c"></div></div></div>""" `go`
           AppendChildE
           (AppendChildE
-           (AppClsE
-             (AddAncestorBranch
-               (AddAncestor (Proxy @"b") (AddAncestor (Proxy @"a") CssOrphan))
-               (TopOrClass (Proxy @"c")))
-             (NilE (Proxy @"div")))
-           (AppClsE
-            (AddAncestorBranch
-             (AddAncestor (Proxy @"a") CssOrphan)
-              (TopOrClass (Proxy @"b")))
-             (NilE (Proxy @"div"))))
-          (AppClsE (TopOrClass (Proxy @"a"))
+           (AppClsE abc (NilE (Proxy @"div")))
+           (AppClsE ab  (NilE (Proxy @"div"))))
+          (AppClsE a
            (NilE (Proxy @"div")))
         ]
       , testGroup "sweet"
         [ testGroup "tag"
           [ go """<ul><li class="a"></li></ul>""" $
             ul_ </ li_ =. ul_a
+          , go """<ul class="a"><li class="b"></li></ul>""" $
+            ul_ =. a </ li_ =. ul_and_a_b
           ]
         , testGroup "id"
           [ go """<div id="a"></div>""" $ div_ =# pa
@@ -118,8 +101,12 @@ test_style =
           ]
         , testGroup "id+class"
           [ go """<div id="a" class="a"></div>""" $ div_ =# pa =. a
-          , go """<div id="a"><div class="b"></div></div>""" $ div_ =# pa </ div_ =. b
-          , go """<div id="b"><div class="a"></div></div>""" $ div_ =# pb </ div_ =. id_a
+          , go """<div id="a"><div class="b"></div></div>""" $
+            div_ =# pa </ div_ =. b
+          , go """<div id="b"><div class="a"></div></div>""" $
+            div_ =# pb </ div_ =. id_a
+          , go """<div id="c" class="a"><div class="b"></div></div>""" $
+            div_ =# pc =. a </ div_ =. idC_and_a_b
           ]
         , testGroup "class"
           [ go """<div class="a"><div class="b"></div></div>""" $
@@ -130,6 +117,8 @@ test_style =
             div_ =. a </ div_ =. ab </ div_ =. ac
           , go """<div class="a"><div class="b"><div class="c"></div></div></div>""" $
             div_ =. a </ (div_ =. ab </ div_ =. ac)
+          , go """<div class="a b"><div class="c"></div></div>""" $
+            div_ =. a =. b </ (div_ =. ab_c)
           ]
         ]
       ]
@@ -140,16 +129,32 @@ test_style =
     go ex el =
       testCase (C8.unpack $ C8.toStrict ex) do
         toHtml (toView el) @?= ex
-    a = TopOrClass (Proxy @"a")
-    b = TopOrClass (Proxy @"b")
-    c = TopOrClass (Proxy @"c")
-    ul_a = AddAncestorBranch (AddTagAncestor (Proxy @"ul") CssOrphan) a
+    a = TopOrClass pa
+    b = TopOrClass pb
+    c = TopOrClass pc
+    pul = Proxy @"ul"
+    ul_a = AddAncestorBranch (AddTagAncestor pul CssOrphan) a
     -- #x .a
-    id_a = AddAncestorBranch (AddIdAncestor (Proxy @"b") CssOrphan) a
+    id_a = AddAncestorBranch (AddIdAncestor pb CssOrphan) a
     pa = Proxy @"a"
     pb = Proxy @"b"
+    pc = Proxy @"c"
     ac = AddAncestorBranch (AddAncestor pa CssOrphan) c
     ab = AddAncestorBranch (AddAncestor pa CssOrphan) b
     abc = AddAncestorBranch
-            (AddAncestor pb (AddAncestor pa CssOrphan))
+            (AddAncestor pb (NextAncestor (AddAncestor pa CssOrphan)))
             c
+    ab_c =
+      AddAncestorBranch
+      (AddAncestor pb (AddAncestor pa CssOrphan))
+      c
+    idC_and_a_b =
+      AddAncestorBranch
+      (AddIdAncestor pc
+       (AddAncestor pa CssOrphan))
+      b
+    ul_and_a_b =
+      AddAncestorBranch
+      (AddTagAncestor pul
+       (AddAncestor pa CssOrphan))
+      b

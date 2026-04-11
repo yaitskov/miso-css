@@ -22,7 +22,7 @@ injectClass cn = \case
   where
     injClass = \case
       [] -> [ClassList [cn]]
-      ClassList cls : atrs' -> ClassList (cn : cls) : atrs'
+      ClassList cls : atrs' -> ClassList (cls <> [cn]) : atrs'
       o : atrs' -> o : injClass atrs'
 
 injectElementId :: MisoString -> View model action -> View model action

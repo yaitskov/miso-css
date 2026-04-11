@@ -27,7 +27,7 @@ infixl 3 =.
     (Just ei)
     (AppendUniq ei kids)
     cls
-    eacs -- (ApplyClass '[] (I ei) eacs)
+    eacs
 e =# i = IdE i e
 
 (</) ::

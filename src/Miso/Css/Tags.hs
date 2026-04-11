@@ -44,5 +44,8 @@ hr_ = NilE (Proxy @"hr")
 ul_ :: E "ul" Composite Nothing '[]'[] '[]
 ul_ = NilE (Proxy @"ul")
 
+ol_ :: E "ol" Composite Nothing '[]'[] '[]
+ol_ = NilE (Proxy @"ol")
+
 li_ :: E "li" Composite Nothing '[]'[] '[]
 li_ = NilE (Proxy @"li")
