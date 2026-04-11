@@ -15,17 +15,8 @@ import Data.Singletons.Base.TH
 import Data.String ( IsString(..) )
 import GHC.TypeLits ( KnownSymbol, Symbol )
 import Miso ( MisoString, ms )
+import Miso.Css.List
 import Prelude
-
-
-$(promote [d|
-  append :: [a] -> [a] -> [a]
-  -- does not check:
-  -- append x y = foldr (:) y x
-  {- HLINT ignore "Use foldr" -}
-  append (x:xs) y = x : append xs y
-  append [] y = y
- |])
 
 data SubSeg
   = C Symbol -- ^ Element Class
@@ -74,13 +65,14 @@ data OrClass
   where
     TopOrClass :: KnownSymbol c => Proxy c -> OrClass '[] c
     AddAncestorBranch :: AncestorClasses ac -> OrClass bs c -> OrClass (ac ': bs) c
+
 $(promote
  [d|
   applySubSegToSeg :: SubSeg -> Seg -> Seg
-  applySubSegToSeg _ ([], m) = ([], m)
-  applySubSegToSeg ss (umH : umT, m)
-   | ss == umH = (umT, umH : m)
-   | otherwise = (umH : umT, m)
+  applySubSegToSeg ss (um, m) =
+     case removeElem [] ss um of
+       Nothing -> (um, m)
+       Just (k, um') -> (um', k : m)
    |])
 
 $(promote
@@ -147,26 +139,7 @@ $(promote
     appendChild (applyClass [] pclsH ceacs) pcls' peacs
    |])
 
-$(promote
- [d|
-  prependMb :: Eq a => Maybe a -> [a] -> [a]
-  prependMb Nothing l = l
-  prependMb (Just x) l = x : l
-   |])
 
-$(promote
- [d|
-  findDup :: Eq a => [a] -> Maybe a
-  findDup [] = Nothing
-  findDup (h : t) =
-    if h `elem` t
-      then Just h
-      else findDup t
-   |])
-
-type AppendUniq x l = x : l
-
-type MergeUniq a b = Append a b
 
 -- promoting not working
 type family SymsToSubSeg l where
@@ -177,8 +150,6 @@ data ElementStructure = Atomic | Composite
 
 type CD = "CDATA"
 
-type UniqueSet = [ Symbol ]
-type UnSet x = x
 
 data E
      (en :: Symbol)

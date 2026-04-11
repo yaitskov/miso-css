@@ -119,6 +119,10 @@ test_style =
             div_ =. a </ (div_ =. ab </ div_ =. ac)
           , go """<div class="a b"><div class="c"></div></div>""" $
             div_ =. a =. b </ (div_ =. ab_c)
+          , go """<div class="a b"><div class="c"></div></div>""" $
+            div_ =. a =. b </ (div_ =. ba_c)
+          , go """<div class="b a"><div class="c"></div></div>""" $
+            div_ =. b =. a </ (div_ =. ba_c)
           ]
         ]
       ]
@@ -147,6 +151,10 @@ test_style =
     ab_c =
       AddAncestorBranch
       (AddAncestor pb (AddAncestor pa CssOrphan))
+      c
+    ba_c =
+      AddAncestorBranch
+      (AddAncestor pa (AddAncestor pb CssOrphan))
       c
     idC_and_a_b =
       AddAncestorBranch

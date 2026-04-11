@@ -48,6 +48,7 @@ library
     Miso.Css.Gen
     Miso.Css.IncludeCss
     Miso.Css.Linear
+    Miso.Css.List
     Miso.Css.Miso
     Miso.Css.Operator
     Miso.Css.Parser

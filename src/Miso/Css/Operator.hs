@@ -1,10 +1,10 @@
 module Miso.Css.Operator where
 
-import Data.Singletons
-import Data.Singletons.Base.TH
+import Data.Singletons.Base.TH ( Proxy, TyCon, PFunctor(Fmap) )
 import GHC.TypeLits ( KnownSymbol )
+import Miso.Css.List ( FindDup, PrependMb, AppendUniq, MergeUniq )
 import Miso.Css.Style
-import Miso.Css.Prelude
+import Miso.Css.Prelude ( Maybe(Just, Nothing), type (~) )
 
 (=.) :: (KnownSymbol en, KnownSymbol c) =>
   E en Composite ei kids cls eacs ->
