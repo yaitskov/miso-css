@@ -7,9 +7,9 @@ import Miso.Css.Style
 import Miso.Css.Prelude ( Maybe(Just, Nothing), type (~) )
 
 (=.) :: (KnownSymbol en, KnownSymbol c) =>
-  E en Composite ei kids cls eacs ->
+  E en Composite ei kids cls eacs children ->
   OrClass p c ->
-  E en Composite ei kids (c:cls) (ApplyClass p (C c) eacs)
+  E en Composite ei kids (c:cls) (ApplyClass p (C c) eacs) children
 e =. c = AppClsE c e
 
 infixl 3 =.
@@ -19,7 +19,7 @@ infixl 3 =.
   , KnownSymbol ei
   , FindDup (AppendUniq ei kids) ~ Nothing
   ) =>
-  E en Composite Nothing kids cls eacs ->
+  E en Composite Nothing kids cls eacs children ->
   Proxy ei ->
   E
     en
@@ -28,12 +28,13 @@ infixl 3 =.
     (AppendUniq ei kids)
     cls
     eacs
+    children
 e =# i = IdE i e
 
 (</) ::
-  (FindDup (MergeUniq cKids pKids) ~ Nothing) =>
-  E pen Composite pi pKids pcls peacs ->
-  E cen cs ci cKids ccls ceacs ->
+  (KnownSymbol cen, FindDup (MergeUniq cKids pKids) ~ Nothing) =>
+  E pen Composite pi pKids pcls peacs pchildren ->
+  E cen cs ci cKids ccls ceacs cchildren ->
   E pen Composite pi
     (MergeUniq cKids pKids)
     pcls
@@ -43,14 +44,18 @@ e =# i = IdE i e
        (Fmap (TyCon I) pi)
        (T pen : SymsToSubSeg pcls))
      peacs)
+    (PrependMb
+        (Fmap (TyCon I) ci)
+        (T cen : SymsToSubSeg ccls) : pchildren)
+
 p </ c = AppendChildE c p
 
 infixl 2 </
 
 (<@) ::
   (FindDup kids ~ Nothing) =>
-  E pen Composite pi kids pcls peacs ->
-  E CD Atomic Nothing '[] '[] '[] ->
+  E pen Composite pi kids pcls peacs pchildren ->
+  E CD Atomic Nothing '[] '[] '[] '[] ->
   E
     pen
     Composite
@@ -63,6 +68,7 @@ infixl 2 </
        (Fmap (TyCon I) pi)
        (T pen : SymsToSubSeg pcls))
      peacs)
+    ('[T CD] : pchildren)
 (<@) = (</)
 
 infixl 2 <@

@@ -10,7 +10,7 @@ import Miso.Css.Miso ( toView )
 import Miso.Css.Operator ( (<@), (=.), (</), (=#) )
 import Miso.Css.Prelude
 import Miso.Css.Style
-import Miso.Css.Tags ( div_, hr_, li_, ul_ )
+import Miso.Css.Tags
 import Miso.Html ( ToHtml(toHtml) )
 import Miso.Html qualified as MH
 import Test.Tasty ( testGroup, TestTree )
@@ -101,6 +101,16 @@ test_style =
           [ go """<div><ul><li class="c"></li></ul></div>""" $
             div_ </ (ul_ </ li_ =. star_dir_star_dir_c)
           ]
+        , testGroup "sibling"
+          [ testGroup "adjacent"
+            [ go """<div><div class="a"></div><div class="b"></div></div>""" $
+              div_ </ div_ =. a </ div_ =. b
+            ]
+          , testGroup "general"
+            [ go """<div><div class="a"></div><span></span><div class="b"></div></div>""" $
+              div_ </ div_ =. a </ span_ </ div_ =. b
+            ]
+          ]
         , testGroup "id"
           [ go """<div id="a"></div>""" $ div_ =# pa
           , go """<div id="a"><div id="b"></div></div>""" $ div_ =# pa </ div_ =# pb
@@ -145,7 +155,7 @@ test_style =
     ]
   ]
   where
-    go :: L.ByteString -> E en es ei kids cls '[] -> TestTree
+    go :: L.ByteString -> E en es ei kids cls '[] children -> TestTree
     go ex el =
       testCase (C8.unpack $ C8.toStrict ex) do
         toHtml (toView el) @?= ex
@@ -204,6 +214,8 @@ test_style =
       (NextAncestor jn $ CssOrphan jn)
       c
     a_dir_b = AddAncestorBranch (AddAncestor pa $ CssOrphan jn) b
+    -- a_neighbour_b =
+
     a_b_dir_c =
       AddAncestorBranch
       (AddAncestor pb . NextAncestor jn . AddAncestor pa $ CssOrphan nol)

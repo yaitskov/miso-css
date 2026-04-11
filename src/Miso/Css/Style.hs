@@ -176,26 +176,25 @@ data E
      (knownIds :: UniqueSet)
      (cls :: [Symbol])
      (l :: [[[Seg]]])
+     (children :: [[SubSeg]])
   where
     CDataE ::
       MisoString ->
-      E CD Atomic Nothing (UnSet '[]) '[] '[]
+      E CD Atomic Nothing (UnSet '[]) '[] '[] '[]
     NilE :: KnownSymbol en =>
       Proxy en ->
-      E en Composite Nothing (UnSet '[]) '[] '[]
+      E en Composite Nothing (UnSet '[]) '[] '[] '[]
     IdE :: (KnownSymbol ei, FindDup (AppendUniq ei kids) ~ Nothing) =>
       Proxy ei ->
-      E en Composite Nothing kids cls eacs ->
-      E en Composite (Just ei) (AppendUniq ei kids) cls eacs
-    AppClsE :: forall p c en cls eacs ei kIds.
-      (KnownSymbol en, KnownSymbol c) =>
+      E en Composite Nothing kids cls eacs children ->
+      E en Composite (Just ei) (AppendUniq ei kids) cls eacs children
+    AppClsE :: (KnownSymbol en, KnownSymbol c) =>
       OrClass p c ->
-      E en Composite ei kIds cls eacs ->
-      E en Composite ei kIds (c : cls) (ApplyClass p (C c) eacs)
-    AppendChildE ::
-      (FindDup (MergeUniq ckIds pkIds) ~ Nothing) =>
-      E ce cs ci ckIds ccls ceacs ->
-      E pe Composite pi pkIds pcls peacs ->
+      E en Composite ei kIds cls eacs children ->
+      E en Composite ei kIds (c : cls) (ApplyClass p (C c) eacs) children
+    AppendChildE :: (KnownSymbol ce, FindDup (MergeUniq ckIds pkIds) ~ Nothing) =>
+      E ce cs ci ckIds ccls ceacs cchildren ->
+      E pe Composite pi pkIds pcls peacs pchildren ->
       E pe Composite pi
       (MergeUniq ckIds pkIds)
       pcls
@@ -205,6 +204,9 @@ data E
         (Fmap (TyCon I) pi)
         (T pe : SymsToSubSeg pcls))
        peacs)
+      (PrependMb
+        (Fmap (TyCon I) ci)
+        (T ce : SymsToSubSeg ccls) : pchildren)
 
-instance IsString (E CD Atomic Nothing (UnSet '[]) '[] '[]) where
+instance IsString (E CD Atomic Nothing (UnSet '[]) '[] '[] '[]) where
   fromString = CDataE . ms
