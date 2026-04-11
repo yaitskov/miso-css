@@ -9,22 +9,30 @@
 
 module Miso.Css.Style where
 
-import Data.Maybe.Singletons ( JustSym0, NothingSym0 )
 import Data.List.Singletons
 import Data.Singletons.Base.TH
 import Data.String ( IsString(..) )
+import GHC.TypeError
 import GHC.TypeLits ( KnownSymbol, Symbol )
 import Miso ( MisoString, ms )
 import Miso.Css.List
 import Prelude
 
-data SubSeg
-  = C Symbol -- ^ Element Class
-  | T Symbol -- ^ Element Name (Tag)
-  | I Symbol -- ^ Element Id
-  deriving (Show, Eq, Ord)
+$(promote
+ [d|
+  data SubSeg
+    = C Symbol -- ^ Element Class
+    | T Symbol -- ^ Element Name (Tag)
+    | I Symbol -- ^ Element Id
+    | B -- ^ Bottom is added to Seg to prevent matching branch later
+        -- used to support CSS '>' syntax
+    deriving (Show, Eq, Ord)
+   |])
 
-promoteEqInstance ''SubSeg
+$(promote
+ [d|
+  data MatchScope = NowOrLater | JustNow deriving (Show, Eq)
+   |])
 
 -- | Composite segment
 -- matched part is appended to unmatched when algorithm goes up to parent node
@@ -32,18 +40,24 @@ promoteEqInstance ''SubSeg
 -- if unmatched is empty then list head is dropped
 -- every SubSeg match step (ie class, id or tag name)
 type Seg =
-  ( [SubSeg] -- unmatched
+  ( MatchScope
+  , [SubSeg] -- unmatched
   , [SubSeg] -- matched
   )
 
 type family AddSubSeg (c :: SubSeg) (ac :: [Seg]) where
-  AddSubSeg c '[] = '[ '( '[ c ] , '[] ) ]
-  AddSubSeg c ( '(um, m) : t) = ( '(c : um, m) : t)
+  AddSubSeg c '[] =
+    -- unreachable
+    TypeError (Text "AddSubSeg " :<>: ShowType c :<>: Text " to empty list")
+  AddSubSeg c ( '( mtScope, um, m) : t) =
+    ( '( mtScope, c : um, m) : t)
 
 data AncestorClasses (p :: [Seg]) where
-  CssOrphan :: AncestorClasses '[]
+  CssOrphan :: Proxy ms -> AncestorClasses '[ '( ms, '[], '[] )]
   NextAncestor ::
-    AncestorClasses ac -> AncestorClasses ('( '[], '[]) : ac)
+    Proxy ms ->
+    AncestorClasses ac ->
+    AncestorClasses ('( ms, '[], '[]) : ac)
   AddAncestor ::
     KnownSymbol a =>
     Proxy a -> AncestorClasses ac -> AncestorClasses (AddSubSeg (C a) ac)
@@ -69,10 +83,10 @@ data OrClass
 $(promote
  [d|
   applySubSegToSeg :: SubSeg -> Seg -> Seg
-  applySubSegToSeg ss (um, m) =
+  applySubSegToSeg ss (mts, um, m) =
      case removeElem [] ss um of
-       Nothing -> (um, m)
-       Just (k, um') -> (um', k : m)
+       Nothing -> (mts, um, m)
+       Just (k, um') -> (mts, um', k : m)
    |])
 
 $(promote
@@ -100,17 +114,24 @@ $(promote
 $(promote
  [d|
   -- [[Seg]] is element (list of branches)
-  filterOutFullyMatchedHead :: [[Seg]] -> Maybe [[Seg]]
-  filterOutFullyMatchedHead [] = Nothing
+  filterOutFullyMatchedHead :: [[Seg]] -> [[Seg]] -> [[Seg]]
+  filterOutFullyMatchedHead r [] = r
   -- empty branch
-  filterOutFullyMatchedHead ([] : t) =
-    filterOutFullyMatchedHead t
+  filterOutFullyMatchedHead _r ([] : _t) = [] -- filterOutFullyMatchedHead t
+  -- matched last branch segment
+  filterOutFullyMatchedHead _r ( [ (_mts, [], _matched) ] : _bs) = []
   -- matched head seg in branch
-  filterOutFullyMatchedHead ((([], _matched) : firstBranchTail) : bs) =
-    filterOutFullyMatchedHead (firstBranchTail : bs)
+  filterOutFullyMatchedHead r (((_mts, [], _matched) : firstBranchTail) : bs) =
+    filterOutFullyMatchedHead (firstBranchTail:r) bs
   -- reset
-  filterOutFullyMatchedHead (((unMatched, matched) : firstBranchTail) : bs) =
-    Just (((unMatched `append` matched, []) : firstBranchTail) : bs)
+  filterOutFullyMatchedHead r (((NowOrLater, unMatched, matched) : firstBranchTail) : bs) =
+    filterOutFullyMatchedHead (((NowOrLater, unMatched `append` matched, []) : firstBranchTail) : r) bs
+
+  filterOutFullyMatchedHead r (((JustNow, B : unMatched, matched) : firstBranchTail) : bs) =
+    filterOutFullyMatchedHead (((JustNow, B : unMatched, matched) : firstBranchTail) : r) bs
+
+  filterOutFullyMatchedHead r (((JustNow, unMatched, matched) : firstBranchTail) : bs) =
+    filterOutFullyMatchedHead (((JustNow, B : unMatched, matched) : firstBranchTail) : r) bs
    |])
 
 $(promote
@@ -118,9 +139,9 @@ $(promote
   mapMaybeFilterOutFullyMatchedHead :: [[[Seg]]] -> [[[Seg]]]
   mapMaybeFilterOutFullyMatchedHead [] = []
   mapMaybeFilterOutFullyMatchedHead (h:t) =
-    case filterOutFullyMatchedHead h of
-      Nothing -> mapMaybeFilterOutFullyMatchedHead t
-      Just h' -> h' : mapMaybeFilterOutFullyMatchedHead t
+    case filterOutFullyMatchedHead [] h of
+      [] -> mapMaybeFilterOutFullyMatchedHead t
+      h' -> h' : mapMaybeFilterOutFullyMatchedHead t
    |])
 
 -- sMapMaybe filterOutFullyMatchedHead ceacs `append` peacs
@@ -139,8 +160,6 @@ $(promote
     appendChild (applyClass [] pclsH ceacs) pcls' peacs
    |])
 
-
-
 -- promoting not working
 type family SymsToSubSeg l where
   SymsToSubSeg '[] = '[]
@@ -149,7 +168,6 @@ type family SymsToSubSeg l where
 data ElementStructure = Atomic | Composite
 
 type CD = "CDATA"
-
 
 data E
      (en :: Symbol)

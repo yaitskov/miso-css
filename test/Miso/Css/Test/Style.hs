@@ -92,6 +92,10 @@ test_style =
             ul_ </ li_ =. ul_a
           , go """<ul class="a"><li class="b"></li></ul>""" $
             ul_ =. a </ li_ =. ul_and_a_b
+          , go """<div><div class="div_child"></div></div>""" $
+            div_ </ div_ =. div_child
+          , go """<div><ul><div class="div_ul_child"></div></ul></div>""" $
+            div_ </ (ul_ </ div_ =. div_ul_child)
           ]
         , testGroup "id"
           [ go """<div id="a"></div>""" $ div_ =# pa
@@ -113,6 +117,8 @@ test_style =
             div_ =. a </ (div_ =. ab)
           , go """<div class="a"><div class="b"><div class="c"></div></div></div>""" $
             div_ =. a </ (div_ =. ab </ div_ =. abc)
+          , go """<div class="a"><div class="b"><ul><div class="c"></div></ul></div></div>""" $
+            div_ =. a </ (div_ =. ab </ (ul_ </ div_ =. abc))
           , go """<div class="a"><div class="b"></div><div class="c"></div></div>""" $
             div_ =. a </ div_ =. ab </ div_ =. ac
           , go """<div class="a"><div class="b"><div class="c"></div></div></div>""" $
@@ -123,6 +129,12 @@ test_style =
             div_ =. a =. b </ (div_ =. ba_c)
           , go """<div class="b a"><div class="c"></div></div>""" $
             div_ =. b =. a </ (div_ =. ba_c)
+          , go """<div class="a"><div class="b"><div class="c"></div></div></div>""" $
+            div_ =. a </ (div_ =. b </ div_ =. a_dir_b_dir_c)
+          , go """<div class="a"><div class="b"></div></div>""" $
+            div_ =. a </ div_ =. a_dir_b
+          , go """<div class="a"><div class="b"><div class="c"></div></div></div>""" $
+            div_ =. a </ (div_ =. b </ div_ =. a_b_dir_c)
           ]
         ]
       ]
@@ -137,32 +149,54 @@ test_style =
     b = TopOrClass pb
     c = TopOrClass pc
     pul = Proxy @"ul"
-    ul_a = AddAncestorBranch (AddTagAncestor pul CssOrphan) a
+    ul_a = AddAncestorBranch (AddTagAncestor pul $ CssOrphan nol) a
     -- #x .a
-    id_a = AddAncestorBranch (AddIdAncestor pb CssOrphan) a
+    id_a = AddAncestorBranch (AddIdAncestor pb $ CssOrphan nol) a
     pa = Proxy @"a"
     pb = Proxy @"b"
     pc = Proxy @"c"
-    ac = AddAncestorBranch (AddAncestor pa CssOrphan) c
-    ab = AddAncestorBranch (AddAncestor pa CssOrphan) b
-    abc = AddAncestorBranch
-            (AddAncestor pb (NextAncestor (AddAncestor pa CssOrphan)))
-            c
+    nol = Proxy @NowOrLater
+    jn = Proxy @JustNow
+    ac = AddAncestorBranch (AddAncestor pa $ CssOrphan nol) c
+    ab = AddAncestorBranch (AddAncestor pa $ CssOrphan nol) b
+    -- .a  .b  .c
+    abc =
+      AddAncestorBranch
+      (AddAncestor pb . NextAncestor nol . AddAncestor pa $ CssOrphan nol)
+      c
+    -- .a > .b > .c
     ab_c =
       AddAncestorBranch
-      (AddAncestor pb (AddAncestor pa CssOrphan))
+      (AddAncestor pb . AddAncestor pa $ CssOrphan nol)
       c
     ba_c =
       AddAncestorBranch
-      (AddAncestor pa (AddAncestor pb CssOrphan))
+      (AddAncestor pa . AddAncestor pb $ CssOrphan nol)
       c
     idC_and_a_b =
       AddAncestorBranch
-      (AddIdAncestor pc
-       (AddAncestor pa CssOrphan))
+      (AddIdAncestor pc . AddAncestor pa $ CssOrphan nol)
       b
     ul_and_a_b =
       AddAncestorBranch
-      (AddTagAncestor pul
-       (AddAncestor pa CssOrphan))
+      (AddTagAncestor pul . AddAncestor pa $ CssOrphan nol)
       b
+    pdiv = Proxy @"div"
+    div_child =
+      AddAncestorBranch
+      (AddTagAncestor pdiv $ CssOrphan jn)
+      (TopOrClass (Proxy @"div_child"))
+    div_ul_child =
+      AddAncestorBranch
+      (AddTagAncestor pul . NextAncestor jn . AddTagAncestor pdiv $ CssOrphan jn)
+      (TopOrClass (Proxy @"div_ul_child"))
+
+    a_dir_b_dir_c =
+      AddAncestorBranch
+      (AddAncestor pb . NextAncestor jn . AddAncestor pa $ CssOrphan jn)
+      c
+    a_dir_b = AddAncestorBranch (AddAncestor pa $ CssOrphan jn) b
+    a_b_dir_c =
+      AddAncestorBranch
+      (AddAncestor pb . NextAncestor jn . AddAncestor pa $ CssOrphan nol)
+      c
