@@ -54,7 +54,7 @@ type family AddSubSeg (c :: SubSeg) (ac :: [Seg]) where
 
 data AncestorClasses (p :: [Seg]) where
   CssOrphan :: Proxy ms -> AncestorClasses '[ '( ms, '[], '[] )]
-  NextAncestor ::
+  NextAncestor :: -- CSS star
     Proxy ms ->
     AncestorClasses ac ->
     AncestorClasses ('( ms, '[], '[]) : ac)

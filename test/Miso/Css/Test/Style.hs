@@ -97,6 +97,10 @@ test_style =
           , go """<div><ul><div class="div_ul_child"></div></ul></div>""" $
             div_ </ (ul_ </ div_ =. div_ul_child)
           ]
+        , testGroup "star"
+          [ go """<div><ul><li class="c"></li></ul></div>""" $
+            div_ </ (ul_ </ li_ =. star_dir_star_dir_c)
+          ]
         , testGroup "id"
           [ go """<div id="a"></div>""" $ div_ =# pa
           , go """<div id="a"><div id="b"></div></div>""" $ div_ =# pa </ div_ =# pb
@@ -164,7 +168,6 @@ test_style =
       AddAncestorBranch
       (AddAncestor pb . NextAncestor nol . AddAncestor pa $ CssOrphan nol)
       c
-    -- .a > .b > .c
     ab_c =
       AddAncestorBranch
       (AddAncestor pb . AddAncestor pa $ CssOrphan nol)
@@ -190,10 +193,15 @@ test_style =
       AddAncestorBranch
       (AddTagAncestor pul . NextAncestor jn . AddTagAncestor pdiv $ CssOrphan jn)
       (TopOrClass (Proxy @"div_ul_child"))
-
+    -- .a > .b > .c
     a_dir_b_dir_c =
       AddAncestorBranch
       (AddAncestor pb . NextAncestor jn . AddAncestor pa $ CssOrphan jn)
+      c
+    -- * > * > .c
+    star_dir_star_dir_c =
+      AddAncestorBranch
+      (NextAncestor jn $ CssOrphan jn)
       c
     a_dir_b = AddAncestorBranch (AddAncestor pa $ CssOrphan jn) b
     a_b_dir_c =
