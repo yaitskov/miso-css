@@ -9,6 +9,8 @@ import Data.ByteString.Char8 qualified as C8
 import Miso.Css.Miso ( toView )
 import Miso.Css.Operator ( (<@), (=.), (</), (=#) )
 import Miso.Css.Prelude
+import Miso.Css.Segment
+import Miso.Css.Sibling
 import Miso.Css.Style
 import Miso.Css.Tags
 import Miso.Html ( ToHtml(toHtml) )
@@ -104,11 +106,11 @@ test_style =
         , testGroup "sibling"
           [ testGroup "adjacent"
             [ go """<div><div class="a"></div><div class="b"></div></div>""" $
-              div_ </ div_ =. a </ div_ =. b
+              div_ </ div_ =. a </ div_ =. a_dirSib_b
             ]
           , testGroup "general"
             [ go """<div><div class="a"></div><span></span><div class="b"></div></div>""" $
-              div_ </ div_ =. a </ span_ </ div_ =. b
+              div_ </ div_ =. a </ span_ </ div_ =. a_genSib_b
             ]
           ]
         , testGroup "id"
@@ -150,9 +152,9 @@ test_style =
           , go """<div class="a"><div class="b"><div class="c"></div></div></div>""" $
             div_ =. a </ (div_ =. b </ div_ =. a_b_dir_c)
           ]
-        ]
-      ]
-    ]
+       ]
+     ]
+   ]
   ]
   where
     go :: L.ByteString -> E en es ei kids cls '[] children -> TestTree
@@ -215,8 +217,19 @@ test_style =
       c
     a_dir_b = AddAncestorBranch (AddAncestor pa $ CssOrphan jn) b
     -- a_neighbour_b =
-
     a_b_dir_c =
       AddAncestorBranch
       (AddAncestor pb . NextAncestor jn . AddAncestor pa $ CssOrphan nol)
       c
+    a_dirSib_b =
+      AddAncestorBranch
+        (AddSiblingBranch
+          (AddSegToSibBranch (AddClassToSib pa $ NilSib jn) NilSibBranch)
+          (CssOrphan nol))
+        b
+    a_genSib_b =
+      AddAncestorBranch
+        (AddSiblingBranch
+          (AddSegToSibBranch (AddClassToSib pa $ NilSib nol) NilSibBranch)
+          (CssOrphan nol))
+        b

@@ -52,3 +52,13 @@ type MergeUniq a b = Append a b
 
 type UniqueSet = [ Symbol ]
 type UnSet x = x
+
+$(promote
+ [d|
+  isSubSet :: Eq a => [a] -> [a] -> Bool
+  isSubSet [] _ = True
+  isSubSet (h:t) l =
+    case removeElem [] h l of
+      Nothing -> False
+      Just (_, l') -> isSubSet t l'
+   |])

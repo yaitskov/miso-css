@@ -54,6 +54,8 @@ library
     Miso.Css.Parser
     Miso.Css.Prelude
     Miso.Css.Qq
+    Miso.Css.Segment
+    Miso.Css.Sibling
     Miso.Css.Style
     Miso.Css.Tags
   build-depends:

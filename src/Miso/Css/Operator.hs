@@ -3,6 +3,7 @@ module Miso.Css.Operator where
 import Data.Singletons.Base.TH ( Proxy, TyCon, PFunctor(Fmap) )
 import GHC.TypeLits ( KnownSymbol )
 import Miso.Css.List ( FindDup, PrependMb, AppendUniq, MergeUniq )
+import Miso.Css.Segment
 import Miso.Css.Style
 import Miso.Css.Prelude ( Maybe(Just, Nothing), type (~) )
 
@@ -31,6 +32,8 @@ infixl 3 =.
     children
 e =# i = IdE i e
 
+infixl 3 =#
+
 (</) ::
   (KnownSymbol cen, FindDup (MergeUniq cKids pKids) ~ Nothing) =>
   E pen Composite pi pKids pcls peacs pchildren ->
@@ -39,6 +42,7 @@ e =# i = IdE i e
     (MergeUniq cKids pKids)
     pcls
     (AppendChild
+     pchildren
      ceacs
      (PrependMb
        (Fmap (TyCon I) pi)
@@ -63,6 +67,7 @@ infixl 2 </
     kids
     pcls
     (AppendChild
+     pchildren
      '[]
      (PrependMb
        (Fmap (TyCon I) pi)

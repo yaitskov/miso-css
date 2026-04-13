@@ -12,52 +12,23 @@ module Miso.Css.Style where
 import Data.List.Singletons
 import Data.Singletons.Base.TH
 import Data.String ( IsString(..) )
-import GHC.TypeError
 import GHC.TypeLits ( KnownSymbol, Symbol )
 import Miso ( MisoString, ms )
 import Miso.Css.List
+import Miso.Css.Segment
+import Miso.Css.Sibling
 import Prelude
 
-$(promote
- [d|
-  data SubSeg
-    = C Symbol -- ^ Element Class
-    | T Symbol -- ^ Element Name (Tag)
-    | I Symbol -- ^ Element Id
-    | B -- ^ Bottom is added to Seg to prevent matching branch later
-        -- used to support CSS '>' syntax
-    deriving (Show, Eq, Ord)
-   |])
-
-$(promote
- [d|
-  data MatchScope = NowOrLater | JustNow deriving (Show, Eq)
-   |])
-
--- | Composite segment
--- matched part is appended to unmatched when algorithm goes up to parent node
--- if unmatched is not empty
--- if unmatched is empty then list head is dropped
--- every SubSeg match step (ie class, id or tag name)
-type Seg =
-  ( MatchScope
-  , [SubSeg] -- unmatched
-  , [SubSeg] -- matched
-  )
-
-type family AddSubSeg (c :: SubSeg) (ac :: [Seg]) where
-  AddSubSeg c '[] =
-    -- unreachable
-    TypeError (Text "AddSubSeg " :<>: ShowType c :<>: Text " to empty list")
-  AddSubSeg c ( '( mtScope, um, m) : t) =
-    ( '( mtScope, c : um, m) : t)
-
 data AncestorClasses (p :: [Seg]) where
-  CssOrphan :: Proxy ms -> AncestorClasses '[ '( ms, '[], '[] )]
+  CssOrphan :: Proxy ms -> AncestorClasses '[ '( ms, '[], '[], '[] )]
+  AddSiblingBranch ::
+    SiblingBranch sgs ->
+    AncestorClasses ac ->
+    AncestorClasses (AddSiblingBr sgs ac)
   NextAncestor :: -- CSS star
     Proxy ms ->
     AncestorClasses ac ->
-    AncestorClasses ('( ms, '[], '[]) : ac)
+    AncestorClasses ('( ms, '[], '[], '[]) : ac)
   AddAncestor ::
     KnownSymbol a =>
     Proxy a -> AncestorClasses ac -> AncestorClasses (AddSubSeg (C a) ac)
@@ -80,68 +51,49 @@ data OrClass
     TopOrClass :: KnownSymbol c => Proxy c -> OrClass '[] c
     AddAncestorBranch :: AncestorClasses ac -> OrClass bs c -> OrClass (ac ': bs) c
 
-$(promote
- [d|
-  applySubSegToSeg :: SubSeg -> Seg -> Seg
-  applySubSegToSeg ss (mts, um, m) =
-     case removeElem [] ss um of
-       Nothing -> (mts, um, m)
-       Just (k, um') -> (mts, um', k : m)
-   |])
-
-$(promote
-  [d|
-    applyClassToBranch :: SubSeg -> [Seg] -> [Seg]
-    applyClassToBranch _ [] = []
-    applyClassToBranch ss (h : t) = applySubSegToSeg ss h : t
-    |])
-
-$(promote
- [d|
-   applyClassToElem :: SubSeg -> [[Seg]] -> [[Seg]]
-   applyClassToElem _ [] = []
-   applyClassToElem c (b : bs) = applyClassToBranch c b : applyClassToElem c bs
-   |])
-
-$(promote
- [d|
-   applyClass :: [[Seg]] -> SubSeg -> [[[Seg]]] -> [[[Seg]]]
-   applyClass [] _ [] = []
-   applyClass acs _ [] = [acs]
-   applyClass acs c (h : eacs) = applyClassToElem c h : applyClass acs c eacs
-   |])
 
 $(promote
  [d|
   -- [[Seg]] is element (list of branches)
-  filterOutFullyMatchedHead :: [[Seg]] -> [[Seg]] -> [[Seg]]
-  filterOutFullyMatchedHead r [] = r
+  filterOutFullyMatchedHead :: [[SubSeg]] -> [[Seg]] -> [[Seg]] -> [[Seg]]
+  filterOutFullyMatchedHead _siblings r [] = r
   -- empty branch
-  filterOutFullyMatchedHead _r ([] : _t) = [] -- filterOutFullyMatchedHead t
+  filterOutFullyMatchedHead _siblings _r ([] : _t) = [] -- filterOutFullyMatchedHead t
   -- matched last branch segment
-  filterOutFullyMatchedHead _r ( [ (_mts, [], _matched) ] : _bs) = []
+  filterOutFullyMatchedHead _siblings _r ( [ (_mts, [], _matched, []) ] : _bs) = []
   -- matched head seg in branch
-  filterOutFullyMatchedHead r (((_mts, [], _matched) : firstBranchTail) : bs) =
-    filterOutFullyMatchedHead (firstBranchTail:r) bs
+  filterOutFullyMatchedHead siblings r (((_mts, [], _matched, []) : firstBranchTail) : bs) =
+    filterOutFullyMatchedHead siblings (firstBranchTail:r) bs
+  -- filter siblings after all
+  filterOutFullyMatchedHead siblings r (((_mts, [], _matched, siblingBranches) : firstBranchTail) : bs) =
+    case matchSiblings [] siblings siblingBranches of
+      [] -> []
+      siblingBranches' ->
+        filterOutFullyMatchedHead
+          siblings
+          (((_mts, [B], _matched, siblingBranches') : firstBranchTail) : r)
+          bs
+  -- skip locked
+  filterOutFullyMatchedHead siblings r (((_mts, B : unMatched, matched, sib) : firstBranchTail) : bs) =
+    filterOutFullyMatchedHead siblings (((_mts, B : unMatched, matched, sib) : firstBranchTail) : r) bs
+
   -- reset
-  filterOutFullyMatchedHead r (((NowOrLater, unMatched, matched) : firstBranchTail) : bs) =
-    filterOutFullyMatchedHead (((NowOrLater, unMatched `append` matched, []) : firstBranchTail) : r) bs
+  filterOutFullyMatchedHead siblings r (((NowOrLater, unMatched, matched, sib) : firstBranchTail) : bs) =
+    filterOutFullyMatchedHead siblings (((NowOrLater, unMatched `append` matched, [], sib) : firstBranchTail) : r) bs
 
-  filterOutFullyMatchedHead r (((JustNow, B : unMatched, matched) : firstBranchTail) : bs) =
-    filterOutFullyMatchedHead (((JustNow, B : unMatched, matched) : firstBranchTail) : r) bs
-
-  filterOutFullyMatchedHead r (((JustNow, unMatched, matched) : firstBranchTail) : bs) =
-    filterOutFullyMatchedHead (((JustNow, B : unMatched, matched) : firstBranchTail) : r) bs
+  -- lock
+  filterOutFullyMatchedHead siblings r (((JustNow, unMatched, matched, sib) : firstBranchTail) : bs) =
+    filterOutFullyMatchedHead siblings (((JustNow, B : unMatched, matched, sib) : firstBranchTail) : r) bs
    |])
 
 $(promote
  [d|
-  mapMaybeFilterOutFullyMatchedHead :: [[[Seg]]] -> [[[Seg]]]
-  mapMaybeFilterOutFullyMatchedHead [] = []
-  mapMaybeFilterOutFullyMatchedHead (h:t) =
-    case filterOutFullyMatchedHead [] h of
-      [] -> mapMaybeFilterOutFullyMatchedHead t
-      h' -> h' : mapMaybeFilterOutFullyMatchedHead t
+  mapMaybeFilterOutFullyMatchedHead :: [[SubSeg]] -> [[[Seg]]] -> [[[Seg]]]
+  mapMaybeFilterOutFullyMatchedHead _ [] = []
+  mapMaybeFilterOutFullyMatchedHead children (h:t) =
+    case filterOutFullyMatchedHead children [] h of
+      [] -> mapMaybeFilterOutFullyMatchedHead children t
+      h' -> h' : mapMaybeFilterOutFullyMatchedHead children t
    |])
 
 -- sMapMaybe filterOutFullyMatchedHead ceacs `append` peacs
@@ -153,11 +105,11 @@ $(promote
 
 $(promote
  [d|
-  appendChild :: [[[Seg]]] -> [SubSeg] -> [[[Seg]]] -> [[[Seg]]]
-  appendChild ceacs [] peacs =
-    mapMaybeFilterOutFullyMatchedHead ceacs `append` peacs
-  appendChild ceacs (pclsH : pcls') peacs =
-    appendChild (applyClass [] pclsH ceacs) pcls' peacs
+  appendChild :: [[SubSeg]] -> [[[Seg]]] -> [SubSeg] -> [[[Seg]]] -> [[[Seg]]]
+  appendChild children ceacs [] peacs =
+    mapMaybeFilterOutFullyMatchedHead children ceacs `append` peacs
+  appendChild children ceacs (pclsH : pcls') peacs =
+    appendChild children (applyClass [] pclsH ceacs) pcls' peacs
    |])
 
 -- promoting not working
@@ -199,6 +151,7 @@ data E
       (MergeUniq ckIds pkIds)
       pcls
       (AppendChild
+       pchildren
        ceacs
        (PrependMb
         (Fmap (TyCon I) pi)
