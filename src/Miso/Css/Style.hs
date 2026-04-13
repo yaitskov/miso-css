@@ -9,18 +9,40 @@
 
 module Miso.Css.Style where
 
-import Data.List.Singletons
+import Data.List.Singletons ( NilSym0, type (:@#@$) )
 import Data.Singletons.Base.TH
+    ( Proxy, Tuple4Sym0, promote, TyCon, PFunctor(Fmap) )
 import Data.String ( IsString(..) )
 import GHC.TypeLits ( KnownSymbol, Symbol )
-import Miso
+import Miso ( MisoString, ms, View )
 import Miso.Css.List
+    ( UnSet,
+      AppendSym0,
+      append,
+      UniqueSet,
+      FindDup,
+      AppendUniq,
+      MergeUniq,
+      PrependMb )
 import Miso.Css.Segment
+    ( SubSeg(..),
+      MatchScope(JustNow, NowOrLater),
+      applyClass,
+      Seg,
+      AddSubSeg,
+      BSym0,
+      JustNowSym0,
+      NowOrLaterSym0,
+      ApplyClassSym0,
+      ApplyClass )
 import Miso.Css.Sibling
+    ( matchSiblings, MatchSiblingsSym0, AddSiblingBr, SiblingBranch )
 import Prelude
 
 data AncestorClasses (p :: [Seg]) where
   CssOrphan :: Proxy ms -> AncestorClasses '[ '( ms, '[], '[], '[] )]
+  AddRoot ::
+    AncestorClasses ac -> AncestorClasses (AddSubSeg R ac)
   AddSiblingBranch ::
     SiblingBranch sgs ->
     AncestorClasses ac ->
@@ -121,12 +143,16 @@ data ElementStructure = Atomic | Composite
 
 type CD = "CDATA"
 type RMV = "RawMisoView"
+type HTML = "html"
+type BODY = "body"
+data Root = Root deriving (Show, Eq)
 
 data E
      model
      action
      (en :: Symbol)
      (es :: ElementStructure)
+     (re :: Maybe Root)
      (ei :: Maybe Symbol)
      (knownIds :: UniqueSet)
      (cls :: [Symbol])
@@ -134,25 +160,25 @@ data E
      (children :: [[SubSeg]])
   where
     RawMisoView ::
-      View model action -> E model action RMV Atomic Nothing '[] '[] '[] '[]
+      View model action -> E model action RMV Atomic Nothing Nothing '[] '[] '[] '[]
     CDataE ::
       MisoString ->
-      E model action CD Atomic Nothing (UnSet '[]) '[] '[] '[]
+      E model action CD Atomic Nothing Nothing (UnSet '[]) '[] '[] '[]
     NilE :: KnownSymbol en =>
       Proxy en ->
-      E model action en Composite Nothing (UnSet '[]) '[] '[] '[]
+      E model action en Composite Nothing Nothing (UnSet '[]) '[] '[] '[]
     IdE :: (KnownSymbol ei, FindDup (AppendUniq ei kids) ~ Nothing) =>
       Proxy ei ->
-      E model action en Composite Nothing kids cls eacs children ->
-      E model action en Composite (Just ei) (AppendUniq ei kids) cls eacs children
+      E model action en Composite r Nothing kids cls eacs children ->
+      E model action en Composite r (Just ei) (AppendUniq ei kids) cls eacs children
     AppClsE :: (KnownSymbol en, KnownSymbol c) =>
       OrClass p c ->
-      E model action en Composite ei kIds cls eacs children ->
-      E model action en Composite ei kIds (c : cls) (ApplyClass p (C c) eacs) children
+      E model action en Composite r ei kIds cls eacs children ->
+      E model action en Composite r ei kIds (c : cls) (ApplyClass p (C c) eacs) children
     AppendChildE :: (KnownSymbol ce, FindDup (MergeUniq ckIds pkIds) ~ Nothing) =>
-      E model action ce cs ci ckIds ccls ceacs cchildren ->
-      E model action pe Composite pi pkIds pcls peacs pchildren ->
-      E model action pe Composite pi
+      E model action ce cs Nothing ci ckIds ccls ceacs cchildren ->
+      E model action pe Composite r pi pkIds pcls peacs pchildren ->
+      E model action pe Composite r pi
       (MergeUniq ckIds pkIds)
       pcls
       (AppendChild
@@ -165,6 +191,29 @@ data E
       (PrependMb
         (Fmap (TyCon I) ci)
         (T ce : SymsToSubSeg ccls) : pchildren)
+    -- Miso can render view up to body to support :root the library provide
+    -- VirtualBodyE and SealDomE to emulate top DOM elements (body and html) without
+    -- generating them because the already exist
+    VirtualBodyE ::
+      E model action ce cs Nothing ci ckids ccls ceacs cchildren ->
+      E model action BODY Composite Nothing Nothing
+        ckids
+        '[]
+        (AppendChild
+          '[]  -- pchildren
+          ceacs
+          '[ T BODY ]
+          '[])
+        '[ PrependMb (Fmap (TyCon I) ci) (T ce : SymsToSubSeg ccls) ]
+    SealDomE ::
+      E model action ce   cs        Nothing      ci      ckids ccls ceacs cchildren ->
+      E model action HTML Composite (Just 'Root) Nothing
+        ckids
+        '[]
+        (MapMaybeFilterOutFullyMatchedHead
+          '[]
+          (ApplyClass '[] (T HTML) (ApplyClass '[] R ceacs)))
+        '[ PrependMb (Fmap (TyCon I) ci) (T ce : SymsToSubSeg ccls) ]
 
-instance IsString (E model action CD Atomic Nothing (UnSet '[]) '[] '[] '[]) where
+instance IsString (E model action CD Atomic Nothing Nothing (UnSet '[]) '[] '[] '[]) where
   fromString = CDataE . ms

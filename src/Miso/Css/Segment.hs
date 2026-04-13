@@ -19,6 +19,7 @@ $(promote
     = C Symbol -- ^ Element Class
     | T Symbol -- ^ Element Name (Tag)
     | I Symbol -- ^ Element Id
+    | R -- ^ CSS :root
     | B -- ^ Bottom is added to Seg to prevent matching branch later
         -- used to support CSS '>' syntax
     deriving (Show, Eq, Ord)

@@ -17,9 +17,9 @@ import Miso.Css.Style
 import Miso.Css.Prelude ( Maybe(Just, Nothing), type (~) )
 
 (=.) :: (KnownSymbol en, KnownSymbol c) =>
-  E model action en Composite ei kids cls eacs children ->
+  E model action en Composite r ei kids cls eacs children ->
   OrClass p c ->
-  E model action en Composite ei kids (c:cls) (ApplyClass p (C c) eacs) children
+  E model action en Composite r ei kids (c:cls) (ApplyClass p (C c) eacs) children
 e =. c = AppClsE c e
 
 infixl 3 =.
@@ -29,13 +29,14 @@ infixl 3 =.
   , KnownSymbol ei
   , FindDup (AppendUniq ei kids) ~ Nothing
   ) =>
-  E model action en Composite Nothing kids cls eacs children ->
+  E model action en Composite r Nothing kids cls eacs children ->
   Proxy ei ->
   E
     model
     action
     en
     Composite
+    r
     (Just ei)
     (AppendUniq ei kids)
     cls
@@ -47,9 +48,9 @@ infixl 3 =#
 
 (</) ::
   (KnownSymbol cen, FindDup (MergeUniq cKids pKids) ~ Nothing) =>
-  E model action pen Composite pi pKids pcls peacs pchildren ->
-  E model action cen cs ci cKids ccls ceacs cchildren ->
-  E model action pen Composite pi
+  E model action pen Composite r       pi pKids pcls peacs pchildren ->
+  E model action cen cs        Nothing ci cKids ccls ceacs cchildren ->
+  E model action pen Composite r       pi
     (MergeUniq cKids pKids)
     pcls
     (AppendChild
@@ -69,13 +70,14 @@ infixl 2 </
 
 (<@) ::
   (FindDup kids ~ Nothing) =>
-  E model action pen Composite pi kids pcls peacs pchildren ->
-  E model action CD Atomic Nothing '[] '[] '[] '[] ->
+  E model action pen Composite r pi kids pcls peacs pchildren ->
+  E model action CD Atomic Nothing Nothing '[] '[] '[] '[] ->
   E
     model
     action
     pen
     Composite
+    r
     pi
     kids
     pcls
@@ -93,13 +95,14 @@ infixl 2 <@
 
 (=<) ::
   (FindDup kids ~ Nothing) =>
-  E model action pen Composite pi kids pcls peacs pchildren ->
+  E model action pen Composite r pi kids pcls peacs pchildren ->
   View model action ->
   E
     model
     action
     pen
     Composite
+    r
     pi
     kids
     pcls

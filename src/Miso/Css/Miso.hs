@@ -1,6 +1,6 @@
 module Miso.Css.Miso where
 
-import Data.Proxy ( Proxy(Proxy) )
+import Data.Singletons.Base.TH
 import Data.Tagged ( Tagged(Tagged) )
 import GHC.TypeLits ( KnownSymbol, symbolVal )
 import Miso
@@ -11,8 +11,21 @@ import Miso
       View(VNode) )
 import Miso.Html ( nodeHtml )
 import Miso.Html.Property (id_)
-import Miso.Css.Style ( OrClass, E(..) )
-import Miso.Css.Prelude ( ($), Semigroup((<>)) )
+import Miso.Css.List ( PrependMb, Append )
+import Miso.Css.Segment ( SubSeg(T, R, I), ApplyClass )
+import Miso.Css.Style
+    ( E(..),
+      ElementStructure(Composite),
+      OrClass,
+      SymsToSubSeg,
+      AppendChild,
+      MapMaybeFilterOutFullyMatchedHead,
+      Root(Root),
+      BODY,
+      HTML )
+import Miso.Css.Prelude
+    ( ($), Semigroup((<>)), Maybe(Nothing, Just) )
+
 
 
 injectClass :: MisoString -> View model action -> View model action
@@ -40,7 +53,6 @@ className :: forall p c. KnownSymbol c => OrClass p c -> MisoString
 className _ =
   ms $ symbolVal $ Proxy @c
 
-
 data Child
 
 appChild :: Tagged Child (View model action) -> View model action -> View model action
@@ -48,7 +60,7 @@ appChild (Tagged c) = \case
   VNode ns tg atrs children -> VNode ns tg atrs $ children <> [c]
   o -> o
 
-eToView :: E model action en es ei knownIds cls eacs children -> View model action
+eToView :: E model action en es r ei knownIds cls eacs children -> View model action
 eToView = \case
   RawMisoView rmv -> rmv
   CDataE txt -> vtext txt
@@ -56,6 +68,48 @@ eToView = \case
   IdE eni e -> injectElementId (ms $ symbolVal eni) (eToView e)
   AppClsE orCls e -> injectClass (className orCls) (eToView e)
   AppendChildE ce pe -> appChild (Tagged @Child (eToView ce)) (eToView pe)
+  SealDomE e -> eToView e
+  VirtualBodyE b -> eToView b
 
-toView :: E model action en es ei knownIds cls '[] children -> View model action
+toView :: E model action en es r ei knownIds cls '[] children -> View model action
 toView = eToView
+
+body_ ::
+  E model action ce   cs        Nothing      ci knownIds ccls ceacs cchildren ->
+  E model action BODY Composite Nothing Nothing knownIds
+    '[] -- classes
+    (AppendChild
+          '[]  -- pchildren
+          ceacs
+          '[ T BODY ]
+          '[])
+    '[ PrependMb (Fmap (TyCon I) ci) (T ce : SymsToSubSeg ccls) ]
+body_ = VirtualBodyE
+
+html_ ::
+  E model action ce   cs        Nothing      ci      ckids ccls ceacs cchildren ->
+  E model action HTML Composite (Just 'Root) Nothing
+    ckids
+    '[]
+    (MapMaybeFilterOutFullyMatchedHead
+      '[]
+      (ApplyClass '[] (T HTML) (ApplyClass '[] R ceacs)))
+    '[ PrependMb (Fmap (TyCon I) ci) (T ce : SymsToSubSeg ccls) ]
+html_ = SealDomE
+
+page ::
+  E model action ce   cs        Nothing      ci      ckids ccls ceacs cchildren ->
+  E model action HTML Composite (Just 'Root) Nothing ckids '[]
+    (MapMaybeFilterOutFullyMatchedHead
+     '[]
+     (ApplyClass
+      '[] (T HTML)
+      (ApplyClass
+       '[] R
+       (Append
+        (MapMaybeFilterOutFullyMatchedHead
+         '[]
+         (ApplyClass '[] (T BODY) ceacs))
+         '[]))))
+    '[ '[T BODY]]
+page x  = html_ (body_ x)

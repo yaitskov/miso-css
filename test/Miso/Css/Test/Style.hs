@@ -6,13 +6,15 @@ module Miso.Css.Test.Style where
 import Data.Proxy ( Proxy(Proxy) )
 import Data.ByteString.Lazy qualified as L
 import Data.ByteString.Char8 qualified as C8
-import Miso.Css.Miso ( toView )
-import Miso.Css.Operator
-import Miso.Css.Prelude
-import Miso.Css.Segment
+import Miso.Css.Miso ( toView, page )
+import Miso.Css.Operator ( (<@), (=.), (</), (=#), (=<) )
+import Miso.Css.Prelude ( ($), (.) )
+import Miso.Css.Segment ( MatchScope(JustNow, NowOrLater) )
 import Miso.Css.Sibling
+    ( SiblingBranch(NilSibBranch, AddSegToSibBranch),
+      Sibling(NilSib, AddClassToSib) )
 import Miso.Css.Style
-import Miso.Css.Tags
+import Miso.Css.Tags ( div_, hr_, ul_, li_, span_ )
 import Miso.Html ( ToHtml(toHtml) )
 import Miso.Html qualified as MH
 import Miso.Html.Property qualified as MH
@@ -104,6 +106,16 @@ test_style =
           [ go """<div><ul><li class="c"></li></ul></div>""" $
             div_ </ (ul_ </ li_ =. star_dir_star_dir_c)
           ]
+        , testGroup ":root"
+          [ go """<div class="a"><div class="b"></div></div>"""
+            (SealDomE (div_ =. a </ div_  =. root_b))
+          , go """<div class="b"></div>""" $
+            page (div_  =. root_b)
+          , go """<div><div class="b"></div></div>"""
+            (SealDomE $ VirtualBodyE (div_ </ div_  =. root_b))
+          , go """<div class="a"><div class="b"></div></div>""" $
+            page (div_ =. a </ div_ =. root_dir_body_dir_a_dir_b)
+          ]
         , testGroup "sibling"
           [ testGroup "adjacent"
             [ go """<div><div class="a"></div><div class="b"></div></div>""" $
@@ -164,7 +176,7 @@ test_style =
    ]
   ]
   where
-    go :: L.ByteString -> E m a en es ei kids cls '[] children -> TestTree
+    go :: L.ByteString -> E m a en es r ei kids cls '[] children -> TestTree
     go ex el =
       testCase (C8.unpack $ C8.toStrict ex) do
         toHtml (toView el) @?= ex
@@ -239,4 +251,17 @@ test_style =
         (AddSiblingBranch
           (AddSegToSibBranch (AddClassToSib pa $ NilSib nol) NilSibBranch)
           (CssOrphan nol))
+        b
+    root_b =
+      AddAncestorBranch
+        (AddRoot $ CssOrphan nol)
+        b
+    root_dir_body_dir_a_dir_b =
+      AddAncestorBranch
+        ( AddAncestor pa .
+          NextAncestor jn .
+          AddTagAncestor (Proxy @BODY) .
+          NextAncestor jn .
+          AddRoot $
+          CssOrphan jn)
         b
