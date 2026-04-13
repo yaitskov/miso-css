@@ -2,15 +2,24 @@ module Miso.Css.Operator where
 
 import Data.Singletons.Base.TH ( Proxy, TyCon, PFunctor(Fmap) )
 import GHC.TypeLits ( KnownSymbol )
+import Miso ( View )
 import Miso.Css.List ( FindDup, PrependMb, AppendUniq, MergeUniq )
-import Miso.Css.Segment
+import Miso.Css.Segment ( SubSeg(C, I, T), ApplyClass )
 import Miso.Css.Style
+    ( CD,
+      E(RawMisoView, AppClsE, IdE, AppendChildE),
+      OrClass,
+      AppendChild,
+      SymsToSubSeg,
+      ElementStructure(Composite, Atomic),
+      RMV )
+
 import Miso.Css.Prelude ( Maybe(Just, Nothing), type (~) )
 
 (=.) :: (KnownSymbol en, KnownSymbol c) =>
-  E en Composite ei kids cls eacs children ->
+  E model action en Composite ei kids cls eacs children ->
   OrClass p c ->
-  E en Composite ei kids (c:cls) (ApplyClass p (C c) eacs) children
+  E model action en Composite ei kids (c:cls) (ApplyClass p (C c) eacs) children
 e =. c = AppClsE c e
 
 infixl 3 =.
@@ -20,9 +29,11 @@ infixl 3 =.
   , KnownSymbol ei
   , FindDup (AppendUniq ei kids) ~ Nothing
   ) =>
-  E en Composite Nothing kids cls eacs children ->
+  E model action en Composite Nothing kids cls eacs children ->
   Proxy ei ->
   E
+    model
+    action
     en
     Composite
     (Just ei)
@@ -36,9 +47,9 @@ infixl 3 =#
 
 (</) ::
   (KnownSymbol cen, FindDup (MergeUniq cKids pKids) ~ Nothing) =>
-  E pen Composite pi pKids pcls peacs pchildren ->
-  E cen cs ci cKids ccls ceacs cchildren ->
-  E pen Composite pi
+  E model action pen Composite pi pKids pcls peacs pchildren ->
+  E model action cen cs ci cKids ccls ceacs cchildren ->
+  E model action pen Composite pi
     (MergeUniq cKids pKids)
     pcls
     (AppendChild
@@ -58,9 +69,11 @@ infixl 2 </
 
 (<@) ::
   (FindDup kids ~ Nothing) =>
-  E pen Composite pi kids pcls peacs pchildren ->
-  E CD Atomic Nothing '[] '[] '[] '[] ->
+  E model action pen Composite pi kids pcls peacs pchildren ->
+  E model action CD Atomic Nothing '[] '[] '[] '[] ->
   E
+    model
+    action
     pen
     Composite
     pi
@@ -77,3 +90,27 @@ infixl 2 </
 (<@) = (</)
 
 infixl 2 <@
+
+(=<) ::
+  (FindDup kids ~ Nothing) =>
+  E model action pen Composite pi kids pcls peacs pchildren ->
+  View model action ->
+  E
+    model
+    action
+    pen
+    Composite
+    pi
+    kids
+    pcls
+    (AppendChild
+     pchildren
+     '[]
+     (PrependMb
+       (Fmap (TyCon I) pi)
+       (T pen : SymsToSubSeg pcls))
+     peacs)
+    ('[T RMV] : pchildren)
+p =< rmv = p </ RawMisoView rmv
+
+infixl 2 =<

@@ -48,13 +48,14 @@ appChild (Tagged c) = \case
   VNode ns tg atrs children -> VNode ns tg atrs $ children <> [c]
   o -> o
 
-eToView :: E en es ei knownIds cls eacs children -> View model action
+eToView :: E model action en es ei knownIds cls eacs children -> View model action
 eToView = \case
+  RawMisoView rmv -> rmv
   CDataE txt -> vtext txt
   NilE enp -> nodeHtml (ms $ symbolVal enp) [] []
   IdE eni e -> injectElementId (ms $ symbolVal eni) (eToView e)
   AppClsE orCls e -> injectClass (className orCls) (eToView e)
   AppendChildE ce pe -> appChild (Tagged @Child (eToView ce)) (eToView pe)
 
-toView :: E en es ei knownIds cls '[] children -> View model action
+toView :: E model action en es ei knownIds cls '[] children -> View model action
 toView = eToView

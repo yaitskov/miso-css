@@ -13,7 +13,7 @@ import Data.List.Singletons
 import Data.Singletons.Base.TH
 import Data.String ( IsString(..) )
 import GHC.TypeLits ( KnownSymbol, Symbol )
-import Miso ( MisoString, ms )
+import Miso
 import Miso.Css.List
 import Miso.Css.Segment
 import Miso.Css.Sibling
@@ -120,8 +120,11 @@ type family SymsToSubSeg l where
 data ElementStructure = Atomic | Composite
 
 type CD = "CDATA"
+type RMV = "RawMisoView"
 
 data E
+     model
+     action
      (en :: Symbol)
      (es :: ElementStructure)
      (ei :: Maybe Symbol)
@@ -130,24 +133,26 @@ data E
      (l :: [[[Seg]]])
      (children :: [[SubSeg]])
   where
+    RawMisoView ::
+      View model action -> E model action RMV Atomic Nothing '[] '[] '[] '[]
     CDataE ::
       MisoString ->
-      E CD Atomic Nothing (UnSet '[]) '[] '[] '[]
+      E model action CD Atomic Nothing (UnSet '[]) '[] '[] '[]
     NilE :: KnownSymbol en =>
       Proxy en ->
-      E en Composite Nothing (UnSet '[]) '[] '[] '[]
+      E model action en Composite Nothing (UnSet '[]) '[] '[] '[]
     IdE :: (KnownSymbol ei, FindDup (AppendUniq ei kids) ~ Nothing) =>
       Proxy ei ->
-      E en Composite Nothing kids cls eacs children ->
-      E en Composite (Just ei) (AppendUniq ei kids) cls eacs children
+      E model action en Composite Nothing kids cls eacs children ->
+      E model action en Composite (Just ei) (AppendUniq ei kids) cls eacs children
     AppClsE :: (KnownSymbol en, KnownSymbol c) =>
       OrClass p c ->
-      E en Composite ei kIds cls eacs children ->
-      E en Composite ei kIds (c : cls) (ApplyClass p (C c) eacs) children
+      E model action en Composite ei kIds cls eacs children ->
+      E model action en Composite ei kIds (c : cls) (ApplyClass p (C c) eacs) children
     AppendChildE :: (KnownSymbol ce, FindDup (MergeUniq ckIds pkIds) ~ Nothing) =>
-      E ce cs ci ckIds ccls ceacs cchildren ->
-      E pe Composite pi pkIds pcls peacs pchildren ->
-      E pe Composite pi
+      E model action ce cs ci ckIds ccls ceacs cchildren ->
+      E model action pe Composite pi pkIds pcls peacs pchildren ->
+      E model action pe Composite pi
       (MergeUniq ckIds pkIds)
       pcls
       (AppendChild
@@ -161,5 +166,5 @@ data E
         (Fmap (TyCon I) ci)
         (T ce : SymsToSubSeg ccls) : pchildren)
 
-instance IsString (E CD Atomic Nothing (UnSet '[]) '[] '[] '[]) where
+instance IsString (E model action CD Atomic Nothing (UnSet '[]) '[] '[] '[]) where
   fromString = CDataE . ms
