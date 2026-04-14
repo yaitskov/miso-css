@@ -1,34 +1,28 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE TemplateHaskell #-}
 
 module Miso.Css.Segment where
 
-import Data.List.Singletons
-import Data.Singletons.Base.TH
 import GHC.TypeError
     ( TypeError, ErrorMessage(Text, (:<>:), ShowType) )
 import GHC.TypeLits ( Symbol )
-import Miso.Css.List
+import Miso.Css.List ( RemoveElem )
 import Prelude
 
-$(promote
- [d|
-  data SubSeg
-    = C Symbol -- ^ Element Class
-    | T Symbol -- ^ Element Name (Tag)
-    | I Symbol -- ^ Element Id
-    | R -- ^ CSS :root
-    | B -- ^ Bottom is added to Seg to prevent matching branch later
-        -- used to support CSS '>' syntax
-    deriving (Show, Eq, Ord)
-   |])
+data SubSeg
+  = C Symbol -- ^ Element Class
+  | T Symbol -- ^ Element Name (Tag)
+  | I Symbol -- ^ Element Id
+  | R -- ^ CSS :root
+  | B -- ^ Bottom is added to Seg to prevent matching branch later
+      -- used to support CSS '>' syntax
 
-$(promote
- [d|
-  data MatchScope = NowOrLater | JustNow deriving (Show, Eq)
-   |])
+type family MbSymToMbI mbs where
+  MbSymToMbI Nothing = Nothing
+  MbSymToMbI (Just s) = Just (I s)
+
+data MatchScope = NowOrLater | JustNow deriving (Show, Eq)
 
 -- | Composite segment
 -- matched part is appended to unmatched when algorithm goes up to parent node

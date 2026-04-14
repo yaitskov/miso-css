@@ -64,9 +64,6 @@ library
     , css-syntax         < 1
     , filepath           < 2
     , miso               >= 1.9 && < 2
-    , singletons         < 4
-    , singletons-base    < 4
-    , singletons-th      < 4
     , tagged             < 1
     , template-haskell   < 3
     , text               < 3

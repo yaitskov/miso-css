@@ -2,58 +2,50 @@
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeAbstractions #-}
 
 module Miso.Css.Sibling where
 
-import Data.Proxy
-import Data.Maybe.Singletons ( JustSym0, NothingSym0 )
-import Data.List.Singletons ( NilSym0, type (:@#@$) )
-import Data.Singletons.Base.TH
-    ( promote, TrueSym0, FalseSym0, Tuple2Sym0 )
-import GHC.TypeError
-import Miso.Css.List ( isSubSet, IsSubSetSym0 )
-import Miso.Css.Segment
-import Prelude
+import Data.Proxy ( Proxy )
 import GHC.TypeLits (KnownSymbol)
+import GHC.TypeError
+    ( TypeError, ErrorMessage(Text, (:<>:), ShowType) )
+import Miso.Css.List ( IsSubSet )
+import Miso.Css.Segment ( SubSeg(B, T, I, C), MatchScope(..), Seg )
+import Prelude
 
 
-$(promote
- [d|
-  matchSiblingElem :: [SubSeg] -> (MatchScope, [SubSeg]) -> (Bool, Maybe (MatchScope, [SubSeg]))
-  matchSiblingElem _el (mts, B : p) = (False, Just (mts, B : p))
-  matchSiblingElem el (mts, p)
-   | isSubSet p el = (True, Nothing)
-   | otherwise =
-     ( False
-     , case mts of
-         JustNow -> Just (JustNow, B : p)
-         NowOrLater -> Nothing
-     )
-   |])
+type family MatchSiblingElemCaseMts mts p where
+  MatchSiblingElemCaseMts JustNow p = Just '( JustNow, B : p)
+  MatchSiblingElemCaseMts NowOrLater _p = Nothing
 
-$(promote
- [d|
-  matchSiblingBranch :: [[SubSeg]] -> [(MatchScope, [SubSeg])] -> [(MatchScope, [SubSeg])]
-  matchSiblingBranch _ [] = []
-  matchSiblingBranch [] p = (JustNow, [B]) : p
-  matchSiblingBranch (e:es) (p:ps) =
-     case matchSiblingElem e p of
-       (True, _) -> matchSiblingBranch es ps
-       (False, Nothing) -> matchSiblingBranch es (p:ps)
-       (False, Just p') -> p' : ps
-   |])
+type family MatchSiblingElemCaseIsSubSet iss mts p where
+  MatchSiblingElemCaseIsSubSet True  _   _ = '( True, Nothing)
+  MatchSiblingElemCaseIsSubSet False mts p = '( False, MatchSiblingElemCaseMts mts p)
 
-$(promote
- [d|
-  matchSiblings :: [[(MatchScope, [SubSeg])]] -> [[SubSeg]] -> [[(MatchScope, [SubSeg])]] -> [[(MatchScope, [SubSeg])]]
-  matchSiblings r _ [] = r
-  matchSiblings r siblings (b:bs) =
-    case matchSiblingBranch siblings b of
-      [] -> [] -- branch fully matched -> element matches
-      b' -> matchSiblings (b':r) siblings bs
-  |])
+type family MatchSiblingElem el mts_p where
+  MatchSiblingElem _el '( mts, B : p) = '( False, Just '( mts, B : p))
+  MatchSiblingElem el  '( mts, p) =
+    MatchSiblingElemCaseIsSubSet (IsSubSet p el) mts p
+
+type family MatchSiblingBranchCase mser es p ps where
+  MatchSiblingBranchCase '( True, _) es _p ps        = MatchSiblingBranch es ps
+  MatchSiblingBranchCase '( False, Nothing) es p ps  = MatchSiblingBranch es (p:ps)
+  MatchSiblingBranchCase '( False, Just p') _es p ps = p' : ps
+
+type family MatchSiblingBranch es ps where
+  MatchSiblingBranch _ '[] = '[]
+  MatchSiblingBranch '[] p = '( JustNow, '[ B]) : p
+  MatchSiblingBranch (e:es) (p:ps) =
+    MatchSiblingBranchCase (MatchSiblingElem e p) es p ps
+
+type family MatchSiblingsCase b r siblings bs where
+  MatchSiblingsCase '[] _ _        _  = '[]
+  MatchSiblingsCase b'  r siblings bs = MatchSiblings (b' : r) siblings bs
+
+type family MatchSiblings r siblings bs where
+  MatchSiblings r _ '[] = r
+  MatchSiblings r siblings (b:bs) =
+    MatchSiblingsCase (MatchSiblingBranch siblings b) r siblings bs
 
 data Sibling (ms :: MatchScope) (ss :: [SubSeg]) where
   NilSib :: Proxy ms -> Sibling ms '[]

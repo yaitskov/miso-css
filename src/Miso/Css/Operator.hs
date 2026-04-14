@@ -1,10 +1,10 @@
 module Miso.Css.Operator where
 
-import Data.Singletons.Base.TH ( Proxy, TyCon, PFunctor(Fmap) )
+import Data.Proxy ( Proxy )
 import GHC.TypeLits ( KnownSymbol )
 import Miso ( View )
 import Miso.Css.List ( FindDup, PrependMb, AppendUniq, MergeUniq )
-import Miso.Css.Segment ( SubSeg(C, I, T), ApplyClass )
+import Miso.Css.Segment ( SubSeg(C, T), ApplyClass, MbSymToMbI )
 import Miso.Css.Style
     ( CD,
       E(RawMisoView, AppClsE, IdE, AppendChildE),
@@ -57,11 +57,11 @@ infixl 3 =#
      pchildren
      ceacs
      (PrependMb
-       (Fmap (TyCon I) pi)
+       (MbSymToMbI pi)
        (T pen : SymsToSubSeg pcls))
      peacs)
     (PrependMb
-        (Fmap (TyCon I) ci)
+        (MbSymToMbI ci)
         (T cen : SymsToSubSeg ccls) : pchildren)
 
 p </ c = AppendChildE c p
@@ -85,7 +85,7 @@ infixl 2 </
      pchildren
      '[]
      (PrependMb
-       (Fmap (TyCon I) pi)
+       (MbSymToMbI pi)
        (T pen : SymsToSubSeg pcls))
      peacs)
     ('[T CD] : pchildren)
@@ -110,7 +110,7 @@ infixl 2 <@
      pchildren
      '[]
      (PrependMb
-       (Fmap (TyCon I) pi)
+       (MbSymToMbI pi)
        (T pen : SymsToSubSeg pcls))
      peacs)
     ('[T RMV] : pchildren)

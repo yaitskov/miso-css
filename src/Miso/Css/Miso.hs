@@ -1,6 +1,6 @@
 module Miso.Css.Miso where
 
-import Data.Singletons.Base.TH
+import Data.Proxy ( Proxy(Proxy) )
 import Data.Tagged ( Tagged(Tagged) )
 import GHC.TypeLits ( KnownSymbol, symbolVal )
 import Miso
@@ -12,7 +12,7 @@ import Miso
 import Miso.Html ( nodeHtml )
 import Miso.Html.Property (id_)
 import Miso.Css.List ( PrependMb, Append )
-import Miso.Css.Segment ( SubSeg(T, R, I), ApplyClass )
+import Miso.Css.Segment ( SubSeg(T, R), ApplyClass, MbSymToMbI )
 import Miso.Css.Style
     ( E(..),
       ElementStructure(Composite),
@@ -83,7 +83,7 @@ body_ ::
           ceacs
           '[ T BODY ]
           '[])
-    '[ PrependMb (Fmap (TyCon I) ci) (T ce : SymsToSubSeg ccls) ]
+    '[ PrependMb (MbSymToMbI ci) (T ce : SymsToSubSeg ccls) ]
 body_ = VirtualBodyE
 
 html_ ::
@@ -94,7 +94,7 @@ html_ ::
     (MapMaybeFilterOutFullyMatchedHead
       '[]
       (ApplyClass '[] (T HTML) (ApplyClass '[] R ceacs)))
-    '[ PrependMb (Fmap (TyCon I) ci) (T ce : SymsToSubSeg ccls) ]
+    '[ PrependMb (MbSymToMbI ci) (T ce : SymsToSubSeg ccls) ]
 html_ = SealDomE
 
 page ::

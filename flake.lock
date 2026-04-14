@@ -72,26 +72,7 @@
         "flake-utils": "flake-utils",
         "miso": "miso",
         "nixpkgs": "nixpkgs",
-        "singletons": "singletons",
-        "th-desugar": "th-desugar",
         "uphack": "uphack"
-      }
-    },
-    "singletons": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1733921340,
-        "narHash": "sha256-A24i/wzVTr7WmnNXJUdo2EPIOc2xm7WWLpARzkZdvj0=",
-        "owner": "goldfirere",
-        "repo": "singletons",
-        "rev": "326e0e9d6490cd6100cc430773296322a883b6a9",
-        "type": "github"
-      },
-      "original": {
-        "owner": "goldfirere",
-        "ref": "singletons-3.0.4",
-        "repo": "singletons",
-        "type": "github"
       }
     },
     "systems": {
@@ -106,23 +87,6 @@
       "original": {
         "owner": "nix-systems",
         "repo": "default",
-        "type": "github"
-      }
-    },
-    "th-desugar": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1733920355,
-        "narHash": "sha256-knEmyZx89c5yjwpYgIFSTwTjK6JnUVE9YyOtGXue7dY=",
-        "owner": "goldfirere",
-        "repo": "th-desugar",
-        "rev": "44158f7bb7faa2022795446505217b5e52862da5",
-        "type": "github"
-      },
-      "original": {
-        "owner": "goldfirere",
-        "ref": "v1.18",
-        "repo": "th-desugar",
         "type": "github"
       }
     },

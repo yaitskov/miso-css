@@ -8,16 +8,14 @@
 
 module Miso.Css.Style where
 
-import Data.Singletons.Base.TH
-
+import Data.Proxy ( Proxy )
 import Data.String ( IsString(..) )
 import GHC.TypeLits ( KnownSymbol, Symbol )
 import Miso ( MisoString, ms, View )
 import Miso.Css.List
-
 import Miso.Css.Segment
-
 import Miso.Css.Sibling
+    ( AddSiblingBr, SiblingBranch, MatchSiblings )
 import Prelude
 
 data AncestorClasses (p :: [Seg]) where
@@ -162,11 +160,11 @@ data E
        pchildren
        ceacs
        (PrependMb
-        (Fmap (TyCon I) pi)
+        (MbSymToMbI pi)
         (T pe : SymsToSubSeg pcls))
        peacs)
       (PrependMb
-        (Fmap (TyCon I) ci)
+        (MbSymToMbI ci)
         (T ce : SymsToSubSeg ccls) : pchildren)
     -- Miso can render view up to body to support :root the library provide
     -- VirtualBodyE and SealDomE to emulate top DOM elements (body and html) without
@@ -181,7 +179,7 @@ data E
           ceacs
           '[ T BODY ]
           '[])
-        '[ PrependMb (Fmap (TyCon I) ci) (T ce : SymsToSubSeg ccls) ]
+        '[ PrependMb (MbSymToMbI ci) (T ce : SymsToSubSeg ccls) ]
     SealDomE ::
       E model action ce   cs        Nothing      ci      ckids ccls ceacs cchildren ->
       E model action HTML Composite (Just 'Root) Nothing
@@ -190,7 +188,7 @@ data E
         (MapMaybeFilterOutFullyMatchedHead
           '[]
           (ApplyClass '[] (T HTML) (ApplyClass '[] R ceacs)))
-        '[ PrependMb (Fmap (TyCon I) ci) (T ce : SymsToSubSeg ccls) ]
+        '[ PrependMb (MbSymToMbI ci) (T ce : SymsToSubSeg ccls) ]
 
 instance IsString (E model action CD Atomic Nothing Nothing (UnSet '[]) '[] '[] '[]) where
   fromString = CDataE . ms

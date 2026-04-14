@@ -1,50 +1,39 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeAbstractions #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE UndecidableInstances #-}
 module Miso.Css.List where
 
-import Data.Maybe.Singletons ( JustSym0, NothingSym0 )
-import Data.List.Singletons ( ElemSym0 )
-import Data.Singletons.Base.TH
+import Data.Type.Bool ( If )
+import Data.Type.Equality ( type (==) )
 import GHC.TypeLits ( Symbol )
 import Prelude
 
-$(promote [d|
-  append :: [a] -> [a] -> [a]
-  -- does not check:
-  -- append x y = foldr (:) y x
-  {- HLINT ignore "Use foldr" -}
-  append (x:xs) y = x : append xs y
-  append [] y = y
- |])
+type family Append a b where
+  Append (x:xs) b = x : Append xs b
+  Append '[]    b = b
 
-$(promote
- [d|
-  removeElem :: Eq a => [a] -> a -> [a] -> Maybe (a, [a])
-  removeElem _ _ [] = Nothing
-  removeElem s k (h:t)
-   | k == h = pure (k, append s t)
-   | otherwise = removeElem (h : s) k t
-   |])
+type family RemoveElem s l x where
+  RemoveElem _ _ '[] = Nothing
+  RemoveElem s k (h:t) =
+    If (k == h)
+      (Just '( k, Append s t))
+      (RemoveElem (h : s) k t)
 
-$(promote
- [d|
-  prependMb :: Eq a => Maybe a -> [a] -> [a]
-  prependMb Nothing l = l
-  prependMb (Just x) l = x : l
-   |])
+type family PrependMb mb l where
+  PrependMb Nothing l = l
+  PrependMb (Just x) l = x : l
 
-$(promote
- [d|
-  findDup :: Eq a => [a] -> Maybe a
-  findDup [] = Nothing
-  findDup (h : t) =
-    if h `elem` t
-      then Just h
-      else findDup t
-   |])
+type family Elem e l where
+  Elem _ '[] = False
+  Elem h (h : l) = True
+  Elem h (_ : l) = Elem h l
+
+type family FindDup l where
+  FindDup '[]     = Nothing
+  FindDup (h : t) =
+    If (Elem h t)
+      (Just h)
+      (FindDup t)
 
 type AppendUniq x l = x : l
 
@@ -53,12 +42,10 @@ type MergeUniq a b = Append a b
 type UniqueSet = [ Symbol ]
 type UnSet x = x
 
-$(promote
- [d|
-  isSubSet :: Eq a => [a] -> [a] -> Bool
-  isSubSet [] _ = True
-  isSubSet (h:t) l =
-    case removeElem [] h l of
-      Nothing -> False
-      Just (_, l') -> isSubSet t l'
-   |])
+type family IsSubSetCase rer t where
+  IsSubSetCase Nothing         _t = False
+  IsSubSetCase (Just '( _, l)) t  = IsSubSet t l
+
+type family IsSubSet a b where
+  IsSubSet '[] _ = True
+  IsSubSet (h : t) l = IsSubSetCase (RemoveElem '[] h l) t

@@ -10,14 +10,6 @@
       url = "github:yaitskov/upload-doc-to-hackage";
       flake = false;
     };
-    th-desugar = {
-      url = "github:goldfirere/th-desugar/v1.18";
-      flake = false;
-    };
-    singletons = {
-      url = "github:goldfirere/singletons/singletons-3.0.4";
-      flake = false;
-    };
     miso = {
       url = # path:/home/dan/study/haskell/miso/miso;
         "github:dmjio/miso";
@@ -46,15 +38,6 @@
             dontCheck
               # (enableCabalFlag "template-haskell"
                 (final.callCabal2nix "miso" "${inputs.miso}" { });
-          th-desugar = final.callCabal2nix "th-desugar" inputs.th-desugar { };
-          singletons-th = final.callCabal2nix "singletons-th" "${inputs.singletons}/singletons-th" { };
-          singletons-base =
-            dontCheck
-              (final.callCabal2nix "singletons-base" "${inputs.singletons}/singletons-base" { });
-          singletons = final.callCabal2nix "singletons" "${inputs.singletons}/singletons" { };
-          singletons-base-code-generator =
-            final.callCabal2nix "singletons-base-code-generator"
-              "${inputs.singletons}/singletons-base-code-generator" { };
         });
       in {
         packages.default =
