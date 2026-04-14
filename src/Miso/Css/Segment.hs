@@ -10,7 +10,7 @@ import Data.Singletons.Base.TH
 import GHC.TypeError
     ( TypeError, ErrorMessage(Text, (:<>:), ShowType) )
 import GHC.TypeLits ( Symbol )
-import Miso.Css.List ( removeElem, RemoveElemSym0 )
+import Miso.Css.List
 import Prelude
 
 $(promote
@@ -49,33 +49,21 @@ type family AddSubSeg (c :: SubSeg) (ac :: [Seg]) where
   AddSubSeg c ( '( mtScope, um, m, sib) : t) =
     ( '( mtScope, c : um, m, sib) : t)
 
-$(promote
- [d|
-  applySubSegToSeg :: SubSeg -> Seg -> Seg
-  applySubSegToSeg ss (mts, um, m, sib) =
-     case removeElem [] ss um of
-       Nothing -> (mts, um, m, sib)
-       Just (k, um') -> (mts, um', k : m, sib)
-   |])
+type family ApplySubSegToSeg removed ss sg where
+  ApplySubSegToSeg Nothing          ss  h = h
+  ApplySubSegToSeg (Just '(k, um')) _ss '( mts, um, m, sib) =
+    '( mts, um', k : m, sib)
 
-$(promote
-  [d|
-    applyClassToBranch :: SubSeg -> [Seg] -> [Seg]
-    applyClassToBranch _ [] = []
-    applyClassToBranch ss (h : t) = applySubSegToSeg ss h : t
-    |])
+type family ApplyClassToBranch subSeg sgs where
+  ApplyClassToBranch _ '[] = '[]
+  ApplyClassToBranch ss ( '( mts, um, m, sib) : t) =
+    ApplySubSegToSeg (RemoveElem '[] ss um) ss '( mts, um, m, sib) : t
 
-$(promote
- [d|
-   applyClassToElem :: SubSeg -> [[Seg]] -> [[Seg]]
-   applyClassToElem _ [] = []
-   applyClassToElem c (b : bs) = applyClassToBranch c b : applyClassToElem c bs
-   |])
+type family ApplyClassToElem c bs where
+  ApplyClassToElem _ '[] = '[]
+  ApplyClassToElem c  (b : bs) = ApplyClassToBranch c b : ApplyClassToElem c bs
 
-$(promote
- [d|
-   applyClass :: [[Seg]] -> SubSeg -> [[[Seg]]] -> [[[Seg]]]
-   applyClass [] _ [] = []
-   applyClass acs _ [] = [acs]
-   applyClass acs c (h : eacs) = applyClassToElem c h : applyClass acs c eacs
-   |])
+type family ApplyClass acs c eacs where
+  ApplyClass '[] _ '[] = '[]
+  ApplyClass acs _ '[] = '[ acs]
+  ApplyClass acs c (h : eacs) = ApplyClassToElem c h : ApplyClass acs c eacs
