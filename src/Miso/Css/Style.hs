@@ -72,7 +72,6 @@ data OrClass
     TopOrClass :: KnownSymbol c => Proxy c -> OrClass '[] c
     AddAncestorBranch :: AncestorClasses ac -> OrClass bs c -> OrClass (ac ': bs) c
 
-
 $(promote
  [d|
   -- [[Seg]] is element (list of branches)
@@ -107,15 +106,19 @@ $(promote
     filterOutFullyMatchedHead siblings (((JustNow, B : unMatched, matched, sib) : firstBranchTail) : r) bs
    |])
 
-$(promote
- [d|
-  mapMaybeFilterOutFullyMatchedHead :: [[SubSeg]] -> [[[Seg]]] -> [[[Seg]]]
-  mapMaybeFilterOutFullyMatchedHead _ [] = []
-  mapMaybeFilterOutFullyMatchedHead children (h:t) =
-    case filterOutFullyMatchedHead children [] h of
-      [] -> mapMaybeFilterOutFullyMatchedHead children t
-      h' -> h' : mapMaybeFilterOutFullyMatchedHead children t
-   |])
+type family MapMaybeFilterOutFullyMatchedHeadCase elems children t where
+  MapMaybeFilterOutFullyMatchedHeadCase '[] children t =
+    MapMaybeFilterOutFullyMatchedHead children t
+  MapMaybeFilterOutFullyMatchedHeadCase h children t =
+    h : MapMaybeFilterOutFullyMatchedHead children t
+
+type family MapMaybeFilterOutFullyMatchedHead children eacs where
+  MapMaybeFilterOutFullyMatchedHead _ '[] = '[]
+  MapMaybeFilterOutFullyMatchedHead children (h : t) =
+    MapMaybeFilterOutFullyMatchedHeadCase
+      (FilterOutFullyMatchedHead children '[] h)
+      children
+      t
 
 type family AppendChild children ceacs pcls peacs where
   AppendChild children ceacs '[] peacs =
