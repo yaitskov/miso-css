@@ -98,18 +98,17 @@ html_ ::
 html_ = SealDomE
 
 page ::
-  E model action ce   cs        Nothing      ci      ckids ccls ceacs cchildren ->
-  E model action HTML Composite (Just 'Root) Nothing ckids '[]
+  E model action ce   cs         Nothing      ci      ckids ccls ceacs cchildren ->
+  E model action HTML Composite  (Just 'Root) Nothing ckids '[]
     (MapMaybeFilterOutFullyMatchedHead
      '[]
      (ApplyClass
       '[] (T HTML)
       (ApplyClass
        '[] R
-       (Append
-        (MapMaybeFilterOutFullyMatchedHead
-         '[]
-         (ApplyClass '[] (T BODY) ceacs))
-         '[]))))
+       (MapMaybeFilterOutFullyMatchedHead
+        '[]
+        (Append (ApplyClass '[] (T BODY) ceacs)
+         '[])))))
     '[ '[T BODY]]
 page x  = html_ (body_ x)

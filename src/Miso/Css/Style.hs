@@ -17,6 +17,7 @@ import GHC.TypeLits ( KnownSymbol, Symbol )
 import Miso ( MisoString, ms, View )
 import Miso.Css.List
     ( UnSet,
+      Append,
       AppendSym0,
       append,
       UniqueSet,
@@ -27,13 +28,11 @@ import Miso.Css.List
 import Miso.Css.Segment
     ( SubSeg(..),
       MatchScope(JustNow, NowOrLater),
-      applyClass,
       Seg,
       AddSubSeg,
       BSym0,
       JustNowSym0,
       NowOrLaterSym0,
-      ApplyClassSym0,
       ApplyClass )
 import Miso.Css.Sibling
     ( matchSiblings, MatchSiblingsSym0, AddSiblingBr, SiblingBranch )
@@ -118,21 +117,11 @@ $(promote
       h' -> h' : mapMaybeFilterOutFullyMatchedHead children t
    |])
 
--- sMapMaybe filterOutFullyMatchedHead ceacs `append` peacs
--- Not in scope: type constructor or class ‘SMapMaybeSym0’
---  • Perhaps use one of these:
---      ‘MapMaybeSym0’ (imported from Data.Maybe.Singletons),
---      ‘MapMaybeSym1’ (imported from Data.Maybe.Singletons),
---      ‘MapMaybeSym2’ (imported from Data.Maybe.Singletons) (lsp)
-
-$(promote
- [d|
-  appendChild :: [[SubSeg]] -> [[[Seg]]] -> [SubSeg] -> [[[Seg]]] -> [[[Seg]]]
-  appendChild children ceacs [] peacs =
-    mapMaybeFilterOutFullyMatchedHead children ceacs `append` peacs
-  appendChild children ceacs (pclsH : pcls') peacs =
-    appendChild children (applyClass [] pclsH ceacs) pcls' peacs
-   |])
+type family AppendChild children ceacs pcls peacs where
+  AppendChild children ceacs '[] peacs =
+    MapMaybeFilterOutFullyMatchedHead children (Append ceacs peacs)
+  AppendChild children ceacs (pclsH : pcls') peacs =
+    AppendChild children (ApplyClass '[] pclsH ceacs) pcls' peacs
 
 -- promoting not working
 type family SymsToSubSeg l where
