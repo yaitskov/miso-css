@@ -16,6 +16,22 @@
         "type": "github"
       }
     },
+    "css-parser": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1779039235,
+        "narHash": "sha256-VIZWLXgZ2luDq2CN0iktDox1vAHZAFB6c0EiyQlO0jk=",
+        "owner": "yaitskov",
+        "repo": "css-parser",
+        "rev": "133e18cc36080c6711dad0f24ec811a1927cf477",
+        "type": "github"
+      },
+      "original": {
+        "owner": "yaitskov",
+        "repo": "css-parser",
+        "type": "github"
+      }
+    },
     "flake-utils": {
       "inputs": {
         "systems": "systems"
@@ -66,12 +82,30 @@
         "type": "github"
       }
     },
+    "reorder-expression": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1778161995,
+        "narHash": "sha256-ayu1hh7EK4IXKsu+2FqH9SDukRi6+IZ21R/fjoh+TME=",
+        "owner": "yaitskov",
+        "repo": "reorder-expression",
+        "rev": "8e16ee1293fef17785c0b6cd2657547b8101216e",
+        "type": "github"
+      },
+      "original": {
+        "owner": "yaitskov",
+        "repo": "reorder-expression",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "adf": "adf",
+        "css-parser": "css-parser",
         "flake-utils": "flake-utils",
         "miso": "miso",
         "nixpkgs": "nixpkgs",
+        "reorder-expression": "reorder-expression",
         "uphack": "uphack"
       }
     },

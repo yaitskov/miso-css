@@ -15,6 +15,15 @@
         "github:dmjio/miso";
       flake = false;
     };
+    css-parser = {
+      url = # path:/home/dan/study/haskell/miso/miso;
+        "github:yaitskov/css-parser";
+      flake = false;
+    };
+    reorder-expression = {
+      url = "github:yaitskov/reorder-expression";
+      flake = false;
+    };
   };
   outputs = inputs@{ self, nixpkgs, flake-utils, uphack,  ... }:
     flake-utils.lib.eachDefaultSystem (system:
@@ -34,6 +43,8 @@
         inherit (pkgs.haskell.lib) dontCheck; #  enableCabalFlag;
         haskellPackages = pkgs.haskell.packages.${ghcName}.extend(final: prev: {
           add-dependent-file = final.callCabal2nix "add-dependent-file" inputs.adf { };
+          reorder-expression = final.callCabal2nix "reorder-expression" inputs.reorder-expression { };
+          css-parser = final.callCabal2nix "css-parser" inputs.css-parser { };
           miso =
             dontCheck
               # (enableCabalFlag "template-haskell"
