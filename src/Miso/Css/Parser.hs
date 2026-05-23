@@ -1,44 +1,53 @@
 module Miso.Css.Parser where
 
-import Data.CSS.Syntax.Tokens
-import Data.Text
+import CssParser as CP
 import Miso.Css.Prelude
+import Data.Map.Strict qualified as M
 
-{-
-consume a stream of CSS tokens.
+type RevSelector = [ (TagRelation, TagSelector) ]
+type RevSelectors = [ RevSelector ]
+type SelIdxByLeafClass = M.Map Ident RevSelectors
 
-reconstruct series of selector.
-selectors from sequences of classes, tag names, ids
+indexByLeafClass :: SelIdxByLeafClass -> RevSelector -> SelIdxByLeafClass
+indexByLeafClass m = \case
+  [] -> m
+  rs@((_, ts) : t) ->
+    case mapMaybe atomicClassName ts.tagSubSelectors of
+      [] -> indexByLeafClass m t
+      cns -> indexByLeafClass (foldl' (go rs) m cns) t
+  where
+    go rs b i = M.insertWith (<>) i [rs] b
 
-so need a struct to represent the info above
--}
+atomicClassName :: TagSubSelector -> Maybe Ident
+atomicClassName = \case
+  AtomicClass x -> Just x
+  _ -> Nothing
 
-newtype ClassName = ClassName Text deriving newtype (Show, Eq, Ord)
-newtype IdKey = IdKey Text deriving newtype (Show, Eq, Ord)
-newtype TagName = TagName Text deriving newtype (Show, Eq, Ord)
+indexFile :: CssFile -> SelIdxByLeafClass
+indexFile = foldl' indexByLeafClass mempty . fileToSelectors
 
-data SelectorSegment
-  = CssClassSegment [ClassName]
-  | TagSegment TagName
-  | IdSegment IdKey
-  | PseudoRoot
-  deriving (Show, Eq, Ord)
+fileToSelectors :: CssFile -> RevSelectors
+fileToSelectors cf = concatMap ruleToSelectors cf.rules
 
-data SegmentRelation = Descendant | Child deriving (Show, Eq)
+ruleToSelectors :: CssRule -> RevSelectors
+ruleToSelectors =
+  fmap (reverse . concatMap selectorToTagRelSel) . extractSelectors
 
-data Selector
-  = Selector
-  { root :: SelectorSegment
-  , suffix :: [ (SegmentRelation, SelectorSegment) ]
-  } deriving (Show, Eq)
+selectorToTagRelSel :: Selector -> RevSelector
+selectorToTagRelSel = \case
+  Selector ftr fts os -> (fromMaybe Descendant ftr, fts) : os
+  PeSelector ftr fts os _ -> (fromMaybe Descendant ftr, fts) : os
+  PeSelectorOnly {} -> []
 
-data StyleRule
-  = StyleRule
-  { selectors :: [ Selector ]
-  , nested :: [ (SegmentRelation, StyleRule) ]
-  } deriving (Show, Eq)
 
-data CssAst = CssAst
-  { rules :: [ StyleRule ]
-  , originFile :: FilePath
-  }
+extractSelectors :: CssRule -> [[Selector]]
+extractSelectors = \case
+  CssRule sels subRules ->
+    let selsList = toList sels in
+    (pure <$> selsList) <> [ a : b |  a <- selsList, b <- concatMap goSubRules subRules ]
+  AtRule {} -> []
+  where
+    goSubRules = \case
+      CssLeafRule {} -> []
+      CssEnumLeaf {} -> []
+      CssNestedRule cr -> extractSelectors cr
