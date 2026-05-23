@@ -4,7 +4,7 @@ import Data.Proxy ( Proxy )
 import GHC.TypeLits ( KnownSymbol )
 import Miso ( View )
 import Miso.Css.List ( FindDup, PrependMb, AppendUniq, MergeUniq )
-import Miso.Css.Segment ( SubSeg(C, T), ApplyClass, MbSymToMbI )
+import Miso.Css.Segment
 import Miso.Css.Style
     ( CD,
       E(RawMisoView, AppClsE, IdE, AppendChildE),
@@ -13,13 +13,18 @@ import Miso.Css.Style
       SymsToSubSeg,
       ElementStructure(Composite, Atomic),
       RMV )
-
+import Miso.Css.Style.PreAppend qualified as Pre
 import Miso.Css.Prelude ( Maybe(Just, Nothing), type (~) )
 
 (=.) :: (KnownSymbol en, KnownSymbol c) =>
   E model action en Composite r ei kids cls eacs children ->
   OrClass p c ->
-  E model action en Composite r ei kids (c:cls) (ApplyClass p (C c) eacs) children
+  E model action en Composite r ei kids (c:cls)
+    (ApplyClass
+      (ApplySubSegsToElem (PrependMb (MbSymToMbI ei) '[T en]) p)
+      (C c)
+      eacs)
+    children
 e =. c = AppClsE c e
 
 infixl 3 =.
@@ -40,7 +45,7 @@ infixl 3 =.
     (Just ei)
     (AppendUniq ei kids)
     cls
-    eacs
+    (ApplyClass '[] (I ei) eacs)
     children
 e =# i = IdE i e
 
@@ -55,7 +60,7 @@ infixl 3 =#
     pcls
     (AppendChild
      pchildren
-     ceacs
+     (Pre.MapMaybeFilterOutFullyMatchedHead '[] ceacs)
      (PrependMb
        (MbSymToMbI pi)
        (T pen : SymsToSubSeg pcls))

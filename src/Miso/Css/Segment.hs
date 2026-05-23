@@ -22,7 +22,16 @@ type family MbSymToMbI mbs where
   MbSymToMbI Nothing = Nothing
   MbSymToMbI (Just s) = Just (I s)
 
-data MatchScope = NowOrLater | JustNow deriving (Show, Eq)
+data MatchScope
+  = NowOrLater
+  | JustNow
+  | AutoClean -- ^ similar to JustNow but Segment is removed right away once UM list becomes empty.
+              --   an empty JustNow segment lives until </, this way
+              --   subseg constrains of tag to be applied
+              -- why JustNow cannot be replaced with AutoClean?
+              -- it cannot be replaced because following selector .a > p.c is indistiguishable from p.c.a
+              -- Seg.siblings are empty for AutoClean
+  deriving (Show, Eq)
 
 -- | Composite segment
 -- matched part is appended to unmatched when algorithm goes up to parent node
@@ -61,3 +70,20 @@ type family ApplyClass acs c eacs where
   ApplyClass '[] _ '[] = '[]
   ApplyClass acs _ '[] = '[ acs]
   ApplyClass acs c (h : eacs) = ApplyClassToElem c h : ApplyClass acs c eacs
+
+type family ApplySubSegToBranch subSeg (sgs :: [ Seg ]) where
+  ApplySubSegToBranch _ '[] = '[]
+  ApplySubSegToBranch ss ( '( mts, um, m, sib) : t) =
+      (ApplySubSegToSeg
+        (RemoveElem '[] ss um)
+        ss
+        '( mts, um, m, sib) : t)
+
+type family ApplySubSegToElem c bs where
+  ApplySubSegToElem _ '[] = '[]
+  ApplySubSegToElem c  (b : bs) =
+    ApplySubSegToBranch c b : ApplySubSegToElem c bs
+
+type family ApplySubSegsToElem ss bs where
+  ApplySubSegsToElem '[] bs = bs
+  ApplySubSegsToElem (h : t) bs = ApplySubSegsToElem t (ApplySubSegToElem h bs)

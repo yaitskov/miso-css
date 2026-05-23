@@ -3,18 +3,7 @@
 
 module Miso.Css.Test.Style where
 
-import Data.Proxy ( Proxy(Proxy) )
-import Data.ByteString.Lazy qualified as L
-import Data.ByteString.Char8 qualified as C8
-import Miso.Css.Miso ( toView, page )
-import Miso.Css.Operator ( (<@), (=.), (</), (=#), (=<) )
-import Miso.Css.Prelude ( ($), (.) )
-import Miso.Css.Segment ( MatchScope(JustNow, NowOrLater) )
-import Miso.Css.Sibling
-    ( SiblingBranch(NilSibBranch, AddSegToSibBranch),
-      Sibling(NilSib, AddClassToSib) )
-import Miso.Css.Style
-import Miso.Css.Tags ( div_, hr_, ul_, li_, span_ )
+import Miso.Css.Test.StyleMock
 import Miso.Html ( ToHtml(toHtml) )
 import Miso.Html qualified as MH
 import Miso.Html.Property qualified as MH
@@ -102,6 +91,18 @@ test_style =
           , go """<div><ul><div class="div_ul_child"></div></ul></div>""" $
             div_ </ (ul_ </ div_ =. div_ul_child)
           ]
+        -- groupped to easy comment/uncomment all at once
+        -- , testGroup "should-fail-to-type-check"
+        --   [ testGroup "dangling hierarchy relation"
+        --     [ go """<div class="c"></div>""" $ div_ =. nol_c ]
+        --   , testGroup "duplicated ID"
+        --     [ go """<div id="b"><div id="b"></div></div>""" $ div_ =# pb </ div_ =# pb ]
+        --   , go """<div id="a"><div class="a"></div></div>""" $ div_ =# pa </ (div_  =. a_id_a )
+        --   , testGroup ".a is applied to this elem rather than parent one"
+        --     [ go """<div class="a"><div class="b"></div></div>""" $
+        --       div_ </ (div_ =. ab =. a)
+        --     ]
+        --   ]
         , testGroup "star"
           [ go """<div><ul><li class="c"></li></ul></div>""" $
             div_ </ (ul_ </ li_ =. star_dir_star_dir_c)
@@ -129,8 +130,6 @@ test_style =
         , testGroup "id"
           [ go """<div id="a"></div>""" $ div_ =# pa
           , go """<div id="a"><div id="b"></div></div>""" $ div_ =# pa </ div_ =# pb
-          -- Should Not Check due to duplicated ID
-          -- , go """<div id="b"><div id="b"></div></div>""" $ div_ =# pb </ div_ =# pb
           ]
         , testGroup "id+class+raw"
           [ go """<div id="a" class="a"><p>h</p></div>""" $
@@ -139,7 +138,8 @@ test_style =
             div_ =# pb </ (div_ =. id_a =<  MH.i_ [ MH.class_ "rc" ] [ "aaa" ])
           ]
         , testGroup "id+class"
-          [ go """<div id="a" class="a"></div>""" $ div_ =# pa =. a
+          [ go """<div id="a" class="a"></div>""" $ div_ =# pa =. a_id_a
+          , go """<div class="a" id="a"></div>""" $ div_ =. a_id_a =# pa
           , go """<div id="a"><div class="b"></div></div>""" $
             div_ =# pa </ div_ =. b
           , go """<div id="b"><div class="a"></div></div>""" $
@@ -166,102 +166,14 @@ test_style =
             div_ =. b =. a </ (div_ =. ba_c)
           , go """<div class="a"><div class="b"><div class="c"></div></div></div>""" $
             div_ =. a </ (div_ =. b </ div_ =. a_dir_b_dir_c)
+          , go """<div class="a"><div class="b"><div class="c"><div class="d"></div></div></div></div>""" $
+            div_ =. a </ (div_ =. b </ (div_ =. c </ div_ =. a_dir_b_dir_c_dir_d))
           , go """<div class="a"><div class="b"></div></div>""" $
             div_ =. a </ div_ =. a_dir_b
           , go """<div class="a"><div class="b"><div class="c"></div></div></div>""" $
             div_ =. a </ (div_ =. b </ div_ =. a_b_dir_c)
           ]
-       ]
-     ]
-   ]
+        ]
+      ]
+    ]
   ]
-  where
-    go :: L.ByteString -> E m a en es r ei kids cls '[] children -> TestTree
-    go ex el =
-      testCase (C8.unpack $ C8.toStrict ex) do
-        toHtml (toView el) @?= ex
-    a = TopOrClass pa
-    b = TopOrClass pb
-    c = TopOrClass pc
-    pul = Proxy @"ul"
-    ul_a = AddAncestorBranch (AddTagAncestor pul $ CssOrphan nol) a
-    -- #x .a
-    id_a = AddAncestorBranch (AddIdAncestor pb $ CssOrphan nol) a
-    pa = Proxy @"a"
-    pb = Proxy @"b"
-    pc = Proxy @"c"
-    nol = Proxy @NowOrLater
-    jn = Proxy @JustNow
-    ac = AddAncestorBranch (AddAncestor pa $ CssOrphan nol) c
-    ab = AddAncestorBranch (AddAncestor pa $ CssOrphan nol) b
-    -- .a  .b  .c
-    abc =
-      AddAncestorBranch
-      (AddAncestor pb . NextAncestor nol . AddAncestor pa $ CssOrphan nol)
-      c
-    ab_c =
-      AddAncestorBranch
-      (AddAncestor pb . AddAncestor pa $ CssOrphan nol)
-      c
-    ba_c =
-      AddAncestorBranch
-      (AddAncestor pa . AddAncestor pb $ CssOrphan nol)
-      c
-    idC_and_a_b =
-      AddAncestorBranch
-      (AddIdAncestor pc . AddAncestor pa $ CssOrphan nol)
-      b
-    ul_and_a_b =
-      AddAncestorBranch
-      (AddTagAncestor pul . AddAncestor pa $ CssOrphan nol)
-      b
-    pdiv = Proxy @"div"
-    div_child =
-      AddAncestorBranch
-      (AddTagAncestor pdiv $ CssOrphan jn)
-      (TopOrClass (Proxy @"div_child"))
-    div_ul_child =
-      AddAncestorBranch
-      (AddTagAncestor pul . NextAncestor jn . AddTagAncestor pdiv $ CssOrphan jn)
-      (TopOrClass (Proxy @"div_ul_child"))
-    -- .a > .b > .c
-    a_dir_b_dir_c =
-      AddAncestorBranch
-      (AddAncestor pb . NextAncestor jn . AddAncestor pa $ CssOrphan jn)
-      c
-    -- * > * > .c
-    star_dir_star_dir_c =
-      AddAncestorBranch
-      (NextAncestor jn $ CssOrphan jn)
-      c
-    a_dir_b = AddAncestorBranch (AddAncestor pa $ CssOrphan jn) b
-    -- a_neighbour_b =
-    a_b_dir_c =
-      AddAncestorBranch
-      (AddAncestor pb . NextAncestor jn . AddAncestor pa $ CssOrphan nol)
-      c
-    a_dirSib_b =
-      AddAncestorBranch
-        (AddSiblingBranch
-          (AddSegToSibBranch (AddClassToSib pa $ NilSib jn) NilSibBranch)
-          (CssOrphan nol))
-        b
-    a_genSib_b =
-      AddAncestorBranch
-        (AddSiblingBranch
-          (AddSegToSibBranch (AddClassToSib pa $ NilSib nol) NilSibBranch)
-          (CssOrphan nol))
-        b
-    root_b =
-      AddAncestorBranch
-        (AddRoot $ CssOrphan nol)
-        b
-    root_dir_body_dir_a_dir_b =
-      AddAncestorBranch
-        ( AddAncestor pa .
-          NextAncestor jn .
-          AddTagAncestor (Proxy @BODY) .
-          NextAncestor jn .
-          AddRoot $
-          CssOrphan jn)
-        b

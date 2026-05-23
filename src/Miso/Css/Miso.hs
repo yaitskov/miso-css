@@ -2,6 +2,7 @@ module Miso.Css.Miso where
 
 import Data.Proxy ( Proxy(Proxy) )
 import Data.Tagged ( Tagged(Tagged) )
+import Data.Type.Equality ( type (~) )
 import GHC.TypeLits ( KnownSymbol, symbolVal )
 import Miso
     ( ms,
@@ -19,10 +20,11 @@ import Miso.Css.Style
       OrClass,
       SymsToSubSeg,
       AppendChild,
-      MapMaybeFilterOutFullyMatchedHead,
       Root(Root),
       BODY,
       HTML )
+import Miso.Css.Style.PostAppend
+    ( MapMaybeFilterOutFullyMatchedHead )
 import Miso.Css.Prelude
     ( ($), Semigroup((<>)), Maybe(Nothing, Just) )
 
@@ -71,7 +73,9 @@ eToView = \case
   SealDomE e -> eToView e
   VirtualBodyE b -> eToView b
 
-toView :: E model action en es r ei knownIds cls '[] children -> View model action
+toView :: forall m a en es r ei kids cls ecs children.
+  (MapMaybeFilterOutFullyMatchedHead '[] ecs ~ '[]) =>
+  E m a en es r ei kids cls ecs children -> View m a
 toView = eToView
 
 body_ ::

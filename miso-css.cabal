@@ -126,6 +126,11 @@ library
     Miso.Css.Segment
     Miso.Css.Sibling
     Miso.Css.Style
+    Miso.Css.Style.E
+    Miso.Css.Style.OrClass
+    Miso.Css.Style.AncestorClasses
+    Miso.Css.Style.PostAppend
+    Miso.Css.Style.PreAppend
     Miso.Css.Tags
   build-depends:
     , add-dependent-file >= 0.0.2 && < 1
@@ -148,6 +153,7 @@ test-suite test
     Miso.Css.Test.QqDefs
     Miso.Css.Test.QqAsserts
     Miso.Css.Test.Style
+    Miso.Css.Test.StyleMock
     Discovery
   hs-source-dirs:
     test
