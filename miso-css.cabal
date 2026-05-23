@@ -6,21 +6,21 @@ synopsis:      verified CSS application
 description:
     == Motivation
     #motivation#
-    
+
     CSS rule is applied to all nodes matching its selector. CSS class of an
     atomic selector can be applied to any DOM element, but that is not true
     for classes in composite selectors, consisting from a sequence of
     classes or plain tag name.
-    
+
     The general rule is anscetors of every node, a CSS class is applied to,
     should containt all classes in the selector preceding the appiled class.
-    
+
     == Usage
     #usage#
-    
+
     === Quasi-quote input
     #quasi-quote-input#
-    
+
     > {-# LANGUAGE QuasiQuotes #-}
     > module Css where
     > import Miso.Css ( css )
@@ -30,7 +30,7 @@ description:
     >   color: #fc2c2c;
     > }
     > |]
-    
+
     > module Main where
     >
     > import Css (a, b, c, cssAsLiteralText)
@@ -51,26 +51,26 @@ description:
     >             [ "Submit" ]
     >         ]
     >       ]
-    
+
     === File input
     #file-input#
-    
+
     > {-# LANGUAGE TemplateHaskell #-}
     > module Css where
     > import Miso.Css ( includeCss )
     >
     > includeCss "assets/style.css"
-    
+
     > module Main where
     >
     > import Css (a, b, c, style)
     > -- ...
-    
+
     == Development environment
     #development-environment#
-    
+
     HLS should be available inside the default dev shell.
-    
+
     > $ nix develop
     > $ emacs src/*/*/Qq.hs &
     > $ cabal build
@@ -117,7 +117,6 @@ library
     Miso.Css.Escape
     Miso.Css.Gen
     Miso.Css.IncludeCss
-    Miso.Css.Linear
     Miso.Css.List
     Miso.Css.Miso
     Miso.Css.Operator
