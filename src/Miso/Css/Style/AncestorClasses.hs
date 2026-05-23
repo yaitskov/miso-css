@@ -2,7 +2,7 @@ module Miso.Css.Style.AncestorClasses where
 
 import Data.Proxy ( Proxy )
 import GHC.TypeLits ( KnownSymbol )
-import Miso.Css.Segment ( SubSeg(I, R, C, T), Seg, AddSubSeg )
+import Miso.Css.Segment ( SubSeg(A, I, R, C, T), Seg, AddSubSeg )
 import Miso.Css.Sibling ( AddSiblingBr, SiblingBranch )
 
 
@@ -24,6 +24,9 @@ data AncestorClasses (p :: [Seg]) where
   AddTagAncestor ::
     KnownSymbol a =>
     Proxy a -> AncestorClasses ac -> AncestorClasses (AddSubSeg (T a) ac)
+  AddAttr ::
+    KnownSymbol a =>
+    Proxy a -> AncestorClasses ac -> AncestorClasses (AddSubSeg (A a) ac)
   AddIdAncestor ::
     KnownSymbol a =>
     Proxy a -> AncestorClasses ac -> AncestorClasses (AddSubSeg (I a) ac)

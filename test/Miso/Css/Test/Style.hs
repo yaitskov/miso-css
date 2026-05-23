@@ -3,6 +3,7 @@
 
 module Miso.Css.Test.Style where
 
+import Miso (MisoString)
 import Miso.Css.Test.StyleMock
 import Miso.Html ( ToHtml(toHtml) )
 import Miso.Html qualified as MH
@@ -131,6 +132,14 @@ test_style =
           [ go """<div id="a"></div>""" $ div_ =# pa
           , go """<div id="a"><div id="b"></div></div>""" $ div_ =# pa </ div_ =# pb
           ]
+        , testGroup "attr"
+          [ go """<div a="av"><div class="a"></div></div>""" $
+            div_ =<| atr @"a" av </ div_ =. a_wants_a_attr_in_parent
+          , go """<div class="a" a="av"></div>""" $  div_ =. a_wants_a_attr =<| atr @"a" av
+          , go """<div class="a" a="av"></div>""" $  div_ =. a_wants_a_attr =<| atr @"a" av =<| atr @"a" av
+          , go """<div a="av" class="a"></div>""" $  div_ =<| atr @"a" av =. a_wants_a_attr =<| atr @"a" av
+          , go """<div a="av" class="a"></div>""" $  div_ =<| atr @"a" av =. a_wants_a_attr
+          ]
         , testGroup "id+class+raw"
           [ go """<div id="a" class="a"><p>h</p></div>""" $
             div_ =# pa =. a =< MH.p_ [] [ "h" ]
@@ -183,3 +192,5 @@ test_style =
       ]
     ]
   ]
+  where
+    av :: MisoString = "av"

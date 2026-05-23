@@ -2,31 +2,25 @@ module Miso.Css.Miso where
 
 import Data.Proxy ( Proxy(Proxy) )
 import Data.Tagged ( Tagged(Tagged) )
-import Data.Type.Equality ( type (~) )
 import GHC.TypeLits ( KnownSymbol, symbolVal )
 import Miso
     ( ms,
       vtext,
+      prop,
       MisoString,
       Attribute(Property, ClassList),
       View(VNode) )
+import Miso.JSON ( ToJSON(..) )
 import Miso.Html ( nodeHtml )
 import Miso.Html.Property (id_)
 import Miso.Css.List ( PrependMb, Append )
 import Miso.Css.Segment ( SubSeg(T, R), ApplyClass, MbSymToMbI )
 import Miso.Css.Style
-    ( E(..),
-      ElementStructure(Composite),
-      OrClass,
-      SymsToSubSeg,
-      AppendChild,
-      Root(Root),
-      BODY,
-      HTML )
+
 import Miso.Css.Style.PostAppend
     ( MapMaybeFilterOutFullyMatchedHead )
 import Miso.Css.Prelude
-    ( ($), Semigroup((<>)), Maybe(Nothing, Just) )
+
 
 
 
@@ -51,6 +45,20 @@ injectElementId ik = \case
       Property "id" _v : atrs' -> id_ ik : atrs'
       o : atrs' -> o : injId atrs'
 
+injectElementAtr :: ToJSON v => MisoString -> v -> View model action -> View model action
+injectElementAtr ik v = \case
+  VNode ns tg atrs children -> VNode ns tg (injId atrs) children
+  o -> o
+  where
+    p = prop ik v
+    injId = \case
+      [] -> [p]
+      -- Property "key" _v : atrs' -> key_ ik : atrs'
+      Property pn pnv : atrs'
+        | pn == ik -> Property pn (toJSON v) : atrs'
+        | otherwise -> Property pn pnv : injId atrs'
+      o : atrs' -> o : injId atrs'
+
 className :: forall p c. KnownSymbol c => OrClass p c -> MisoString
 className _ =
   ms $ symbolVal $ Proxy @c
@@ -62,7 +70,7 @@ appChild (Tagged c) = \case
   VNode ns tg atrs children -> VNode ns tg atrs $ children <> [c]
   o -> o
 
-eToView :: E model action en es r ei knownIds cls eacs children -> View model action
+eToView :: E model action en es r ei atrs knownIds cls eacs children -> View model action
 eToView = \case
   RawMisoView rmv -> rmv
   CDataE txt -> vtext txt
@@ -70,17 +78,18 @@ eToView = \case
   IdE eni e -> injectElementId (ms $ symbolVal eni) (eToView e)
   AppClsE orCls e -> injectClass (className orCls) (eToView e)
   AppendChildE ce pe -> appChild (Tagged @Child (eToView ce)) (eToView pe)
+  AddAtrE a e -> injectElementAtr (elAtrKey a) (elAtrVal a) (eToView e)
   SealDomE e -> eToView e
   VirtualBodyE b -> eToView b
 
-toView :: forall m a en es r ei kids cls ecs children.
+toView :: forall m a en es r ei atrs kids cls ecs children.
   (MapMaybeFilterOutFullyMatchedHead '[] ecs ~ '[]) =>
-  E m a en es r ei kids cls ecs children -> View m a
+  E m a en es r ei atrs kids cls ecs children -> View m a
 toView = eToView
 
 body_ ::
-  E model action ce   cs        Nothing      ci knownIds ccls ceacs cchildren ->
-  E model action BODY Composite Nothing Nothing knownIds
+  E model action ce   cs        Nothing      ci atrs knownIds ccls ceacs cchildren ->
+  E model action BODY Composite Nothing Nothing atrs knownIds
     '[] -- classes
     (AppendChild
           '[]  -- pchildren
@@ -91,9 +100,9 @@ body_ ::
 body_ = VirtualBodyE
 
 html_ ::
-  E model action ce   cs        Nothing      ci      ckids ccls ceacs cchildren ->
+  E model action ce   cs        Nothing      ci      catrs ckids ccls ceacs cchildren ->
   E model action HTML Composite (Just 'Root) Nothing
-    ckids
+    catrs ckids
     '[]
     (MapMaybeFilterOutFullyMatchedHead
       '[]
@@ -102,8 +111,8 @@ html_ ::
 html_ = SealDomE
 
 page ::
-  E model action ce   cs         Nothing      ci      ckids ccls ceacs cchildren ->
-  E model action HTML Composite  (Just 'Root) Nothing ckids '[]
+  E model action ce   cs         Nothing      ci      catrs ckids ccls ceacs cchildren ->
+  E model action HTML Composite  (Just 'Root) Nothing catrs ckids '[]
     (MapMaybeFilterOutFullyMatchedHead
      '[]
      (ApplyClass

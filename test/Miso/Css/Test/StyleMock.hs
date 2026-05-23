@@ -23,9 +23,9 @@ import Miso.Html ( ToHtml(toHtml) )
 import Test.Tasty ( TestTree )
 import Test.Tasty.HUnit ( testCase, (@?=) )
 
-go :: forall m a en es r ei kids cls ecs children.
+go :: forall m a en es r ei atrs kids cls ecs children.
   (MapMaybeFilterOutFullyMatchedHead '[] ecs ~ '[]) =>
-  L.ByteString -> E m a en es r ei kids cls ecs children -> TestTree
+  L.ByteString -> E m a en es r ei atrs kids cls ecs children -> TestTree
 go ex el =
   testCase (C8.unpack $ C8.toStrict ex) do
     toHtml (toView el) @?= ex
@@ -114,6 +114,12 @@ b_next_to_a :: OrClass '[ '[ '(AutoClean, '[C "b"], '[], '[])]] "a"
 b_next_to_a =
   AddAncestorBranch
   (AddAncestor pb $ CssOrphan acn) a
+-- .a[a]
+a_wants_a_attr :: OrClass '[ '[ '(AutoClean, '[A "a"], '[], '[])]] "a"
+a_wants_a_attr = AddAncestorBranch (AddAttr pa $ CssOrphan acn) a
+-- [a] > .a
+a_wants_a_attr_in_parent :: OrClass '[ '[ '(JustNow, '[A "a"], '[], '[])]] "a"
+a_wants_a_attr_in_parent = AddAncestorBranch (AddAttr pa $ CssOrphan jn) a
 
 pdiv :: Proxy "div"
 pdiv = Proxy @"div"
