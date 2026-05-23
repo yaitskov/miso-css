@@ -21,7 +21,11 @@ import Miso.Css.Prelude ( Maybe(Just, Nothing), type (~) )
   OrClass p c ->
   E model action en Composite r ei kids (c:cls)
     (ApplyClass
-      (ApplySubSegsToElem (PrependMb (MbSymToMbI ei) '[T en]) p)
+      (ApplySubSegsToElem
+         (PrependMb
+           (MbSymToMbI ei)
+           (T en : SymsToSubSeg cls))
+         p)
       (C c)
       eacs)
     children

@@ -63,7 +63,11 @@ data E
       E model action en Composite r ei kIds cls eacs children ->
       E model action en Composite r ei kIds (c : cls)
         (ApplyClass
-          (ApplySubSegsToElem (PrependMb (MbSymToMbI ei) '[T en]) p)
+          (ApplySubSegsToElem
+             (PrependMb
+               (MbSymToMbI ei)
+               (T en : SymsToSubSeg cls))
+             p)
           (C c)
           eacs)
         children

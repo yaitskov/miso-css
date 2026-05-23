@@ -150,6 +150,12 @@ test_style =
         , testGroup "class"
           [ go """<div class="a"><div class="b"></div></div>""" $
             div_ =. a </ (div_ =. ab)
+          , go """<div class="b a"></div>""" $
+            div_ =. a_next_to_b =. b_next_to_a
+          , go """<div class="a b"></div>""" $
+            div_  =. b_next_to_a =. a_next_to_b
+          , go """<div class="a b a"></div>""" $
+            div_  =. b_next_to_a =. a_next_to_b =. b_next_to_a
           , go """<div class="a"><div class="b"><div class="c"></div></div></div>""" $
             div_ =. a </ (div_ =. ab </ div_ =. abc)
           , go """<div class="a"><div class="b"><ul><div class="c"></div></ul></div></div>""" $

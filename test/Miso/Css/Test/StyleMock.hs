@@ -70,6 +70,7 @@ ab :: OrClass '[ [ '(AutoClean, '[], '[], '[])
                  ] ] "b"
 ab = AddAncestorBranch (NextAncestor acn . AddAncestor pa $ CssOrphan nol) b
 
+
 -- .a  .b  .c
 abc :: OrClass '[['(NowOrLater, '[C "b"], '[], '[]), '(NowOrLater, '[C "a"], '[], '[])]] "c"
 abc =
@@ -102,6 +103,17 @@ a_id_a =
   AddAncestorBranch
   (AddIdAncestor pa $ CssOrphan acn)
   a
+
+-- .a.b
+a_next_to_b :: OrClass '[ '[ '(AutoClean, '[C "a"], '[], '[])]] "b"
+a_next_to_b =
+  AddAncestorBranch
+  (AddAncestor pa $ CssOrphan acn) b
+-- .b.a
+b_next_to_a :: OrClass '[ '[ '(AutoClean, '[C "b"], '[], '[])]] "a"
+b_next_to_a =
+  AddAncestorBranch
+  (AddAncestor pb $ CssOrphan acn) a
 
 pdiv :: Proxy "div"
 pdiv = Proxy @"div"
