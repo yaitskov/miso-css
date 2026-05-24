@@ -1,27 +1,87 @@
 module Miso.Css.Gen where
 
-import Data.Map.Strict qualified as M
-
 import Language.Haskell.TH.Syntax
+import Miso.Css.Segment
 import Miso.Css.Prelude
 import Miso.Css.Parser
+import CssParser
+import Miso.Css.Style
+import Data.Proxy
+import Data.Text (unpack)
 
-
-{-
-list of selectors show be
--}
-selectorsToDecs :: M.Map SelectorSegment [ Selector ] -> Q [ Dec ]
+selectorsToDecs :: SelIdxByLeafClass -> Q [ Dec ]
 selectorsToDecs _ = pure []
 
 
-{- | generate definition like:
+identToName :: Ident -> Name
+identToName (Ident i) = mkName $ unpack i
+tagRelToMs :: TagRelation -> Maybe MatchScope
+tagRelToMs = \case
+  Child -> pure JustNow
+  Descendant -> pure NowOrLater
+  NextSibling -> Nothing
+  GeneralSibling -> Nothing
 
-@@
-  {-# INLINE foo #-}
-  foo :: IsString s => CssClass s
-  foo = "foo"
-@@
+-- data MatchScope = NowOrLater | JustNow deriving (Show, Eq)
+-- data SubSeg = C Symbol | T Symbol | I Symbol
+-- type Seg =
+--   ( MatchScope
+--   , [SubSeg] -- unmatched
+--   , [SubSeg] -- matched
+--   , [[(MatchScope, [SubSeg])]] -- siblings
+--   )
+-- CssOrphan :: Proxy ms -> AncestorClasses '[ '( ms, '[], '[], '[] )]
+-- selListToAncestorClasses :: Exp -> [ (TagRelation, TagSelector) ] ->  Q Exp
+-- selListToAncestorClasses base  l = _
+-- a_dir_b_dir_c :: OrClass
+--   '[ [ '(AutoClean, '[], '[], '[])
+--      , '(JustNow, '[C "b"], '[], '[])
+--      , '(JustNow, '[C "a"], '[], '[])
+--      ]
+--    ] "c"
+-- a_dir_b_sp_c =
+--   AddAncestorBranch
+--   (NextAncestor acn . AddAncestor pb . NextAncestor nol . AddAncestor pa $ CssOrphan jn)
+--   c
 
--}
-selectorToDec :: SelectorSegment -> [Selector] -> Q [ Dec ]
-selectorToDec _ _  = pure []
+-- _ .a > .b _ .c  -- normal
+-- drop first tag relation
+-- ">"  -> CssOrphan jn
+-- ".a" -> AddAncestor pa
+-- "_"  -> NexnAncestor
+-- ".b" -> AddAncestor pb
+-- last TagSelector is special case and it is processed nonrecursively
+
+--                    > .a _ .b acn .c
+
+-- Now it is clear how to produce a selector composed of just Descendant and Child relation,
+-- so next step is to cover cases involving siblings:
+--
+--      _ .c > .a + .b
+--      > .c + .a acn .b
+--
+-- (NextAncestor acn $ AddSiblingBranch
+--   (AddSegToSibBranch (AddClassToSib pa $ NilSib jn) NilSibBranch)
+--   (CssOrphan nol))
+-- .a > .b + .c
+
+--
+-- special handling for first pair -> AddAncestorBranch
+--
+selectorToExp :: Ident -> [ (TagRelation, TagSelector) ] -> Q Exp
+selectorToExp i _s = do
+  base <- topOpClass i
+
+  pure base
+  -- where
+  --   go =
+-- .a > .b > .c
+
+-- :: OrClass [] "span"
+topOpClass :: Ident -> Q Exp
+topOpClass i = do
+  let
+    n = identToName i
+    t = [t| Proxy $(pure $ ConT n) |]
+   in
+     [e| TopOrClass (Proxy :: $t) |]
