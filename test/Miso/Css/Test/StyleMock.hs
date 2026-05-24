@@ -29,6 +29,15 @@ domLbs :: forall m a en es r ei atrs kids cls ecs children.
   L.ByteString
 domLbs = toHtml . toView
 
+doNotTc :: forall exEcs m a en es r ei atrs kids cls ecs children.
+  (MapMaybeFilterOutFullyMatchedHead '[] ecs ~ exEcs) =>
+  Proxy exEcs ->
+  E m a en es r ei atrs kids cls ecs children ->
+  TestTree
+doNotTc _ _ =
+  testCase "see type message from the checker" do
+    () @?= ()
+
 go :: forall m a en es r ei atrs kids cls ecs children.
   (MapMaybeFilterOutFullyMatchedHead '[] ecs ~ '[]) =>
   L.ByteString -> E m a en es r ei atrs kids cls ecs children -> TestTree
@@ -66,8 +75,10 @@ jn = Proxy @JustNow
 
 acn :: Proxy AutoClean
 acn = Proxy @AutoClean
--- nol_c = AddAncestorBranch (CssOrphan nol) c
--- jn_c =  AddAncestorBranch (CssOrphan jn) c
+nol_c :: OrClass '[ '[ '(NowOrLater, '[], '[], '[])]] "c"
+nol_c = AddAncestorBranch (CssOrphan nol) c
+jn_c :: OrClass '[ '[ '(JustNow, '[], '[], '[])]] "c"
+jn_c =  AddAncestorBranch (CssOrphan jn) c
 ac :: OrClass '[ '[ '(NowOrLater, '[C "a"], '[], '[])]] "c"
 ac = AddAncestorBranch (AddAncestor pa $ CssOrphan nol) c
 
