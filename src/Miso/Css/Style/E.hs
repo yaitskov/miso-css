@@ -60,7 +60,8 @@ data E
      (children :: [[SubSeg]])
   where
     RawMisoView ::
-      View model action -> E model action RMV Atomic Nothing Nothing '[] '[] '[] '[] '[]
+      View model action ->
+      E model action RMV Atomic Nothing Nothing '[] '[] '[] '[] '[]
     CDataE ::
       MisoString ->
       E model action CD Atomic Nothing Nothing '[] (UnSet '[]) '[] '[] '[]
@@ -72,7 +73,6 @@ data E
       E model action en Composite r ei atrs kids cls eacs children ->
       E model action en Composite r ei (k : atrs) kids cls
         (ApplyClass '[] (A k) eacs)
-        -- eacs
         children
     IdE :: (KnownSymbol ei, FindDup (AppendUniq ei kids) ~ Nothing) =>
       Proxy ei ->
