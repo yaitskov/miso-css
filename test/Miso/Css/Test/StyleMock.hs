@@ -1,5 +1,6 @@
 {-# LANGUAGE BlockArguments #-}
 {-# LANGUAGE MultilineStrings #-}
+{-# LANGUAGE RequiredTypeArguments #-}
 
 module Miso.Css.Test.StyleMock
   ( module Miso.Css.Test.StyleMock
@@ -29,9 +30,8 @@ domLbs :: forall m a en es r ei atrs kids cls ecs children.
   L.ByteString
 domLbs = toHtml . toView
 
-doNotTc :: forall exEcs m a en es r ei atrs kids cls ecs children.
-  (MapMaybeFilterOutFullyMatchedHead '[] ecs ~ exEcs) =>
-  Proxy exEcs ->
+doNotTc :: forall m a en es r ei atrs kids cls ecs children.
+  forall exEcs -> (MapMaybeFilterOutFullyMatchedHead '[] ecs ~ exEcs) =>
   E m a en es r ei atrs kids cls ecs children ->
   TestTree
 doNotTc _ _ =

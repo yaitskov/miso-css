@@ -93,8 +93,8 @@ test_style =
           ]
         , testGroup "misc"
           [ testGroup "dangling hierarchy relation"
-            [ doNotTc (Proxy @'[]) $ div_ =. nol_c
-            , doNotTc (Proxy @'[]) $ div_ =. jn_c
+            [ doNotTc [] $ div_ =. nol_c
+            , doNotTc [] $ div_ =. jn_c
             ]
           ]
         -- groupped to easy comment/uncomment all at once
@@ -131,16 +131,16 @@ test_style =
             , go """<div class="c"><div class="a"></div><div class="b"><div class="d"></div></div></div>"""  $
               div_ =. c </ div_ =. a </ (div_ =. b </ div_ =. c_dir_a_dirSib_b_spc_d)
             , testGroup "parent c is missing"
-              [ doNotTc (Proxy @'[ '[ '[ '(JustNow, [B, C "c"], '[], '[ '[ '(JustNow, '[C "a"])]])]]]) $
+              [ doNotTc [[[ (JustNow, [B, C "c"], [], [[(JustNow, [C "a"])]])]]] $
                 div_ </ div_ =. a </ div_ =. c_dir_a_dirSib_b
               ]
             , testGroup "extra node between .c and .a + .b"
-              [ doNotTc (Proxy @'[ '[ '[ '(JustNow, '[B], '[C "c"], '[ '[ '(JustNow, '[C "a"])]])]]]) $
+              [ doNotTc [[[(JustNow, [B], [C "c"], [[(JustNow, [C "a"])]])]]] $
                 div_ =. c </ (div_ </ (div_ =. a </ div_ =. c_dir_a_dirSib_b))
               ]
-            , doNotTc (Proxy @'[ '[ '[ '(JustNow, '[B], '[C "c"], '[ '[ '(NowOrLater, '[C "a"])]])]]]) $
+            , doNotTc [[[(JustNow, [B], [C "c"], [[(NowOrLater, [C "a"])]])]]] $
               div_ =. c  </ (div_ </ div_ =. a </ (div_ =. b </ div_ =. c_dir_a_dirSib_b_spc_d))
-            , doNotTc (Proxy @'[ '[ '[ '(JustNow, [B, C "c"], '[], '[ '[ '(NowOrLater, '[C "a"])]])]]]) $
+            , doNotTc [[[(JustNow, [B, C "c"], [], [[(NowOrLater, [C "a"])]])]]] $
               div_  </ div_ =. a </ (div_ =. b </ div_ =. c_dir_a_dirSib_b_spc_d)
             ]
           , testGroup "general"
@@ -170,7 +170,7 @@ test_style =
           [ go """<div id="a" class="a"></div>""" $ div_ =# pa =. a_id_a
           , go """<div class="a" id="a"></div>""" $ div_ =. a_id_a =# pa
           , testGroup "#a is on parent but required to be in tag with class"
-            [ doNotTc (Proxy @'[ '[ '[ '(AutoClean, '[B], '[I "a"], '[])]]]) $
+            [ doNotTc [[[(AutoClean, [B], [I "a"], [])]]] $
               div_ =# pa </ (div_  =. a_id_a )
             ]
           , go """<div id="a"><div class="b"></div></div>""" $
@@ -184,13 +184,13 @@ test_style =
           [ go """<div class="a"><div class="b"></div></div>""" $
             div_ =. a </ (div_ =. ab)
           , testGroup ".a is applied to this elem rather than parent one"
-            [ doNotTc (Proxy @'[ '[ '[ '(NowOrLater, '[C "a"], '[], '[])]]]) do
+            [ doNotTc [[[(NowOrLater, [C "a"], [], [])]]] do
               div_ </ (div_ =. ab =. a)
             ]
           , testGroup ".a is not applied to parent elem"
-            [ doNotTc (Proxy @'[ '[ '[ '(NowOrLater, '[C "a"], '[], '[])]]]) do
+            [ doNotTc [[[(NowOrLater, [C "a"], [], [])]]] do
               div_ </ (div_ =. ab)
-            , doNotTc (Proxy @'[ '[ '[ '(NowOrLater, '[C "a"], '[], '[])]]]) do
+            , doNotTc [[[(NowOrLater, [C "a"], [], [])]]] do
               div_ =. ab
             ]
           , go """<div class="b a"></div>""" $
