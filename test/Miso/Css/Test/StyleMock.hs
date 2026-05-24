@@ -19,16 +19,22 @@ import Miso.Css.Sibling
 import Miso.Css.Style as X
 import Miso.Css.Style.PostAppend as Post
 import Miso.Css.Tags as X
-import Miso.Html ( ToHtml(toHtml) )
+import Miso.Html as X ( ToHtml(toHtml) )
 import Test.Tasty ( TestTree )
 import Test.Tasty.HUnit ( testCase, (@?=) )
+
+domLbs :: forall m a en es r ei atrs kids cls ecs children.
+  (MapMaybeFilterOutFullyMatchedHead '[] ecs ~ '[]) =>
+  E m a en es r ei atrs kids cls ecs children ->
+  L.ByteString
+domLbs = toHtml . toView
 
 go :: forall m a en es r ei atrs kids cls ecs children.
   (MapMaybeFilterOutFullyMatchedHead '[] ecs ~ '[]) =>
   L.ByteString -> E m a en es r ei atrs kids cls ecs children -> TestTree
 go ex el =
   testCase (C8.unpack $ C8.toStrict ex) do
-    toHtml (toView el) @?= ex
+    domLbs el @?= ex
 a :: OrClass '[] "a"
 a = TopOrClass pa
 b :: OrClass '[] "b"
@@ -152,6 +158,25 @@ a_dir_b_dir_c =
   AddAncestorBranch
   (NextAncestor acn . AddAncestor pb . NextAncestor jn . AddAncestor pa $ CssOrphan nol)
   c
+a_dir_b_sp_c :: OrClass
+  '[ [ '(AutoClean, '[], '[], '[])
+     , '(NowOrLater, '[C "b"], '[], '[])
+     , '(JustNow, '[C "a"], '[], '[])
+     ] ] "c"
+a_dir_b_sp_c =
+  AddAncestorBranch
+  (NextAncestor acn . AddAncestor pb . NextAncestor nol . AddAncestor pa $ CssOrphan jn)
+  c
+a_sp_b_dir_c :: OrClass
+  '[ [ '(AutoClean, '[], '[], '[])
+     , '(JustNow, '[C "b"], '[], '[])
+     , '(NowOrLater, '[C "a"], '[], '[])
+     ] ] "c"
+a_sp_b_dir_c =
+  AddAncestorBranch
+  (NextAncestor acn . AddAncestor pb . NextAncestor jn . AddAncestor pa $ CssOrphan nol)
+  c
+
 -- .a > .b > .c > .d
 a_dir_b_dir_c_dir_d :: OrClass
   '[ [ '(AutoClean, '[], '[], '[])
@@ -187,8 +212,9 @@ a_b_dir_c =
   AddAncestorBranch
   (NextAncestor acn . AddAncestor pb . NextAncestor jn . AddAncestor pa $ CssOrphan nol)
   c
+-- .a + .b
 a_dirSib_b :: OrClass
-  '[ [ '(AutoClean, '[], '[], '[])
+  '[ [ '(AutoClean,  '[], '[], '[])
      , '(NowOrLater, '[], '[], '[ '[ '(JustNow, '[C "a"])]])
      ] ] "b"
 a_dirSib_b =
@@ -197,9 +223,38 @@ a_dirSib_b =
       (AddSegToSibBranch (AddClassToSib pa $ NilSib jn) NilSibBranch)
       (CssOrphan nol))
     b
-a_genSib_b :: OrClass
+-- _ .c > .a + .b
+c_dir_a_dirSib_b :: OrClass
   '[ [ '(AutoClean, '[], '[], '[])
-     , '(NowOrLater, '[], '[], '[ '[ '(NowOrLater, '[C "a"])]])
+     , '(JustNow, '[C "c"], '[], '[ '[ '(JustNow, '[C "a"])]]) ] ] "b"
+c_dir_a_dirSib_b =
+  AddAncestorBranch
+    ( NextAncestor acn
+    . AddSiblingBranch (AddSegToSibBranch (AddClassToSib pa $ NilSib jn) NilSibBranch)
+    . AddAncestor pc
+    $ CssOrphan jn )
+    b
+-- _ .c > .a + .b _ .d
+c_dir_a_dirSib_b_spc_d :: OrClass
+  '[ [ '(AutoClean, '[], '[], '[])
+     , '(NowOrLater, '[C "b"], '[], '[])
+     , '(JustNow, '[C "c"], '[], '[ '[ '(NowOrLater, '[C "a"])]])
+     ] ] "d"
+c_dir_a_dirSib_b_spc_d =
+  AddAncestorBranch
+    ( NextAncestor acn
+    . AddAncestor pb
+    . NextAncestor nol
+    . AddSiblingBranch (AddSegToSibBranch (AddClassToSib pa $ NilSib nol) NilSibBranch)
+    -- . NextAncestor acn -- nol
+    . AddAncestor pc
+    $ CssOrphan jn )
+    d
+
+-- .a ~ .b
+a_genSib_b :: OrClass
+  '[ [ '(AutoClean,  '[], '[], '[])
+     , '(NowOrLater, '[], '[], '[ '[ '(NowOrLater, '[C "a"]) ]])
      ] ] "b"
 a_genSib_b =
   AddAncestorBranch

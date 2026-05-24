@@ -5,7 +5,6 @@ module Miso.Css.Test.Style where
 
 import Miso (MisoString)
 import Miso.Css.Test.StyleMock
-import Miso.Html ( ToHtml(toHtml) )
 import Miso.Html qualified as MH
 import Miso.Html.Property qualified as MH
 import Test.Tasty ( testGroup, TestTree )
@@ -103,6 +102,14 @@ test_style =
         --     [ go """<div class="a"><div class="b"></div></div>""" $
         --       div_ </ (div_ =. ab =. a)
         --     ]
+        --   , go """<div><div class="a"></div><div class="b"></div></div>"""  $
+        --     div_ </ div_ =. a </ div_ =. c_dir_a_dirSib_b -- parent c is missing
+        --   , go """<div class="c"><div><div class="a"></div><div class="b"></div></div></div>"""  $
+        --     div_ =. c </ div_ </ (div_ =. a </ div_ =. c_dir_a_dirSib_b) -- extra node between .c and .a + .b
+        --   , go """<div class="c"><div class="a"></div><div class="b"></div></div>"""  $
+        --     div_ =. c  </ (div_ </ div_ =. a </ (div_ =. b </ div_ =. c_dir_a_dirSib_b_spc_d))
+        --   , go """<div class="c"><div class="a"></div><div class="b"></div></div>"""  $
+        --     div_  </ div_ =. a </ (div_ =. b </ div_ =. c_dir_a_dirSib_b_spc_d)
         --   ]
         , testGroup "star"
           [ go """<div><ul><li class="c"></li></ul></div>""" $
@@ -122,6 +129,16 @@ test_style =
           [ testGroup "adjacent"
             [ go """<div><div class="a"></div><div class="b"></div></div>""" $
               div_ </ div_ =. a </ div_ =. a_dirSib_b
+            , go """<div class="c"><div class="a"></div><div class="b"></div></div>"""  $
+              div_ =. c </ div_ =. a </ div_ =. c_dir_a_dirSib_b
+            , go """<div class="c"><div class="b"></div><div class="a"></div><div class="b"></div></div>"""  $
+              div_ =. c </ div_ =. b </ div_ =. a </ div_ =. c_dir_a_dirSib_b
+            , go """<div class="c"><div></div><div class="a"></div><div class="b"></div></div>"""  $
+              div_ =. c </ div_ </ div_ =. a </ div_ =. c_dir_a_dirSib_b
+            , go """<div class="c"><div class="a"></div><div class="b"></div><div></div></div>"""  $
+              div_ =. c </ div_ =. a </ div_ =. c_dir_a_dirSib_b </ div_
+            , go """<div class="c"><div class="a"></div><div class="b"></div></div>"""  $
+              div_ =. c </ div_ =. a </ (div_ =. b </ div_ =. c_dir_a_dirSib_b_spc_d)
             ]
           , testGroup "general"
             [ go """<div><div class="a"></div><span></span><div class="b"></div></div>""" $
@@ -181,6 +198,10 @@ test_style =
             div_ =. b =. a </ (div_ =. ba_c)
           , go """<div class="a"><div class="b"><div class="c"></div></div></div>""" $
             div_ =. a </ (div_ =. b </ div_ =. a_dir_b_dir_c)
+          , go """<div class="a"><div class="b"><p><div class="c"></div></p></div></div>""" $
+            div_ =. a </ (div_ =. b </ (p_ </ div_ =. a_dir_b_sp_c))
+          , go """<div class="a"><p><div class="b"><div class="c"></div></div></p></div>""" $
+            div_ =. a </ (p_ </ (div_ =. b </ div_ =. a_sp_b_dir_c))
           , go """<div class="a"><div class="b"><div class="c"><div class="d"></div></div></div></div>""" $
             div_ =. a </ (div_ =. b </ (div_ =. c </ div_ =. a_dir_b_dir_c_dir_d))
           , go """<div class="a"><div class="b"></div></div>""" $
