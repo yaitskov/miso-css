@@ -4,11 +4,11 @@ import CssParser as CP
 import Miso.Css.Prelude
 import Data.Map.Strict qualified as M
 
-type RevSelector = [ (TagRelation, TagSelector) ]
-type RevSelectors = [ RevSelector ]
-type SelIdxByLeafClass = M.Map Ident RevSelectors
+type RelTag = [ (TagRelation, TagSelector) ]
+type Selectors = [ RelTag ]
+type SelIdxByLeafClass = M.Map Ident Selectors
 
-indexByLeafClass :: SelIdxByLeafClass -> RevSelector -> SelIdxByLeafClass
+indexByLeafClass :: SelIdxByLeafClass -> RelTag -> SelIdxByLeafClass
 indexByLeafClass m = \case
   [] -> m
   rs@((_, ts) : t) ->
@@ -26,14 +26,14 @@ atomicClassName = \case
 indexFile :: CssFile -> SelIdxByLeafClass
 indexFile = foldl' indexByLeafClass mempty . fileToSelectors
 
-fileToSelectors :: CssFile -> RevSelectors
+fileToSelectors :: CssFile -> Selectors
 fileToSelectors cf = concatMap ruleToSelectors cf.rules
 
-ruleToSelectors :: CssRule -> RevSelectors
+ruleToSelectors :: CssRule -> Selectors
 ruleToSelectors =
-  fmap (reverse . concatMap selectorToTagRelSel) . extractSelectors
+  fmap (concatMap selectorToTagRelSel) . extractSelectors
 
-selectorToTagRelSel :: Selector -> RevSelector
+selectorToTagRelSel :: Selector -> RelTag
 selectorToTagRelSel = \case
   Selector ftr fts os -> (fromMaybe Descendant ftr, fts) : os
   PeSelector ftr fts os _ -> (fromMaybe Descendant ftr, fts) : os
