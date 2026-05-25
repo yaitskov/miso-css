@@ -93,15 +93,10 @@ test_style =
           ]
         , testGroup "misc"
           [ testGroup "dangling hierarchy relation"
-            [ doNotTc [] $ div_ =. nol_c
-            , doNotTc [] $ div_ =. jn_c
+            [ doNotTc [] [] $ div_ =. nol_c
+            , doNotTc [] [] $ div_ =. jn_c
             ]
           ]
-        -- groupped to easy comment/uncomment all at once
-        -- , testGroup "should-fail-to-type-check"
-        --   [ testGroup "duplicated ID"
-        --     [ go """<div id="b"><div id="b"></div></div>""" $ div_ =# pb </ div_ =# pb ]
-        --   ]
         , testGroup "star"
           [ go """<div><ul><li class="c"></li></ul></div>""" $
             div_ </ (ul_ </ li_ =. star_dir_star_dir_c)
@@ -131,16 +126,16 @@ test_style =
             , go """<div class="c"><div class="a"></div><div class="b"><div class="d"></div></div></div>"""  $
               div_ =. c </ div_ =. a </ (div_ =. b </ div_ =. c_dir_a_dirSib_b_spc_d)
             , testGroup "parent c is missing"
-              [ doNotTc [[[ (JustNow, [B, C "c"], [], [[(JustNow, [C "a"])]])]]] $
+              [ doNotTc [] [[[ (JustNow, [B, C "c"], [], [[(JustNow, [C "a"])]])]]] $
                 div_ </ div_ =. a </ div_ =. c_dir_a_dirSib_b
               ]
             , testGroup "extra node between .c and .a + .b"
-              [ doNotTc [[[(JustNow, [B], [C "c"], [[(JustNow, [C "a"])]])]]] $
+              [ doNotTc [] [[[(JustNow, [B], [C "c"], [[(JustNow, [C "a"])]])]]] $
                 div_ =. c </ (div_ </ (div_ =. a </ div_ =. c_dir_a_dirSib_b))
               ]
-            , doNotTc [[[(JustNow, [B], [C "c"], [[(NowOrLater, [C "a"])]])]]] $
+            , doNotTc [] [[[(JustNow, [B], [C "c"], [[(NowOrLater, [C "a"])]])]]] $
               div_ =. c  </ (div_ </ div_ =. a </ (div_ =. b </ div_ =. c_dir_a_dirSib_b_spc_d))
-            , doNotTc [[[(JustNow, [B, C "c"], [], [[(NowOrLater, [C "a"])]])]]] $
+            , doNotTc [] [[[(JustNow, [B, C "c"], [], [[(NowOrLater, [C "a"])]])]]] $
               div_  </ div_ =. a </ (div_ =. b </ div_ =. c_dir_a_dirSib_b_spc_d)
             ]
           , testGroup "general"
@@ -151,6 +146,13 @@ test_style =
         , testGroup "id"
           [ go """<div id="a"></div>""" $ div_ =# pa
           , go """<div id="a"><div id="b"></div></div>""" $ div_ =# pa </ div_ =# pb
+          , testGroup "duplicated ID"
+            [ doNotTc [DuplicatedId "b"] []  $ div_ =# pb </ div_ =# pb
+            , doNotTc [DuplicatedId "b"] []  $ div_ </ div_ =# pb </ div_ =# pb
+            , doNotTc [DuplicatedId "b"] []  $ div_ </ div_ =# pb </ div_ </ div_ =# pb
+            , doNotTc [DuplicatedId "b"] []  $ div_ =# pb </ (div_ </ (div_ </ div_ =# pb))
+            , doNotTc [DuplicatedId "b"] []  $ div_ =# pb </ (div_ =# pc </ (div_ =# pa </ div_ =# pb))
+            ]
           ]
         , testGroup "attr"
           [ go """<div a="av"><div class="a"></div></div>""" $
@@ -170,7 +172,7 @@ test_style =
           [ go """<div id="a" class="a"></div>""" $ div_ =# pa =. a_id_a
           , go """<div class="a" id="a"></div>""" $ div_ =. a_id_a =# pa
           , testGroup "#a is on parent but required to be in tag with class"
-            [ doNotTc [[[(AutoClean, [B], [I "a"], [])]]] $
+            [ doNotTc [] [[[(AutoClean, [B], [I "a"], [])]]] $
               div_ =# pa </ (div_  =. a_id_a )
             ]
           , go """<div id="a"><div class="b"></div></div>""" $
@@ -184,13 +186,13 @@ test_style =
           [ go """<div class="a"><div class="b"></div></div>""" $
             div_ =. a </ (div_ =. ab)
           , testGroup ".a is applied to this elem rather than parent one"
-            [ doNotTc [[[(NowOrLater, [C "a"], [], [])]]] do
+            [ doNotTc [] [[[(NowOrLater, [C "a"], [], [])]]] do
               div_ </ (div_ =. ab =. a)
             ]
           , testGroup ".a is not applied to parent elem"
-            [ doNotTc [[[(NowOrLater, [C "a"], [], [])]]] do
+            [ doNotTc [] [[[(NowOrLater, [C "a"], [], [])]]] do
               div_ </ (div_ =. ab)
-            , doNotTc [[[(NowOrLater, [C "a"], [], [])]]] do
+            , doNotTc [] [[[(NowOrLater, [C "a"], [], [])]]] do
               div_ =. ab
             ]
           , go """<div class="b a"></div>""" $

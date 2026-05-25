@@ -5,7 +5,6 @@ module Miso.Css.List where
 
 import Data.Type.Bool ( If )
 import Data.Type.Equality ( type (==) )
-import GHC.TypeLits ( Symbol )
 import Prelude
 
 type family Append a b where
@@ -28,19 +27,12 @@ type family Elem e l where
   Elem h (h : l) = True
   Elem h (_ : l) = Elem h l
 
-type family FindDup l where
-  FindDup '[]     = Nothing
-  FindDup (h : t) =
-    If (Elem h t)
-      (Just h)
-      (FindDup t)
-
-type AppendUniq x l = x : l
-
-type MergeUniq a b = Append a b
-
-type UniqueSet = [ Symbol ]
-type UnSet x = x
+type family MergeUniq a b s where
+  MergeUniq '[] b s = Right (Append b s)
+  MergeUniq (ah : at) b s =
+    If (Elem ah b)
+      (Left ah)
+      (MergeUniq at b (ah : s))
 
 type family IsSubSetCase rer t where
   IsSubSetCase Nothing         _t = False

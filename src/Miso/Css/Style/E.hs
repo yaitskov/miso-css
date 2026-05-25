@@ -1,10 +1,12 @@
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE UndecidableInstances #-}
 
 module Miso.Css.Style.E where
 
 import Data.Proxy ( Proxy(..) )
 import Data.String ( IsString(..) )
+import Data.Type.Bool ( If )
 import GHC.Generics (Generic)
 import GHC.TypeLits ( KnownSymbol, Symbol, symbolVal )
 import Miso ( MisoString, ms, View )
@@ -40,6 +42,35 @@ type family SymsToAtrs l where
 
 data ElementStructure = Atomic | Composite
 
+newtype DuplicatedID = DuplicatedId Symbol
+
+data KnownIDS = KnownIds { duplicatedIds :: [DuplicatedID], knownIds :: [Symbol] }
+
+type family DuplicatedIds kids where
+  DuplicatedIds (KnownIds dids _) = dids
+
+type family AddTagId x kids where
+  AddTagId x (KnownIds dids kids) =
+    If (Elem x kids)
+      (KnownIds (DuplicatedId x : dids) kids)
+      (KnownIds dids (x : kids))
+
+type family MergeKidsCase r didsA didsB kidsA kidsB where
+  MergeKidsCase (Left e) didsA didsB kidsA kidsB =
+    KnownIds
+      (DuplicatedId e : Append didsA didsB)
+      (Append kidsA kidsB)
+  MergeKidsCase (Right kidsAB) didsA didsB _kidsA _kidsB =
+    KnownIds
+      (Append didsA didsB)
+      kidsAB
+
+type family MergeKids a b where
+  MergeKids (KnownIds didsA kidsA) (KnownIds didsB kidsB) =
+    MergeKidsCase (MergeUniq kidsA kidsB '[]) didsA didsB kidsA kidsB
+
+type EmptyKids = KnownIds '[] '[]
+
 type CD = "CDATA"
 type RMV = "RawMisoView"
 type HTML = "html"
@@ -54,30 +85,32 @@ data E
      (re :: Maybe Root)
      (ei :: Maybe Symbol)
      (atrs :: [Symbol])
-     (knownIds :: UniqueSet)
+     (knownIds :: KnownIDS)
      (cls :: [Symbol])
      (l :: [[[Seg]]])
      (children :: [[SubSeg]])
   where
     RawMisoView ::
       View model action ->
-      E model action RMV Atomic Nothing Nothing '[] '[] '[] '[] '[]
+      E model action RMV Atomic Nothing Nothing '[] EmptyKids '[] '[] '[]
     CDataE ::
       MisoString ->
-      E model action CD Atomic Nothing Nothing '[] (UnSet '[]) '[] '[] '[]
+      E model action CD Atomic Nothing Nothing '[] EmptyKids '[] '[] '[]
     NilE :: KnownSymbol en =>
       Proxy en ->
-      E model action en Composite Nothing Nothing '[] (UnSet '[]) '[] '[] '[]
+      E model action en Composite Nothing Nothing '[] EmptyKids '[] '[] '[]
     AddAtrE :: (KnownSymbol k, ToJSON v) =>
       ElAtr k v ->
       E model action en Composite r ei atrs kids cls eacs children ->
       E model action en Composite r ei (k : atrs) kids cls
         (ApplyClass '[] (A k) eacs)
         children
-    IdE :: (KnownSymbol ei, FindDup (AppendUniq ei kids) ~ Nothing) =>
+    IdE :: (KnownSymbol ei) =>
       Proxy ei ->
       E model action en Composite r Nothing atrs kids cls eacs children ->
-      E model action en Composite r (Just ei) ("id" : atrs) (AppendUniq ei kids) cls
+      E model action en Composite r (Just ei) ("id" : atrs)
+        (AddTagId ei kids)
+        cls
         (ApplyClass '[] (A "id") (ApplyClass '[] (I ei) eacs))
         children
     AppClsE :: (KnownSymbol en, KnownSymbol c) =>
@@ -93,11 +126,11 @@ data E
           (C c)
           eacs)
         children
-    AppendChildE :: (KnownSymbol ce, FindDup (MergeUniq ckIds pkIds) ~ Nothing) =>
+    AppendChildE :: KnownSymbol ce =>
       E model action ce cs Nothing ci cAtrs ckIds ccls ceacs cchildren ->
       E model action pe Composite r pi pAtrs pkIds pcls peacs pchildren ->
       E model action pe Composite r pi pAtrs
-      (MergeUniq ckIds pkIds)
+      (MergeKids ckIds pkIds)
       pcls
       (AppendChild
        pchildren
@@ -133,5 +166,5 @@ data E
           (ApplyClass '[] (T HTML) (ApplyClass '[] R ceacs)))
         '[ PrependMb (MbSymToMbI ci) (T ce : SymsToSubSeg ccls) ]
 
-instance IsString (E model action CD Atomic Nothing Nothing '[] (UnSet '[]) '[] '[] '[]) where
+instance IsString (E model action CD Atomic Nothing Nothing '[] EmptyKids '[] '[] '[]) where
   fromString = CDataE . ms

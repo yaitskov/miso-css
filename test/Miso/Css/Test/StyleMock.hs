@@ -25,21 +25,26 @@ import Test.Tasty ( TestTree )
 import Test.Tasty.HUnit ( testCase, (@?=) )
 
 domLbs :: forall m a en es r ei atrs kids cls ecs children.
-  (MapMaybeFilterOutFullyMatchedHead '[] ecs ~ '[]) =>
+  ( MapMaybeFilterOutFullyMatchedHead '[] ecs ~ '[]
+  , DuplicatedIds kids ~ '[]
+  ) =>
   E m a en es r ei atrs kids cls ecs children ->
   L.ByteString
 domLbs = toHtml . toView
 
 doNotTc :: forall m a en es r ei atrs kids cls ecs children.
+  forall exDids -> (DuplicatedIds kids ~ exDids) =>
   forall exEcs -> (MapMaybeFilterOutFullyMatchedHead '[] ecs ~ exEcs) =>
   E m a en es r ei atrs kids cls ecs children ->
   TestTree
-doNotTc _ _ =
+doNotTc _ _ _ =
   testCase "see type message from the checker" do
     () @?= ()
 
 go :: forall m a en es r ei atrs kids cls ecs children.
-  (MapMaybeFilterOutFullyMatchedHead '[] ecs ~ '[]) =>
+  ( MapMaybeFilterOutFullyMatchedHead '[] ecs ~ '[]
+  , DuplicatedIds kids ~ '[]
+  ) =>
   L.ByteString -> E m a en es r ei atrs kids cls ecs children -> TestTree
 go ex el =
   testCase (C8.unpack $ C8.toStrict ex) do

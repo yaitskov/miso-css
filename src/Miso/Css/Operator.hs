@@ -4,12 +4,12 @@ import Data.Proxy ( Proxy )
 import GHC.TypeLits ( KnownSymbol )
 import Miso ( View )
 import Miso.JSON ( ToJSON )
-import Miso.Css.List ( FindDup, PrependMb, AppendUniq, MergeUniq, Append )
+import Miso.Css.List ( PrependMb, Append )
 import Miso.Css.Segment
 import Miso.Css.Style
 
 import Miso.Css.Style.PreAppend qualified as Pre
-import Miso.Css.Prelude ( Maybe(Just, Nothing), type (~) )
+import Miso.Css.Prelude ( Maybe(Just, Nothing) )
 
 (=.) :: (KnownSymbol en, KnownSymbol c) =>
   E model action en Composite r ei atrs kids cls eacs children ->
@@ -44,7 +44,6 @@ infixl 3 =<|
 (=#) ::
   ( KnownSymbol en
   , KnownSymbol ei
-  , FindDup (AppendUniq ei kids) ~ Nothing
   ) =>
   E model action en Composite r Nothing catrs kids cls eacs children ->
   Proxy ei ->
@@ -56,7 +55,7 @@ infixl 3 =<|
     r
     (Just ei)
     ("id" : catrs)
-    (AppendUniq ei kids)
+    (AddTagId ei kids)
     cls
     (ApplyClass '[] (A "id") (ApplyClass '[] (I ei) eacs))
     children
@@ -65,11 +64,11 @@ e =# i = IdE i e
 infixl 3 =#
 
 (</) ::
-  (KnownSymbol cen, FindDup (MergeUniq cKids pKids) ~ Nothing) =>
+  KnownSymbol cen =>
   E model action pen Composite r       pi patrs pKids pcls peacs pchildren ->
   E model action cen cs        Nothing ci catrs cKids ccls ceacs cchildren ->
   E model action pen Composite r       pi patrs
-    (MergeUniq cKids pKids)
+    (MergeKids cKids pKids)
     pcls
     (AppendChild
      pchildren
@@ -87,9 +86,8 @@ p </ c = AppendChildE c p
 infixl 2 </
 
 (<@) ::
-  (FindDup kids ~ Nothing) =>
   E model action pen Composite r pi patrs kids pcls peacs pchildren ->
-  E model action CD Atomic Nothing Nothing '[] '[] '[] '[] '[] ->
+  E model action CD Atomic Nothing Nothing '[] EmptyKids '[] '[] '[] ->
   E
     model
     action
@@ -98,7 +96,7 @@ infixl 2 </
     r
     pi
     patrs
-    kids
+    (MergeKids EmptyKids kids)
     pcls
     (AppendChild
      pchildren
@@ -113,7 +111,6 @@ infixl 2 </
 infixl 2 <@
 
 (=<) ::
-  (FindDup kids ~ Nothing) =>
   E model action pen Composite r pi atrs kids pcls peacs pchildren ->
   View model action ->
   E
@@ -124,7 +121,7 @@ infixl 2 <@
     r
     pi
     atrs
-    kids
+    (MergeKids EmptyKids kids)
     pcls
     (AppendChild
      pchildren

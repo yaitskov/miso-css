@@ -83,7 +83,9 @@ eToView = \case
   VirtualBodyE b -> eToView b
 
 toView :: forall m a en es r ei atrs kids cls ecs children.
-  (MapMaybeFilterOutFullyMatchedHead '[] ecs ~ '[]) =>
+  ( MapMaybeFilterOutFullyMatchedHead '[] ecs ~ '[]
+  , DuplicatedIds kids ~ '[]
+  ) =>
   E m a en es r ei atrs kids cls ecs children -> View m a
 toView = eToView
 
