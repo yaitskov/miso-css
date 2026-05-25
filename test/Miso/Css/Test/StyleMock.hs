@@ -262,10 +262,23 @@ c_dir_a_dirSib_b_spc_d =
     . AddAncestor pb
     . NextAncestor nol
     . AddSiblingBranch (AddSegToSibBranch (AddClassToSib pa $ NilSib nol) NilSibBranch)
-    -- . NextAncestor acn -- nol
     . AddAncestor pc
     $ CssOrphan jn )
     d
+-- .a + .b > .c
+a_dirSib_b_dir_c :: OrClass
+  '[ [ '(AutoClean, '[], '[], '[])
+     , '(JustNow, '[C "b"], '[], '[])
+     , '(JustNow, '[], '[], '[ '[ '(JustNow, '[C "a"]) ] ])
+     ] ] "c"
+a_dirSib_b_dir_c =
+  AddAncestorBranch
+    ( NextAncestor acn
+    . AddAncestor pb
+    . NextAncestor jn
+    . AddSiblingBranch (AddSegToSibBranch (AddClassToSib pa $ NilSib jn) NilSibBranch)
+    $ CssOrphan jn )
+    c
 
 -- .a ~ .b
 a_genSib_b :: OrClass
@@ -278,6 +291,22 @@ a_genSib_b =
       (AddSegToSibBranch (AddClassToSib pa $ NilSib nol) NilSibBranch)
       (CssOrphan nol))
     b
+
+-- .a ~ .b _ .c
+a_genSib_b_spc_c :: OrClass
+  '[ [ '(AutoClean, '[], '[], '[])
+     , '(NowOrLater, '[C "b"], '[], '[])
+     , '(NowOrLater, '[], '[], '[ '[ '(NowOrLater, '[C "a"])]])
+     ] ] "c"
+a_genSib_b_spc_c =
+  AddAncestorBranch
+    ( NextAncestor acn
+    . AddAncestor pb
+    . NextAncestor nol
+    . AddSiblingBranch (AddSegToSibBranch (AddClassToSib pa $ NilSib nol) NilSibBranch)
+    $ CssOrphan nol )
+    c
+
 root_b :: OrClass '[ '[ '(NowOrLater, '[R], '[], '[])]] "b"
 root_b =
   AddAncestorBranch

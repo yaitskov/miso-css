@@ -115,6 +115,44 @@ test_style =
           [ testGroup "adjacent"
             [ go """<div><div class="a"></div><div class="b"></div></div>""" $
               div_ </ div_ =. a </ div_ =. a_dirSib_b
+            , go """<div><div class="a"></div><div class="b"><div class="c"></div></div></div>"""  $
+              div_ </ div_ =. a </ (div_ =. b </ div_ =. a_dirSib_b_dir_c)
+            , testGroup "div between a and b"
+              [ doNotTc [] [[[(JustNow, [B], [], [[(JustNow, [B, C "a"])]])]]] $
+                div_ </ div_ =. a </ div_ </ (div_ =. b </ div_ =. a_dirSib_b_dir_c)
+              ]
+            , testGroup "a missing"
+              [ doNotTc [] [[[(JustNow, [B], [], [[(JustNow, [B, C "a"])]])]]] $
+                div_ </ div_ </ (div_ =. b </ div_ =. a_dirSib_b_dir_c)
+              ]
+            , testGroup "a and b are flipped"
+              [ doNotTc [] [[[ (JustNow, [B], [], [[(JustNow, [B]), (JustNow, [C "a"])]])]]] $
+                div_ </ (div_ =. b </ div_ =. a_dirSib_b_dir_c) </ div_ =. a
+              ]
+            , testGroup "b missing"
+              [ doNotTc [] [[[(JustNow, [B, C "b"], [], []),(JustNow, [], [], [[ (JustNow, [C "a"])]])]]] $
+                div_ </ div_ =. a </ (div_ </ div_ =. a_dirSib_b_dir_c)
+              ]
+            , testGroup "b in root 1"
+              [ doNotTc [] [[[ (JustNow, [B], [], [[(JustNow, [B]), (JustNow, [C "a"])]])]]] $
+                div_ =. b </ div_ =. a </ div_ =. a_dirSib_b_dir_c
+              ]
+            , testGroup "b in root 2"
+              [ doNotTc [] [[[(JustNow, [B], [C "b"], []), (JustNow, [], [], [[ (JustNow, [C "a"])]])]]] $
+                div_ =. b </ div_ =. a </ (div_ </ div_ =. a_dirSib_b_dir_c)
+              ]
+            , testGroup "b with c 1"
+              [ doNotTc [] [[[(JustNow, [B, C "b"], [], []), (JustNow, [], [], [[ (JustNow, [C "a"])]])]]] $
+                div_ </ div_ =. a </ div_ =. a_dirSib_b_dir_c =. b
+              ]
+            , testGroup "b with c 2"
+              [ doNotTc [] [[[(JustNow, [B, C "b"], [], []), (JustNow, [], [], [[ (JustNow, [C "a"])]])]]] $
+                div_ </ div_ =. a </ (div_ </ div_ =. a_dirSib_b_dir_c =. b)
+              ]
+            , testGroup "c is wrapped in div"
+              [ doNotTc [] [[[(JustNow, [B], [C "b"], []), (JustNow, [], [], [[(JustNow, [C "a"])]])]]] $
+                div_ </ div_ =. a </ (div_ =. b </ (div_ </ div_ =. a_dirSib_b_dir_c))
+              ]
             , go """<div class="c"><div class="a"></div><div class="b"></div></div>"""  $
               div_ =. c </ div_ =. a </ div_ =. c_dir_a_dirSib_b
             , go """<div class="c"><div class="b"></div><div class="a"></div><div class="b"></div></div>"""  $
@@ -126,7 +164,7 @@ test_style =
             , go """<div class="c"><div class="a"></div><div class="b"><div class="d"></div></div></div>"""  $
               div_ =. c </ div_ =. a </ (div_ =. b </ div_ =. c_dir_a_dirSib_b_spc_d)
             , testGroup "parent c is missing"
-              [ doNotTc [] [[[ (JustNow, [B, C "c"], [], [[(JustNow, [C "a"])]])]]] $
+              [ doNotTc [] [[[(JustNow, [B, C "c"], [], [[(JustNow, [C "a"])]])]]] $
                 div_ </ div_ =. a </ div_ =. c_dir_a_dirSib_b
               ]
             , testGroup "extra node between .c and .a + .b"
@@ -141,6 +179,32 @@ test_style =
           , testGroup "general"
             [ go """<div><div class="a"></div><span></span><div class="b"></div></div>""" $
               div_ </ div_ =. a </ span_ </ div_ =. a_genSib_b
+            , go """<div><div class="a"></div><div class="b"><div class="c"></div></div></div>"""  $
+              div_ </ div_ =. a </ (div_ =. b </ div_ =. a_genSib_b_spc_c)
+            , go """<div><div class="a"></div><div></div><div class="b"><div class="c"></div></div></div>"""  $
+              div_ </ div_ =. a </ div_ </ (div_ =. b </ div_ =. a_genSib_b_spc_c)
+            , go """<div><div class="a"></div><div></div><div></div><div class="b"><div class="c"></div></div></div>"""  $
+              div_ </ div_ =. a </ div_ </ div_ </ (div_ =. b </ div_ =. a_genSib_b_spc_c)
+            , go """<div><div class="a"></div><div class="b"><div><div class="c"></div></div></div></div>"""  $
+              div_ </ div_ =. a </ (div_ =. b </ (div_ </ div_ =. a_genSib_b_spc_c))
+            , go """<div><div class="a"></div><div class="b"><div><div><div class="c"></div></div></div></div></div>"""  $
+              div_ </ div_ =. a </ (div_ =. b </ (div_ </ (div_ </ div_ =. a_genSib_b_spc_c)))
+            , testGroup "a missing"
+              [ doNotTc [] [[[(NowOrLater, [B], [], [[(JustNow, [B]), (NowOrLater, [C "a"])]])]]] $
+                div_ </ div_ </ (div_ =. b </ div_ =. a_genSib_b_spc_c)
+              ]
+            , testGroup "a in parent"
+              [ doNotTc [] [[[(NowOrLater, [B], [], [[(JustNow, [B]), (NowOrLater, [C "a"])]])]]] $
+                div_ =. a </ div_ </ (div_ =. b </ div_ =. a_genSib_b_spc_c)
+              ]
+            , testGroup "b missing"
+              [ doNotTc [] [[[(NowOrLater, [C "b"], [], []), (NowOrLater, [], [], [[ (NowOrLater, [C "a"])]])]]] $
+                div_ </ div_ =. a </ (div_ </ div_ =. a_genSib_b_spc_c)
+              ]
+            , testGroup "b on same tag with c"
+              [ doNotTc [] [[[(NowOrLater, [C "b"], [], []), (NowOrLater, [], [], [[ (NowOrLater, [C "a"])]])]]] $
+                div_ </ div_ =. a </ (div_ </ div_ =. a_genSib_b_spc_c =. b)
+              ]
             ]
           ]
         , testGroup "id"
