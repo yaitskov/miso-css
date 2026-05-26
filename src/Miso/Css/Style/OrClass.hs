@@ -5,7 +5,7 @@ import GHC.TypeLits ( KnownSymbol, Symbol )
 import Miso.Css.Segment ( Seg )
 import Miso.Css.Style.AncestorClasses ( AncestorClasses )
 
--- | 'OrClass' describes all posible selector prefixes
+-- | 'OrClass' describes all selector prefixes
 -- possible for the last selector segment
 data OrClass
        (p :: [[Seg]])

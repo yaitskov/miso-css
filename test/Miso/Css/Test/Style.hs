@@ -163,18 +163,30 @@ test_style =
               div_ =. c </ div_ =. a </ div_ =. c_dir_a_dirSib_b </ div_
             , go """<div class="c"><div class="a"></div><div class="b"><div class="d"></div></div></div>"""  $
               div_ =. c </ div_ =. a </ (div_ =. b </ div_ =. c_dir_a_dirSib_b_spc_d)
+            , go """<div class="c"><div class="a"></div><div class="b"><div><div class="d"></div></div></div></div>"""  $
+              div_ =. c </ div_ =. a </ (div_ =. b </ (div_ </ div_ =. c_dir_a_dirSib_b_spc_d))
             , testGroup "parent c is missing"
               [ doNotTc [] [[[(JustNow, [B, C "c"], [], [[(JustNow, [C "a"])]])]]] $
                 div_ </ div_ =. a </ div_ =. c_dir_a_dirSib_b
+              ]
+            , testGroup "extra node between .a and .b"
+              [ doNotTc [] [[[(JustNow, [B], [C "c"], [[(JustNow, [B, C "a"])]])]]] $
+                div_ =. c </ div_ =. a </ div_ </ div_ =. c_dir_a_dirSib_b
               ]
             , testGroup "extra node between .c and .a + .b"
               [ doNotTc [] [[[(JustNow, [B], [C "c"], [[(JustNow, [C "a"])]])]]] $
                 div_ =. c </ (div_ </ (div_ =. a </ div_ =. c_dir_a_dirSib_b))
               ]
-            , doNotTc [] [[[(JustNow, [B], [C "c"], [[(NowOrLater, [C "a"])]])]]] $
-              div_ =. c  </ (div_ </ div_ =. a </ (div_ =. b </ div_ =. c_dir_a_dirSib_b_spc_d))
-            , doNotTc [] [[[(JustNow, [B, C "c"], [], [[(NowOrLater, [C "a"])]])]]] $
-              div_  </ div_ =. a </ (div_ =. b </ div_ =. c_dir_a_dirSib_b_spc_d)
+            , testGroup "a and b wrapped into extra div"
+              [ doNotTc [] [[[(JustNow, [B], [C "c"], [[(JustNow, [C "a"])]])]]] $
+                div_ =. c  </ (div_ </ div_ =. a </ (div_ =. b </ div_ =. c_dir_a_dirSib_b_spc_d))
+              ]
+            , testGroup "parent c is missing"
+              [ doNotTc [] [[[(JustNow, [B, C "c"], [], [[(JustNow, [C "a"])]])]]] $
+                div_  </ div_ =. a </ (div_ =. b </ div_ =. c_dir_a_dirSib_b_spc_d)
+              ]
+            , go """<div><div class="a b"></div><div class="c"></div></div>""" $
+              div_ </ div_ =. a =. b </ div_ =. a_with_b_dirSib_c
             ]
           , testGroup "general"
             [ go """<div><div class="a"></div><span></span><div class="b"></div></div>""" $
@@ -205,6 +217,14 @@ test_style =
               [ doNotTc [] [[[(NowOrLater, [C "b"], [], []), (NowOrLater, [], [], [[ (NowOrLater, [C "a"])]])]]] $
                 div_ </ div_ =. a </ (div_ </ div_ =. a_genSib_b_spc_c =. b)
               ]
+            ]
+          , testGroup "mix"
+            [ go """<div><div></div><p></p><span><div class="a"></div><div class="b"></div></span></div>"""  $
+              div_ </ div_ </ p_ </ (span_ </ div_ =. a </ div_ =. div_genSib_p_dirSib_span_dir_a_dirSib_b)
+            , go """<div><div></div><p></p><p></p><span><div class="a"></div><div class="b"></div></span></div>"""  $
+              div_ </ div_ </ p_ </ p_ </ (span_ </ div_ =. a </ div_ =. div_genSib_p_dirSib_span_dir_a_dirSib_b)
+            , go """<div><div></div><p></p><span><p></p><div class="a"></div><div class="b"></div></span></div>"""  $
+              div_ </ div_ </ p_ </ (span_ </ p_ </ div_ =. a </ div_ =. div_genSib_p_dirSib_span_dir_a_dirSib_b)
             ]
           ]
         , testGroup "id"
@@ -249,6 +269,28 @@ test_style =
         , testGroup "class"
           [ go """<div class="a"><div class="b"></div></div>""" $
             div_ =. a </ (div_ =. ab)
+          , go """<div class="a b"><div class="c"></div></div>""" $
+            div_ =. a =. b </ (div_ =. a_with_b_dir_c)
+          , go """<div class="b a"><div class="c"></div></div>""" $
+            div_ =. b =. a </ (div_ =. a_with_b_dir_c)
+          , go """<div class="b c a"><div class="c"></div></div>""" $
+            div_ =. b =. c =. a </ (div_ =. a_with_b_dir_c)
+          , testGroup "extra div around c"
+            [ doNotTc [] [[[(JustNow, [B], [C "b", C "a"], [])]]] do
+              div_ =. b =. a </ (div_ </ div_ =. a_with_b_dir_c)
+            ]
+          , testGroup "a missing"
+            [ doNotTc [] [[[(JustNow, [B, C "a"], [C "b"], [])]]] do
+              div_ =. b =. b </ div_ =. a_with_b_dir_c
+            ]
+          , testGroup "a is parent of b"
+            [ doNotTc [] [[[(JustNow, [B], [C "a", C "b"], [])]]] do
+              div_ =. a </ (div_ =. b </ div_ =. a_with_b_dir_c)
+            ]
+          , testGroup "a and b are applied to siblings"
+            [ doNotTc [] [[[(JustNow, [B, C "a"], [C "b"],[])]]] do
+              div_ </ div_ =. a </ (div_ =. b </ div_ =. a_with_b_dir_c)
+            ]
           , testGroup ".a is applied to this elem rather than parent one"
             [ doNotTc [] [[[(NowOrLater, [C "a"], [], [])]]] do
               div_ </ (div_ =. ab =. a)
@@ -267,6 +309,16 @@ test_style =
             div_  =. b_next_to_a =. a_next_to_b =. b_next_to_a
           , go """<div class="a"><div class="b"><div class="c"></div></div></div>""" $
             div_ =. a </ (div_ =. ab </ div_ =. abc)
+          , testGroup "b is missing"
+            [ doNotTc [] [[[(NowOrLater, [C "b"], [], []), (NowOrLater, [C "a"], [], [])]]] $
+              div_ =. a </ (div_ </ div_ =. abc)
+            , doNotTc [] [[[(NowOrLater, [C "b"], [], []), (NowOrLater, [C "a"], [], [])]]] $
+              div_ =. a </ div_ =. abc
+            ]
+          , testGroup "a and are flipped"
+            [ doNotTc [] [[[(NowOrLater, [C "a"], [], [])]]] $
+              div_ =. b </ (div_ =. a </ div_ =. abc)
+            ]
           , go """<div class="a"><div class="b"><ul><div class="c"></div></ul></div></div>""" $
             div_ =. a </ (div_ =. ab </ (ul_ </ div_ =. abc))
           , go """<div class="a"><div class="b"></div><div class="c"></div></div>""" $
