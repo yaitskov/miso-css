@@ -1,7 +1,5 @@
 module Miso.Css.Miso where
 
-import Data.Proxy ( Proxy(Proxy) )
-import Data.Tagged ( Tagged(Tagged) )
 import GHC.TypeLits ( KnownSymbol, symbolVal )
 import Miso
     ( ms,
@@ -16,7 +14,6 @@ import Miso.Html.Property (id_)
 import Miso.Css.List ( PrependMb, Append )
 import Miso.Css.Segment ( SubSeg(T, R), ApplyClass, MbSymToMbI )
 import Miso.Css.Style
-
 import Miso.Css.Style.PostAppend
     ( MapMaybeFilterOutFullyMatchedHead )
 import Miso.Css.Prelude

@@ -6,7 +6,6 @@ import Miso.Css.Prelude
 import Miso.Css.Parser
 import CssParser
 import Miso.Css.Style
-import Data.Proxy
 import Data.Text (unpack)
 
 selectorsToDecs :: SelIdxByLeafClass -> Q [ Dec ]
@@ -64,6 +63,17 @@ tagRelToMs = \case
 --   (AddSegToSibBranch (AddClassToSib pa $ NilSib jn) NilSibBranch)
 --   (CssOrphan nol))
 -- .a > .b + .c
+
+-- c_dir_a_dirSib_b :: OrClass
+--   '[ [ '(AutoClean, '[], '[], '[])
+--      , '(JustNow, '[C "c"], '[], '[ '[ '(JustNow, '[C "a"])]]) ] ] "b"
+-- c_dir_a_dirSib_b =
+--   AddAncestorBranch
+--     ( NextAncestor acn
+--     . AddSiblingBranch (AddSegToSibBranch (AddSib (Proxy @C) pa $ NilSib jn) NilSibBranch)
+--     . AddSubSegConstraint (Proxy @C) pc
+--     $ CssOrphan jn )
+--     b
 
 --
 -- special handling for first pair -> AddAncestorBranch

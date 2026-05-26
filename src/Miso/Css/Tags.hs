@@ -1,9 +1,7 @@
 module Miso.Css.Tags where
 
-import Data.Proxy ( Proxy(Proxy) )
 import Miso.Css.Style ( E(NilE), ElementStructure(Composite), EmptyKids )
-import Miso.Css.Prelude ( Maybe(Nothing) )
-
+import Miso.Css.Prelude
 
 div_ :: E model action "div" Composite Nothing Nothing '[] EmptyKids '[] '[] '[]
 div_ = NilE (Proxy @"div")

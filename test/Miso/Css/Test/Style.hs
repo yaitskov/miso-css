@@ -342,7 +342,9 @@ test_style =
           , go """<div class="a"><div class="b"></div></div>""" $
             div_ =. a </ div_ =. a_dir_b
           , go """<div class="a"><div class="b"><div class="c"></div></div></div>""" $
-            div_ =. a </ (div_ =. b </ div_ =. a_b_dir_c)
+            div_ =. a </ (div_ =. b </ div_ =. a_dir_b_spc_c)
+          , go """<div class="a"><div class="b"><div><div class="c"></div></div></div></div>""" $
+            div_ =. a </ (div_ =. b </ (div_ </ div_ =. a_dir_b_spc_c))
           ]
         ]
       ]
