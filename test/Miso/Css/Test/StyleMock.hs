@@ -269,7 +269,7 @@ a_dirSib_b :: OrClass
 a_dirSib_b =
   AddAncestorBranch
     (NextAncestor acn $ AddSiblingBranch
-      (AddSegToSibBranch (AddClassToSib pa $ NilSib jn) NilSibBranch)
+      (AddSegToSibBranch (AddSib (Proxy @C) pa $ NilSib jn) NilSibBranch)
       (CssOrphan nol))
     b
 -- _ .c > .a + .b
@@ -279,7 +279,7 @@ c_dir_a_dirSib_b :: OrClass
 c_dir_a_dirSib_b =
   AddAncestorBranch
     ( NextAncestor acn
-    . AddSiblingBranch (AddSegToSibBranch (AddClassToSib pa $ NilSib jn) NilSibBranch)
+    . AddSiblingBranch (AddSegToSibBranch (AddSib (Proxy @C) pa $ NilSib jn) NilSibBranch)
     . AddSubSegConstraint (Proxy @C) pc
     $ CssOrphan jn )
     b
@@ -294,7 +294,7 @@ c_dir_a_dirSib_b_spc_d =
     ( NextAncestor acn
     . AddSubSegConstraint (Proxy @C) pb
     . NextAncestor nol
-    . AddSiblingBranch (AddSegToSibBranch (AddClassToSib pa $ NilSib jn) NilSibBranch)
+    . AddSiblingBranch (AddSegToSibBranch (AddSib (Proxy @C) pa $ NilSib jn) NilSibBranch)
     . AddSubSegConstraint (Proxy @C) pc
     $ CssOrphan jn )
     d
@@ -314,7 +314,7 @@ a_with_b_dir_c =
 a_with_b_dirSib_c :: OrClass '[ '[ '(JustNow, '[], '[], '[ '[ '(JustNow, [C "b", C "a"])]])]] "c"
 a_with_b_dirSib_c =
   AddAncestorBranch
-    ( AddSiblingBranch (AddSegToSibBranch (AddClassToSib pb $ AddClassToSib pa $ NilSib jn) NilSibBranch)
+    ( AddSiblingBranch (AddSegToSibBranch (AddSib (Proxy @C) pb $ AddSib (Proxy @C) pa $ NilSib jn) NilSibBranch)
     $ CssOrphan jn ) -- or nol - does not matter
     c
 
@@ -328,14 +328,15 @@ div_genSib_p_dirSib_span_dir_a_dirSib_b :: OrClass
      , '(JustNow, '[T "span"], '[], '[ '[ '(JustNow, '[C "a"])]])
      , '(JustNow, '[], '[], [ '[ '(JustNow, '[T "p"])], '[ '(NowOrLater, '[T "div"])]])
      ] ] "b"
+
 div_genSib_p_dirSib_span_dir_a_dirSib_b =
   AddAncestorBranch
     ( NextAncestor acn
-    . AddSiblingBranch (AddSegToSibBranch (AddClassToSib pa $ NilSib jn) NilSibBranch)
+    . AddSiblingBranch (AddSegToSibBranch (AddSib (Proxy @C) pa $ NilSib jn) NilSibBranch)
     . AddSubSegConstraint (Proxy @T) pspan
     . NextAncestor jn
-    . AddSiblingBranch (AddSegToSibBranch (AddTagToSib pp $ NilSib jn) NilSibBranch)
-    . AddSiblingBranch (AddSegToSibBranch (AddTagToSib pdiv $ NilSib nol) NilSibBranch)
+    . AddSiblingBranch (AddSegToSibBranch (AddSib (Proxy @T) pp $ NilSib jn) NilSibBranch)
+    . AddSiblingBranch (AddSegToSibBranch (AddSib (Proxy @T) pdiv $ NilSib nol) NilSibBranch)
     $ CssOrphan jn )
     b
 
@@ -350,7 +351,7 @@ a_dirSib_b_dir_c =
     ( NextAncestor acn
     . AddSubSegConstraint (Proxy @C) pb
     . NextAncestor jn
-    . AddSiblingBranch (AddSegToSibBranch (AddClassToSib pa $ NilSib jn) NilSibBranch)
+    . AddSiblingBranch (AddSegToSibBranch (AddSib (Proxy @C) pa $ NilSib jn) NilSibBranch)
     $ CssOrphan jn )
     c
 
@@ -362,7 +363,7 @@ a_genSib_b :: OrClass
 a_genSib_b =
   AddAncestorBranch
     (NextAncestor acn $ AddSiblingBranch
-      (AddSegToSibBranch (AddClassToSib pa $ NilSib nol) NilSibBranch)
+      (AddSegToSibBranch (AddSib (Proxy @C) pa $ NilSib nol) NilSibBranch)
       (CssOrphan nol))
     b
 
@@ -377,7 +378,7 @@ a_genSib_b_spc_c =
     ( NextAncestor acn
     . AddSubSegConstraint (Proxy @C) pb
     . NextAncestor nol
-    . AddSiblingBranch (AddSegToSibBranch (AddClassToSib pa $ NilSib nol) NilSibBranch)
+    . AddSiblingBranch (AddSegToSibBranch (AddSib (Proxy @C) pa $ NilSib nol) NilSibBranch)
     $ CssOrphan nol )
     c
 

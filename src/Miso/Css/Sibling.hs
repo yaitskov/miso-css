@@ -10,7 +10,8 @@ import GHC.TypeLits (KnownSymbol)
 import GHC.TypeError
     ( TypeError, ErrorMessage(Text, (:<>:), ShowType) )
 import Miso.Css.List ( IsSubSet )
-import Miso.Css.Segment ( SubSeg(B, T, I, C), MatchScope(..), Seg )
+import Miso.Css.Segment
+    ( SubSeg(B), Seg, MatchScope(NowOrLater, JustNow) )
 import Prelude
 
 
@@ -49,9 +50,7 @@ type family MatchSiblings r siblings bs where
 
 data Sibling (ms :: MatchScope) (ss :: [SubSeg]) where
   NilSib :: Proxy ms -> Sibling ms '[]
-  AddTagToSib :: KnownSymbol t => Proxy t -> Sibling ms ss -> Sibling ms (T t : ss)
-  AddIdToSib :: KnownSymbol t => Proxy t -> Sibling ms ss -> Sibling ms (I t : ss)
-  AddClassToSib :: KnownSymbol t => Proxy t -> Sibling ms ss -> Sibling ms (C t : ss)
+  AddSib :: KnownSymbol t => Proxy c -> Proxy t -> Sibling ms ss -> Sibling ms (c t : ss)
 
 data SiblingBranch (sgs :: [(MatchScope, [SubSeg])]) where
   NilSibBranch :: SiblingBranch '[]
