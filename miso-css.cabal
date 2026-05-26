@@ -128,7 +128,7 @@ library
     Miso.Css.Style
     Miso.Css.Style.E
     Miso.Css.Style.OrClass
-    Miso.Css.Style.AncestorClasses
+    Miso.Css.Style.AncestorConstraint
     Miso.Css.Style.PostAppend
     Miso.Css.Style.PreAppend
     Miso.Css.Tags

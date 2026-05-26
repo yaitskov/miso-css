@@ -10,4 +10,4 @@ module Miso.Css.Style (module X) where
 
 import Miso.Css.Style.E as X
 import Miso.Css.Style.OrClass as X
-import Miso.Css.Style.AncestorClasses as X
+import Miso.Css.Style.AncestorConstraint as X

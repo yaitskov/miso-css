@@ -30,9 +30,9 @@ tagRelToMs = \case
 --   , [SubSeg] -- matched
 --   , [[(MatchScope, [SubSeg])]] -- siblings
 --   )
--- CssOrphan :: Proxy ms -> AncestorClasses '[ '( ms, '[], '[], '[] )]
--- selListToAncestorClasses :: Exp -> [ (TagRelation, TagSelector) ] ->  Q Exp
--- selListToAncestorClasses base  l = _
+-- CssOrphan :: Proxy ms -> AncestorConstraint '[ '( ms, '[], '[], '[] )]
+-- selListToAncestorConstraint :: Exp -> [ (TagRelation, TagSelector) ] ->  Q Exp
+-- selListToAncestorConstraint base  l = _
 -- a_dir_b_dir_c :: OrClass
 --   '[ [ '(AutoClean, '[], '[], '[])
 --      , '(JustNow, '[C "b"], '[], '[])
