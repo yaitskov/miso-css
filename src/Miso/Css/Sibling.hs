@@ -23,9 +23,9 @@ type family MatchSiblingElemCaseIsSubSet iss mts p where
   MatchSiblingElemCaseIsSubSet True  _   _ = '( True, Nothing)
   MatchSiblingElemCaseIsSubSet False mts p = '( False, MatchSiblingElemCaseMts mts p)
 
-type family MatchSiblingElem el mts_p where
+type family MatchSiblingElem sibling mts_p where
   MatchSiblingElem _el '( mts, B : p) = '( False, Just '( mts, B : p))
-  MatchSiblingElem el  '( mts, p) =
+  MatchSiblingElem el  '( mts, p) = -- el :: [SubSug] , p :: [SubSeg]
     MatchSiblingElemCaseIsSubSet (IsSubSet p el) mts p
 
 type family MatchSiblingBranchCase mser es p ps where
@@ -33,9 +33,9 @@ type family MatchSiblingBranchCase mser es p ps where
   MatchSiblingBranchCase '( False, Nothing) es p ps  = MatchSiblingBranch es (p:ps)
   MatchSiblingBranchCase '( False, Just p') _es p ps = p' : ps
 
-type family MatchSiblingBranch es ps where
-  MatchSiblingBranch _ '[] = '[]
-  MatchSiblingBranch '[] p = '( JustNow, '[ B]) : p
+type family MatchSiblingBranch siblings branch where
+  MatchSiblingBranch _       '[]   = '[]
+  MatchSiblingBranch '[]     p     = '( JustNow, '[ B]) : p
   MatchSiblingBranch (e:es) (p:ps) =
     MatchSiblingBranchCase (MatchSiblingElem e p) es p ps
 

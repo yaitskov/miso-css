@@ -10,7 +10,8 @@ import Miso.Css.Sibling ( MatchSiblings )
 type family FilterOutFullyMatchedHeadCaseSibling
   siblingBranches siblings firstBranchTail r mts matched bs
   where
-    FilterOutFullyMatchedHeadCaseSibling '[] _siblings _firstBranchTail _r  _mts _matched _bs = '[]
+    FilterOutFullyMatchedHeadCaseSibling '[] siblings firstBranchTail r  _mts _matched bs =
+      FilterOutFullyMatchedHead siblings (firstBranchTail:r) bs
     FilterOutFullyMatchedHeadCaseSibling unmatchedSiblingBranches siblings firstBranchTail r mts matched bs =
       FilterOutFullyMatchedHead
         siblings
