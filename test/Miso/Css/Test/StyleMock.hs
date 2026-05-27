@@ -193,12 +193,12 @@ div_ul_child =
 a_dir_b_dir_c :: OrClass
   '[ [ '(AutoClean, '[], '[], '[])
      , '(JustNow, '[C "b"], '[], '[])
-     , '(NowOrLater, '[C "a"], '[], '[])
+     , '(JustNow, '[C "a"], '[], '[])
      ]
    ] "c"
 a_dir_b_dir_c =
   AddAncestorBranch
-  (   CssOrphan nol
+  (   CssOrphan jn
   & ( AddSubSegConstraint (Proxy @C) pa
   >>> NextAncestor jn
   >>> AddSubSegConstraint (Proxy @C) pb
