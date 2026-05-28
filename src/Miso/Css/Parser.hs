@@ -1,8 +1,8 @@
 module Miso.Css.Parser where
 
 import CssParser as CP
-import Miso.Css.Prelude
 import Data.Map.Strict qualified as M
+import Miso.Css.Prelude
 
 type RelTag = [ (TagRelation, TagSelector) ]
 type Selectors = [ RelTag ]

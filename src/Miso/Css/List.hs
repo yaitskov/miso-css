@@ -41,3 +41,9 @@ type family IsSubSetCase rer t where
 type family IsSubSet a b where
   IsSubSet '[] _ = True
   IsSubSet (h : t) l = IsSubSetCase (RemoveElem '[] h l) t
+
+spanMaybe :: (a -> Maybe b) -> [a] -> ([b], [a])
+spanMaybe _ xs@[] = ([], xs)
+spanMaybe p xs@(x : xs') = case p x of
+  Just y -> let (ys, zs) = spanMaybe p xs' in (y : ys, zs)
+  Nothing -> ([], xs)

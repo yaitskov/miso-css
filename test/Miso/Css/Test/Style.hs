@@ -436,6 +436,39 @@ test_style =
             div_ =. a </ (div_ =. b </ div_ =. a_dir_b_spc_c)
           , go """<div class="a"><div class="b"><div><div class="c"></div></div></div></div>""" $
             div_ =. a </ (div_ =. b </ (div_ </ div_ =. a_dir_b_spc_c))
+
+          , go """<div class="c"><div class="a b"></div></div>""" $
+            div_ =. c </ div_ =. a =. c_dir_a_with_b
+          , go """<div class="c"><div class="b a"></div></div>""" $
+            div_ =. c </ div_ =. c_dir_a_with_b =. a
+          , go """<div class="c"><div></div><div class="b a"></div></div>""" $
+            div_ =. c </ div_ </ div_ =. c_dir_a_with_b =. a
+          , go """<div class="c"><div class="b a"></div><div></div></div>""" $
+            div_ =. c </ div_ =. c_dir_a_with_b =. a </ div_
+          , testGroup "a is missing"
+            [ doNotTc [] [[[(AutoClean, [B, C "a"], [], []), (JustNow, [C "c"], [], [])]]] $
+              div_ =. c  </ div_ =. c_dir_a_with_b
+            ]
+          , testGroup "c is missing"
+            [ doNotTc [] [[[(JustNow, [B, C "c"], [], [])]]] $
+              div_ </ div_ =. a =. c_dir_a_with_b
+            ]
+          , testGroup "c is sibling"
+            [ doNotTc [] [[[(JustNow, [B, C "c"], [], [])]]] $
+              div_  </ div_ =. c </ div_ =. a =. c_dir_a_with_b
+            ]
+          , testGroup "c and a are mixed"
+            [ doNotTc [] [[[(AutoClean, [B], [C "a"], []), (JustNow, [C "c"], [], [])]]] $
+              div_ =. a </ div_ =. c =. c_dir_a_with_b
+            , doNotTc [] [[[(AutoClean, [B], [C "a"], []), (JustNow, [C "c"], [], [])]]] $
+              div_ =. a </ div_ =. c_dir_a_with_b =. c
+            ]
+          , testGroup "a is sibling"
+            [ doNotTc [] [[[(AutoClean, [B, C "a"], [], []), (JustNow, [C "c"], [], [])]]] $
+              div_  =. c </ div_ =. a </ div_ =. c_dir_a_with_b
+            , doNotTc [] [[[(AutoClean, [B, C "a"], [], []), (JustNow, [C "c"], [], [])]]] $
+              div_  =. c </ div_ =. c_dir_a_with_b </ div_ =. a
+            ]
           ]
         ]
       ]
