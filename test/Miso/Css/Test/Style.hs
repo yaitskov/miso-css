@@ -115,6 +115,10 @@ test_style =
           [ testGroup "adjacent"
             [ go """<div><div class="a"></div><div class="b"></div></div>""" $
               div_ </ div_ =. a </ div_ =. a_dirSib_b
+            , testGroup ".a + .b"
+              [ doNotTc [] [[[(NowOrLater, [B], [], [[(JustNow, [B]), (JustNow, [C "a"])]])]]] $
+                div_ </ div_ =. a_dirSib_b
+              ]
             , go """<div><div class="a"></div><div class="b"><div class="c"></div></div></div>"""  $
               div_ </ div_ =. a </ (div_ =. b </ div_ =. a_dirSib_b_dir_c)
             , testGroup "div between a and b"
@@ -396,6 +400,8 @@ test_style =
             div_ =. a_next_to_b =. b_next_to_a
           , go """<div class="a b"></div>""" $
             div_  =. b_next_to_a =. a_next_to_b
+          , go """<div class="a b"></div>""" $
+            div_  =. b_next_to_a =. a_next_to_b
           , go """<div class="a b a"></div>""" $
             div_  =. b_next_to_a =. a_next_to_b =. b_next_to_a
           , go """<div class="a"><div class="b"><div class="c"></div></div></div>""" $
@@ -406,9 +412,13 @@ test_style =
             , doNotTc [] [[[(NowOrLater, [C "b"], [], []), (NowOrLater, [C "a"], [], [])]]] $
               div_ =. a </ div_ =. abc
             ]
-          , testGroup "a and are flipped"
+          , testGroup "a and b are flipped"
             [ doNotTc [] [[[(NowOrLater, [C "a"], [], [])]]] $
               div_ =. b </ (div_ =. a </ div_ =. abc)
+            ]
+          , testGroup "a is missing"
+            [ doNotTc [] [[[(NowOrLater, [C "a"], [], [])]]] $
+              div_ =. b </ div_ =. abc
             ]
           , go """<div class="a"><div class="b"><ul><div class="c"></div></ul></div></div>""" $
             div_ =. a </ (div_ =. ab </ (ul_ </ div_ =. abc))
@@ -432,6 +442,12 @@ test_style =
             div_ =. a </ (div_ =. b </ (div_ =. c </ div_ =. a_dir_b_dir_c_dir_d))
           , go """<div class="a"><div class="b"></div></div>""" $
             div_ =. a </ div_ =. a_dir_b
+          , testGroup ".a > .b"
+            [ testGroup "a is missing"
+              [ doNotTc [] [[[(JustNow, [B, C "a"], [], [])]]] $ div_ </ div_ =. a_dir_b
+              , doNotTc [] [[[(JustNow, [C "a"], [], [])]]] $ div_ =. a_dir_b
+              ]
+            ]
           , go """<div class="a"><div class="b"><div class="c"></div></div></div>""" $
             div_ =. a </ (div_ =. b </ div_ =. a_dir_b_spc_c)
           , go """<div class="a"><div class="b"><div><div class="c"></div></div></div></div>""" $
