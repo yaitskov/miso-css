@@ -3,9 +3,9 @@ module Miso.Css.IncludeCss (includeCss) where
 import AddDependentFile ( (</>), addDependentFile, getPackageRoot )
 import Miso.Css.Escape ( escapeValIden )
 import Miso.Css.Qq (cssToDecs)
-import Data.Text.IO.Utf8 qualified as U
 import Language.Haskell.TH.Syntax ( mkName, Q, Dec, runIO )
-import Prelude
+import Miso.Css.Prelude
+    ( ($), Maybe(Just), (=<<), (<$>), readFile, FilePath )
 import System.FilePath (takeBaseName)
 
 -- | like css quasi quoter but
@@ -15,4 +15,4 @@ includeCss :: FilePath -> Q [Dec]
 includeCss p = do
   ap <- (</> p) <$> getPackageRoot
   addDependentFile ap
-  cssToDecs (mkName (escapeValIden $ takeBaseName p)) <$> runIO (U.readFile ap)
+  cssToDecs (Just ap) (mkName (escapeValIden $ takeBaseName p)) =<< runIO (readFile ap)

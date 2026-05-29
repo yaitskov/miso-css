@@ -2,13 +2,21 @@ module Miso.Css.Gen where
 
 import Control.Monad.State ( MonadState(put), runState, State )
 import CssParser
+    ( TagSubSelector(Hash, AtomicClass, HasAttr),
+      TagRelation(..),
+      TagSelector(tagSubSelectors, tagName),
+      Ident(..),
+      AttrName(attrName),
+      TagName(AmpersandTag, TagName) )
 import Data.Map.Strict qualified as M
 import Data.Text (unpack)
 import Language.Haskell.TH.Syntax
+import Miso.Css.Escape ( escapeValIden )
 import Miso.Css.List ( spanMaybe )
-import Miso.Css.Parser
+import Miso.Css.Parser ( SelIdxByLeafClass, Selectors )
 import Miso.Css.Prelude
 import Miso.Css.Segment
+    ( MatchScope(NowOrLater, AutoClean, JustNow), SubSeg(A, T, C) )
 import Miso.Css.Sibling (SiblingBranch(NilSibBranch))
 import Miso.Css.Style
 
@@ -29,13 +37,11 @@ selectorsToDecs m = concat <$> mapM go (M.toList m)
 -- type of result Exp is :: OrClass p c
 selectorsToExp :: Ident -> Selectors -> Q Exp
 selectorsToExp i sels =
-  [| ($(composeExpsWithDot <$> mapM go sels)) $(topOpClass i) |]
-  where
-    go s =
-      [| AddAncestorBranch $(selectorToExp i s) |]
+  [| ($(composeExpsWithDot <$> mapM (selectorToExp i) sels))
+        (TopOrClass $(identToSymbol i)) |]
 
 identToName :: Ident -> Name
-identToName (Ident i) = mkName $ unpack i
+identToName (Ident i) = mkName . escapeValIden $ unpack i
 
 identToSymbol :: Ident -> Q Exp
 identToSymbol (Ident i) =
@@ -94,7 +100,7 @@ lastSelectorToExp tsf lastTs = [| NextAncestor acn >>> $(tagSelectorToExp tsf la
 foldShiftedTsTr :: TsFilter -> TagSelector -> [ TsTr ] -> Q Exp
 foldShiftedTsTr tsFilter lastTs tsTrs =
   case spanSiblings tsTrs of
-    ([], []) -> [| (CssOphan acn & $(tagSelectorToExp tsFilter lastTs)) |]
+    ([], []) -> [| (CssOrphan acn & $(tagSelectorToExp tsFilter lastTs)) |]
     ([], [(ts, Child)]) ->
       [| (CssOrphan jn & ($(tagSelectorToExp passAll ts) >>> $(lastSelectorToExp tsFilter lastTs))) |]
     ([], [(ts, Descendant)]) ->
@@ -238,12 +244,3 @@ shiftSelector = \case
       [] -> pure []
       [(r, lastS)] -> put (Just lastS) >> pure [(s, r)]
       (r', s') : t -> ((s, r') :) <$> go s' t
-
--- :: OrClass [] "span"
-topOpClass :: Ident -> Q Exp
-topOpClass i = do
-  let
-    n = identToName i
-    t = [t| Proxy $(pure $ ConT n) |]
-   in
-     [e| TopOrClass (Proxy :: $t) |]

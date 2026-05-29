@@ -66,7 +66,6 @@ library
     , add-dependent-file >= 0.0.2 && < 1
     , containers         < 1
     , css-parser         < 1
-    , css-syntax         < 1
     , filepath           < 2
     , miso               >= 1.9 && < 2
     , mtl                < 3

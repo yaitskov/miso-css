@@ -1,60 +1,35 @@
 -- | Module provides a quasi quoter translating CSS classes to Haskell functions
-module Miso.Css.Qq
-  ( CssIdentifier (id_)
-  , CssClass
-  , cssToDecs
-  , css
-  , class_
-  ) where
+module Miso.Css.Qq where
 
-import Miso.Css.Escape ( escapeValIden, escapeTypeIden )
-import Data.CSS.Syntax.Tokens
-    ( Token(Hash, Delim, Ident, Whitespace, LeftCurlyBracket), tokenize, HashFlag(HId) )
-import Data.Set ( insert, Set, toList )
+import CssParser as CP ( parseCssP, P(Failed, Ok) )
 import Data.String ( IsString )
-import Data.Text ( Text, pack, unpack )
+import Miso.Css.Gen ( selectorsToDecs )
+import Miso.Css.Parser ( indexFile )
 import Language.Haskell.TH.Quote ( QuasiQuoter(..) )
 import Language.Haskell.TH.Syntax
 import Prelude
 
-data CssName = CssClassName Text | CssId Text deriving (Show, Eq, Ord)
+{- | quasi quoter accepts CSS and generates definitions for CSS classes
 
-newtype CssClass s = CssClass { unCssClass :: s } deriving (Show, Eq, Ord)
-
-instance (Semigroup s, IsString s) => Semigroup (CssClass s) where
-  CssClass l <> CssClass r = CssClass $ l <> " " <> r
-
-class_ :: IsString s => CssClass s -> s
-class_ = unCssClass
-
-class CssIdentifier a where
-  id_ :: IsString s => a -> s
-
-
-{- | quasi quoter accepts CSS and generates definition for classes
-
-> .foo-bar {
+> .foo > .bar {
 >   padding: 0px;
 > }
-> #foo-bar {
->   padding: 0px;
-> }
-
 
 is expanded as:
 
 @
-data FooBar = FooBar
-instance CssIdentifier FooBar where
-  id_ _ = "foo-bar"
-{-# INLINE id_ #-}
-
 {-# INLINE fooBar #-}
-fooBar :: IsString s => CssClass s
-fooBar = "foo-bar"
+
+foo = TopOrClass (Proxy @"foo")
+
+bar =
+  AddAncestorBranch
+    (CssOrphan jn & ( AddSubSegConstraint (Proxy @C) (Proxy @"foo")))
+    (TopOrClass (Proxy @"bar"))
+
 {-# INLINE cssAsLiteralText #-}
 cssAsLiteralText :: IsString s => s
-cssAsLiteralText = ".foo-bar { padding: 0px; }"
+cssAsLiteralText = ".foo > .bar { padding: 0px; }"
 @
 
 -}
@@ -63,72 +38,20 @@ css = QuasiQuoter
   { quoteExp  = \_ -> fail "quoteExp: not implemented"
   , quotePat  = \_ -> fail "quotePat: not implemented"
   , quoteType = \_ -> fail "quoteType: not implemented"
-  , quoteDec  = pure . cssToDecs n . pack
+  , quoteDec  = cssToDecs Nothing n
   }
   where
     n = mkName "cssAsLiteralText"
 
-{- Sample of token stream
-Delim '.',Ident "skeleton-block",Colon,Function "not",Colon,Ident "last-child",RightParen
--}
-collectReferedClasses :: Set CssName -> [Token] -> Set CssName
-collectReferedClasses s = \case
-  Delim '.' : Ident cn : t ->
-    collectReferedClasses (insert (CssClassName cn) s) t
-  Hash HId i : Whitespace : LeftCurlyBracket : t -> iden i t
-  Hash HId i : LeftCurlyBracket : t -> iden i t
-  _ : t -> collectReferedClasses s t
-  [] -> s
-  where
-    iden i = collectReferedClasses (insert (CssId i) s)
-{- | generate definition like:
-
-@@
-  {-# INLINE foo #-}
-  foo :: IsString s => CssClass s
-  foo = "foo"
-@@
-
--}
-cssClassConstDec :: CssName -> [Dec]
-cssClassConstDec = \case
-  CssClassName cn -> className cn
-  CssId i -> cssId i
-  where
-    st = mkName "s"
-    cssId i =
-      [ DataD [] n [] Nothing
-        [NormalC n []]
-        [DerivClause Nothing [ConT ''Show, ConT ''Eq]]
-      , InstanceD Nothing [] (AppT (ConT ''CssIdentifier) (ConT n))
-        [ FunD (mkName "id_")
-          [ Clause [WildP] (NormalB . LitE $ StringL ns) [] ]
-        ]
-      ]
-      where
-        ns = unpack i
-        n = mkName $ escapeTypeIden ns
-
-    className cn =
-      [ PragmaD (InlineP n Inline FunLike AllPhases)
-      , SigD n
-        (ForallT
-          [PlainTV st InferredSpec]
-          [AppT (ConT ''IsString) (VarT st)]
-          (AppT (ConT ''CssClass) (VarT st)))
-      , FunD n [ Clause [] body [] ]
-      ]
-      where
-        ns = unpack cn
-        n = mkName $ escapeValIden ns
-        body = NormalB (AppE (ConE 'CssClass) (LitE (StringL ns)))
-
-
-cssToDecs :: Name -> Text -> [Dec]
-cssToDecs inputExportName s = go s
-  where
-    go = (cssAsLiteralTextD inputExportName s <>) . concatMap cssClassConstDec .
-      toList . collectReferedClasses mempty . tokenize
+cssToDecs :: Maybe FilePath -> Name -> String -> Q [Dec]
+cssToDecs fileNameMb inputExportName s =
+  case parseCssP s of
+    Ok cssFile ->
+      (cssAsLiteralTextD inputExportName s <>) <$> selectorsToDecs (indexFile cssFile)
+    Failed cssErr ->
+      case fileNameMb of
+        Nothing -> fail $ "Failed to parse QuasiQuoted CSS due: " <> cssErr
+        Just fn -> fail $ "Failed to parse CSS from " <> fn <> " due: " <> cssErr
 
 {- | generate definition like:
 @@
@@ -137,7 +60,7 @@ cssToDecs inputExportName s = go s
   cssAsLiteralText = s
 @@
 -}
-cssAsLiteralTextD :: Name -> Text -> [Dec]
+cssAsLiteralTextD :: Name -> String -> [Dec]
 cssAsLiteralTextD n s =
   [ SigD n
     (ForallT
@@ -149,4 +72,4 @@ cssAsLiteralTextD n s =
   ]
   where
     st = mkName "s"
-    body = NormalB (LitE (StringL $ unpack s))
+    body = NormalB (LitE (StringL s))

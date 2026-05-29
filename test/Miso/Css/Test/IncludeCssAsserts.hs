@@ -1,27 +1,26 @@
 {-# LANGUAGE MultilineStrings #-}
 module Miso.Css.Test.IncludeCssAsserts where
 
-import Miso.Css (class_, id_)
-import Miso.Css.Test.IncludeCssDefs (fooBar, FooBar(..), style)
-import Prelude
-import Test.Tasty.HUnit ( (@=?) )
+import Miso.Css.Test.IncludeCssDefs (foo, bar, style)
+import Miso.Css.Test.StyleMock
+import Test.Tasty ( testGroup, TestTree )
+import Test.Tasty.HUnit ( testCase, (@=?) )
 
-unit_camelCaseLiteral :: IO ()
-unit_camelCaseLiteral = ("foo-bar" :: String) @=? class_ fooBar
-
-unit_camelCaseLiteral_Id :: IO ()
-unit_camelCaseLiteral_Id = ("foo-bar" :: String) @=? id_ FooBar
-
-unit_exportCssInputAsIs :: IO ()
-unit_exportCssInputAsIs = css @=? style
+test_include_css :: TestTree
+test_include_css =
+  testGroup "IncludeCss"
+  [ go """<div class="foo"></div>""" $ div_ =. foo
+  , go """<div class="foo"><div class="bar"></div></div>""" $
+    div_ =. foo </ div_ =. bar
+  , testGroup "bad"
+    [ doNotTc [] [[[(JustNow, [C "foo"], [], [])]]] $ div_ =. bar
+    ]
+  , testCase "golden" (css @=? style)
+  ]
   where
     css :: String
     css = """
-      .foo-bar {
-        color: #1212ff;
-      }
-
-      #foo-bar {
+      .foo > .bar {
         color: #f212ff;
       }
     """ <> "\n"

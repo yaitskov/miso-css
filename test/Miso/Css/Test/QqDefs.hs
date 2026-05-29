@@ -1,14 +1,10 @@
 {-# LANGUAGE QuasiQuotes #-}
+-- {-# OPTIONS_GHC -ddump-splices #-}
+{-# OPTIONS_GHC -Wno-missing-signatures #-}
 module Miso.Css.Test.QqDefs where
 
-import Miso.Css ( css, CssIdentifier(id_) )
+import Miso.Css (css)
 
-[css|.foo-bar {
+[css|.foo > .bar {
   color: #1212ff;
-}
-
-#foo-bar {
-  color: #f212ff;
 }|]
-
-data F212ff

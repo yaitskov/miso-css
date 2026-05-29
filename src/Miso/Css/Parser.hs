@@ -11,12 +11,12 @@ type SelIdxByLeafClass = M.Map Ident Selectors
 indexByLeafClass :: SelIdxByLeafClass -> RelTag -> SelIdxByLeafClass
 indexByLeafClass m = \case
   [] -> m
-  rs@((_, ts) : t) ->
-    case mapMaybe atomicClassName ts.tagSubSelectors of
+  reversedSels@((_, lastTs) : t) ->
+    case mapMaybe atomicClassName lastTs.tagSubSelectors of
       [] -> indexByLeafClass m t
-      cns -> indexByLeafClass (foldl' (go rs) m cns) t
+      clsNames -> indexByLeafClass (foldr (go $ reverse reversedSels) m clsNames) t
   where
-    go rs b i = M.insertWith (<>) i [rs] b
+    go rrs i = M.insertWith (<>) i [rrs]
 
 atomicClassName :: TagSubSelector -> Maybe Ident
 atomicClassName = \case
@@ -24,7 +24,7 @@ atomicClassName = \case
   _ -> Nothing
 
 indexFile :: CssFile -> SelIdxByLeafClass
-indexFile = foldl' indexByLeafClass mempty . fileToSelectors
+indexFile = foldl' indexByLeafClass mempty . fmap reverse . fileToSelectors
 
 fileToSelectors :: CssFile -> Selectors
 fileToSelectors cf = concatMap ruleToSelectors cf.rules
