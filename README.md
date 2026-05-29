@@ -21,13 +21,16 @@ found in the input.  A type of such constant describes all possible
 ways the class can used in DOM.
 
 Besides that the library ships **E** type represting an HTML element
-and a set of operators for constructing tags and combining them in DOM tree.
-E is miso **VNode** type protected with a few type parameters.
+and a set of operators for constructing tags and combining them in DOM
+tree.  E is miso
+[VNode](https://hackage-content.haskell.org/package/miso/docs/Miso-Types.html#t:View)
+type protected with a few type parameters.
 
 ### Composing tags
 
 Before jumping straight to style application lets get familiar with
-syntax for tag composition because it is different in vanilla miso.
+syntax for tag composition because it is different in vanilla
+[miso](https://hackage-content.haskell.org/package/miso).
 
 #### Appending a child
 ```haskell
@@ -83,16 +86,18 @@ go = div_ =< MH.p_ [] [ "h" ]
 ```
 
 ``` html
-<div><p>h</p></div>
+<div>
+  <p>h</p>
+</div>
 ```
 
 #### Adding tag attribute
 ```haskell
-a_ =<| atr @"url" "http://link.com"
+a_ =<| atr @"href" "http://link.com"
 ```
 
 ``` html
-<a url="http://link.com"></a>
+<a href="http://link.com"></a>
 ```
 
 #### Adding tag ID
@@ -124,13 +129,13 @@ div_ =. red
 [css|.form .red { color: red; }|]
 
 div_ =. form =# Proxy @"footer"
-  </ (a_ =. red =<| atr @"url" "/click.php?x=1"
+  </ (a_ =. red =<| atr @"href" "/click.php?x=1"
       </ (span_ <@ "Click me"))
 ```
 
 ``` html
 <div class="form" id="footer>
-  <a class="red" url="/click.php?x=1">
+  <a class="red" href="/click.php?x=1">
     <span>Click me</span>
   </a>
 </div>
@@ -165,7 +170,7 @@ div_ =. b
 ```
 
 The error message is a list of triples where first element is a list of not
-applied classes, ids (hashes), tag names, attribute name.
+applied classes, ids (hashes), tag names or attribute names.
 
 ```haskell
 [([C "a"], [], [])]
@@ -187,9 +192,9 @@ div_ =. c
 
 #### B element
 
-When selector with child relation is partially applied the triple
+When selector with a child relation is partially applied the triple
 contains B element.  It is a synthetic element preventing the failed
-rule from matching latery somewhere upper in DOM by an accident.
+rule from matching later somewhere upper in DOM by an accident.
 
 ```haskell
 [css|.a > .b {}|]
@@ -204,7 +209,7 @@ div_ </ div_ =. b
 #### One of classes is missing
 
 Second element of triple is a list of applied classes.  It helps to
-understand what worket out and what didn't in a composite selector.
+understand what worked out and what didn't in a composite selector.
 
 ```haskell
 [css|.a.b > .c {}|]
@@ -249,7 +254,9 @@ data E
      (children :: [[SubSeg]])
 ```
 
-First two parameters **model** and **action** are forwarded to miso VNode type.
+First two parameters **model** and **action** are forwarded to miso
+[VNode](https://hackage-content.haskell.org/package/miso/docs/Miso-Types.html#t:View)
+type.
 
 #### en - tag name
 
@@ -271,12 +278,12 @@ children.  *Es* parameter of *CDATA* element is **Atomic**.
 
 #### re - root indicator
 
-It is the root tag indicator. A root tag cannot be adopted.
+It is a root tag indicator. A root tag cannot be adopted.
 
 ```haskell
 [css|:root > .a {}|]
 ```
-#### ei - tag hash
+#### ei - HTML tag hash
 
 ```haskell
 div_ =# Proxy @"Duncan"
@@ -285,9 +292,9 @@ div_ =# Proxy @"Duncan"
 #### atrs - names of tag attributes
 
 ```
-:t a_ =# Proxy @"x" =<| atr @"url" "/click.php?x=1"
+:t a_ =# Proxy @"x" =<| atr @"href" "/click.php?x=1"
 ...
-       ["url", "id"]
+       ["href", "id"]
 ...
 ```
 #### knownIds - hashes used in tag descendants
@@ -301,7 +308,7 @@ div_ =# Proxy @"Duncan"
 
 #### cls - classes applied to tag
 
-Classes applied to children and descedants are not included.
+Classes applied to children and descendants are not included.
 ```
 :t div_ =. a =. b </ div_ =. c
 ...
@@ -311,7 +318,7 @@ Classes applied to children and descedants are not included.
 
 #### l - ancestor constraints
 
-The parameter describes requirements to be satisfied in ancestor of
+The parameter describes requirements to be satisfied in ancestors of
 the tag.
 
 ```haskell
