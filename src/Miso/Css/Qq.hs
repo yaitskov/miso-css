@@ -2,12 +2,11 @@
 module Miso.Css.Qq where
 
 import CssParser as CP ( parseCssP, P(Failed, Ok) )
-import Data.String ( IsString )
 import Miso.Css.Gen ( selectorsToDecs )
 import Miso.Css.Parser ( indexFile )
+import Miso.Css.Prelude
 import Language.Haskell.TH.Quote ( QuasiQuoter(..) )
 import Language.Haskell.TH.Syntax
-import Prelude
 
 {- | quasi quoter accepts CSS and generates definitions for CSS classes
 
@@ -38,13 +37,25 @@ css = QuasiQuoter
   { quoteExp  = \_ -> fail "quoteExp: not implemented"
   , quotePat  = \_ -> fail "quotePat: not implemented"
   , quoteType = \_ -> fail "quoteType: not implemented"
-  , quoteDec  = cssToDecs Nothing n
+  , quoteDec  = cssToDecs Nothing
   }
-  where
-    n = mkName "cssAsLiteralText"
 
-cssToDecs :: Maybe FilePath -> Name -> String -> Q [Dec]
-cssToDecs fileNameMb inputExportName s =
+newtype CssTextConstName = CssTextConstName { unCssTextConstName :: String } deriving newtype (Show, Eq, Ord)
+
+-- | default name is @cssAsLiteralText@
+renameCssTextConst :: String -> Q [Dec]
+renameCssTextConst = pure . const [] <=< putQ . CssTextConstName
+
+getInputExportName :: Q Name
+getInputExportName =  mkName . maybe "cssAsLiteralText" unCssTextConstName <$>  getQ
+
+cssToDecs :: Maybe FilePath -> String -> Q [Dec]
+cssToDecs fileNameMb s = do
+  inputExportName <- getInputExportName
+  cssToDecs' inputExportName fileNameMb s
+
+cssToDecs' :: Name -> Maybe FilePath -> String -> Q [Dec]
+cssToDecs' inputExportName fileNameMb s =
   case parseCssP s of
     Ok cssFile ->
       (cssAsLiteralTextD inputExportName s <>) <$> selectorsToDecs (indexFile cssFile)

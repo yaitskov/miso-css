@@ -3,7 +3,8 @@ module Miso.Css
   ( css
   , cssToDecs
   , includeCss
+  , renameCssTextConst
   ) where
 
-import Miso.Css.Qq ( css, cssToDecs )
+import Miso.Css.Qq ( css, cssToDecs, renameCssTextConst )
 import Miso.Css.IncludeCss ( includeCss )

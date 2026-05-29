@@ -4,7 +4,7 @@
 {-# OPTIONS_GHC -Wno-missing-signatures #-}
 module Miso.Css.Test.QqAsserts where
 
-import Miso.Css (css)
+import Miso.Css
 import Miso.Css.Test.StyleMock
 import Test.Tasty ( testGroup, TestTree )
 import Test.Tasty.HUnit ( testCase, (@=?) )
@@ -12,6 +12,10 @@ import Test.Tasty.HUnit ( testCase, (@=?) )
 [css|.foo > .bar {
   color: #1212ff;
 }|]
+
+renameCssTextConst "css2"
+[css|.x {}
+|]
 
 test_qq :: TestTree
 test_qq =
@@ -23,6 +27,7 @@ test_qq =
     [ doNotTc [] [[[(JustNow, [C "foo"], [], [])]]] $ div_ =. bar
     ]
   , testCase "golden" (expectedCss @=? cssAsLiteralText)
+  , testCase "golden2" ((".x {}\n" :: String) @=? css2)
   ]
   where
     expectedCss :: String
