@@ -1,11 +1,17 @@
 {-# LANGUAGE MultilineStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
+-- {-# OPTIONS_GHC -ddump-splices #-}
+{-# OPTIONS_GHC -Wno-missing-signatures #-}
 module Miso.Css.Test.QqAsserts where
 
-import Miso.Css.Test.QqDefs (foo, bar, cssAsLiteralText)
+import Miso.Css (css)
 import Miso.Css.Test.StyleMock
 import Test.Tasty ( testGroup, TestTree )
 import Test.Tasty.HUnit ( testCase, (@=?) )
 
+[css|.foo > .bar {
+  color: #1212ff;
+}|]
 
 test_qq :: TestTree
 test_qq =
@@ -16,11 +22,11 @@ test_qq =
   , testGroup "bad"
     [ doNotTc [] [[[(JustNow, [C "foo"], [], [])]]] $ div_ =. bar
     ]
-  , testCase "golden" (css @=? cssAsLiteralText)
+  , testCase "golden" (expectedCss @=? cssAsLiteralText)
   ]
   where
-    css :: String
-    css = """
+    expectedCss :: String
+    expectedCss = """
       .foo > .bar {
         color: #1212ff;
       }

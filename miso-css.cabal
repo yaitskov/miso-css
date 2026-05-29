@@ -148,9 +148,7 @@ test-suite test
   type: exitcode-stdio-1.0
   main-is: Driver.hs
   other-modules:
-    Miso.Css.Test.IncludeCssDefs
     Miso.Css.Test.IncludeCssAsserts
-    Miso.Css.Test.QqDefs
     Miso.Css.Test.QqAsserts
     Miso.Css.Test.Style
     Miso.Css.Test.StyleMock
