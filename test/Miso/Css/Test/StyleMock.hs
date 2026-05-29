@@ -36,6 +36,9 @@ go :: forall m a en es r ei atrs kids cls ecs children.
 go ex el =
   testCase (C8.unpack $ C8.toStrict ex) do
     domLbs el @?= ex
+
+infixl 1 `go`
+
 a :: OrClass '[] "a"
 a = TopOrClass pa
 b :: OrClass '[] "b"
