@@ -7,9 +7,6 @@ import Miso (MisoString)
 import Miso.Css.Test.StyleMock
 import Miso.Html qualified as MH
 import Miso.Html.Property qualified as MH
-import Test.Tasty ( testGroup, TestTree )
-import Test.Tasty.HUnit ( testCase, (@?=) )
-
 
 test_style :: TestTree
 test_style =

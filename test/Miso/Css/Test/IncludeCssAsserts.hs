@@ -4,10 +4,7 @@
 {-# OPTIONS_GHC -Wno-missing-signatures #-}
 module Miso.Css.Test.IncludeCssAsserts where
 
-import Miso.Css ( includeCss )
 import Miso.Css.Test.StyleMock
-import Test.Tasty ( testGroup, TestTree )
-import Test.Tasty.HUnit ( testCase, (@=?) )
 
 -- following imports just simplify output of dumped slices
 -- import Miso.Css.Gen
@@ -27,11 +24,11 @@ test_include_css =
   , testGroup "bad"
     [ doNotTc [] [[[(JustNow, [C "foo"], [], [])]]] $ div_ =. bar
     ]
-  , testCase "golden" (css @=? style)
+  , testCase "golden" (expectedCss @=? style)
   ]
   where
-    css :: String
-    css = """
+    expectedCss :: String
+    expectedCss = """
       .foo > .bar {
         color: #f212ff;
       }

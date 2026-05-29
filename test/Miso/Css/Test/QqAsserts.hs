@@ -4,10 +4,7 @@
 {-# OPTIONS_GHC -Wno-missing-signatures #-}
 module Miso.Css.Test.QqAsserts where
 
-import Miso.Css
 import Miso.Css.Test.StyleMock
-import Test.Tasty ( testGroup, TestTree )
-import Test.Tasty.HUnit ( testCase, (@=?) )
 
 [css|.foo > .bar {
   color: #1212ff;
@@ -15,6 +12,12 @@ import Test.Tasty.HUnit ( testCase, (@=?) )
 
 renameCssTextConst "css2"
 [css|.x {}
+|]
+
+renameCssTextConst "classlessSelectors"
+[css|
+body > div[x] {}
+#xxx {}
 |]
 
 test_qq :: TestTree

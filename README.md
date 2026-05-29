@@ -351,10 +351,12 @@ List of lists of children subselectors in reverse order.
 ### Hello World
 
 ``` haskell
+{-# LANGUAGE QuasiQuotes #-}
+{-# OPTIONS_GHC -Wno-missing-signatures #-}
 module Main where
 
 import Miso
-import Miso.Css.Miso
+import Miso.Css
 
 -- default name is "cssAsLiteralText"
 renameCssTextConst "cssFromQq"

@@ -1,5 +1,4 @@
 {-# LANGUAGE BlockArguments #-}
-{-# LANGUAGE MultilineStrings #-}
 {-# LANGUAGE RequiredTypeArguments #-}
 
 module Miso.Css.Test.StyleMock
@@ -9,18 +8,8 @@ module Miso.Css.Test.StyleMock
 
 import Data.ByteString.Lazy qualified as L
 import Data.ByteString.Char8 qualified as C8
-import Miso.Css.Gen as X
-import Miso.Css.Miso as X
-import Miso.Css.Operator as X
-import Miso.Css.Prelude as X
-import Miso.Css.Segment as X
-import Miso.Css.Sibling
-import Miso.Css.Style as X
 import Miso.Css.Style.PostAppend as Post
-import Miso.Css.Tags as X
-import Miso.Html as X ( ToHtml(toHtml) )
-import Test.Tasty ( TestTree )
-import Test.Tasty.HUnit ( testCase, (@?=) )
+import Miso.Css.Test.Prelude as X
 
 domLbs :: forall m a en es r ei atrs kids cls ecs children.
   ( MapMaybeFilterOutFullyMatchedHead '[] ecs ~ '[]

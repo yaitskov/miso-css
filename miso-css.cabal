@@ -312,6 +312,8 @@ description:
     === Hello World
     #hello-world#
     
+    > {-# LANGUAGE QuasiQuotes #-}
+    > {-# OPTIONS_GHC -Wno-missing-signatures #-}
     > module Main where
     >
     > import Miso
@@ -428,9 +430,11 @@ test-suite test
   main-is: Driver.hs
   other-modules:
     Miso.Css.Test.IncludeCssAsserts
+    Miso.Css.Test.Prelude
     Miso.Css.Test.QqAsserts
     Miso.Css.Test.Style
     Miso.Css.Test.StyleMock
+    Miso.Css.Test.Th.APlusBPlusC
     Discovery
   hs-source-dirs:
     test

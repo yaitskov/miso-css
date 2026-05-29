@@ -79,9 +79,11 @@ test-suite test
   main-is: Driver.hs
   other-modules:
     Miso.Css.Test.IncludeCssAsserts
+    Miso.Css.Test.Prelude
     Miso.Css.Test.QqAsserts
     Miso.Css.Test.Style
     Miso.Css.Test.StyleMock
+    Miso.Css.Test.Th.APlusBPlusC
     Discovery
   hs-source-dirs:
     test
