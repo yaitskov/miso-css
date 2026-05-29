@@ -1,11 +1,6 @@
-{-# LANGUAGE MultilineStrings #-}
-{-# LANGUAGE QuasiQuotes #-}
-{-# OPTIONS_GHC -Wno-missing-signatures #-}
 module Miso.Css.Test.Th.APlusBPlusC where
 
-
 import Miso.Css.Test.StyleMock hiding (a, b, c)
-
 
 [css|.a + .b + .c {} |]
 

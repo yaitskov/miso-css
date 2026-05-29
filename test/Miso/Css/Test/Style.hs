@@ -1,6 +1,4 @@
 {-# LANGUAGE BlockArguments #-}
-{-# LANGUAGE MultilineStrings #-}
-
 module Miso.Css.Test.Style where
 
 import Miso (MisoString)

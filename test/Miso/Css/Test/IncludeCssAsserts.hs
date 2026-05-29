@@ -1,7 +1,4 @@
-{-# LANGUAGE MultilineStrings #-}
-{-# LANGUAGE TemplateHaskell #-}
 -- {-# OPTIONS_GHC -ddump-splices #-}
-{-# OPTIONS_GHC -Wno-missing-signatures #-}
 module Miso.Css.Test.IncludeCssAsserts where
 
 import Miso.Css.Test.StyleMock

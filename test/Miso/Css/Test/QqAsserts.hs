@@ -1,7 +1,4 @@
-{-# LANGUAGE MultilineStrings #-}
-{-# LANGUAGE QuasiQuotes #-}
 -- {-# OPTIONS_GHC -ddump-splices #-}
-{-# OPTIONS_GHC -Wno-missing-signatures #-}
 module Miso.Css.Test.QqAsserts where
 
 import Miso.Css.Test.StyleMock

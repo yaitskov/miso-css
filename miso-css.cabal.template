@@ -77,6 +77,9 @@ test-suite test
   import: base
   type: exitcode-stdio-1.0
   main-is: Driver.hs
+  default-extensions:
+    MultilineStrings
+    QuasiQuotes
   other-modules:
     Miso.Css.Test.IncludeCssAsserts
     Miso.Css.Test.Prelude
@@ -87,7 +90,7 @@ test-suite test
     Discovery
   hs-source-dirs:
     test
-  ghc-options: -Wall -rtsopts -threaded -main-is Driver
+  ghc-options: -Wall -Wno-missing-signatures -rtsopts -threaded -main-is Driver
   build-depends:
     , bytestring
     , miso
