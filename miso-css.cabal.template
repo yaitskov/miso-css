@@ -2,7 +2,7 @@ cabal-version: 3.0
 name:          miso-css
 version:       0.0.1
 
-synopsis:      verified CSS application
+synopsis:      wrapper over miso checking CSS classes applicability through dependent types
 description:
 homepage:      http://github.com/yaitskov/miso-css
 license:       BSD-3-Clause

@@ -2,78 +2,357 @@ cabal-version: 3.0
 name:          miso-css
 version:       0.0.1
 
-synopsis:      verified CSS application
+synopsis:      wrapper over miso checking CSS classes applicability through dependent types
 description:
     == Motivation
     #motivation#
-
-    CSS rule is applied to all nodes matching its selector. CSS class of an
-    atomic selector can be applied to any DOM element, but that is not true
-    for classes in composite selectors, consisting from a sequence of
-    classes or plain tag name.
-
-    The general rule is anscetors of every node, a CSS class is applied to,
-    should containt all classes in the selector preceding the appiled class.
-
+    
+    __miso-css__ is an evolutionary step ahead from
+    <https://github.com/yaitskov/css-class-bindings css-class-bindings>.
+    
+    CSS class of an atomic selector can be applied to any DOM element, but
+    that is not true for classes used in composite selectors. Rules with
+    partially matched selectors are silently ignored by browser and this
+    open a door for introducing bugs during consequent changes.
+    Css-class-binding just cannot cope with such problem and miso-css uses
+    dependent types to track what CSS classes can applied to HTML elements.
+    
     == Usage
     #usage#
-
-    === Quasi-quote input
-    #quasi-quote-input#
-
+    
+    miso-css runs a css parser to extract CSS selectors and generates
+    Haskell constants for every CSS class with correspondent name that is
+    found in the input. A type of such constant describes all possible ways
+    the class can used in DOM.
+    
+    Besides that the library ships __E__ type represting an HTML element and
+    a set of operators for constructing tags and combining them in DOM tree.
+    E is miso
+    <https://hackage-content.haskell.org/package/miso/docs/Miso-Types.html#t:View VNode>
+    type protected with a few type parameters.
+    
+    === Composing tags
+    #composing-tags#
+    
+    Before jumping straight to style application lets get familiar with
+    syntax for tag composition because it is different in vanilla
+    <https://hackage-content.haskell.org/package/miso miso>.
+    
+    ==== Appending a child
+    #appending-a-child#
+    
+    > div_ </ p_
+    
+    > <div>
+    >   <p></p>
+    > </div>
+    
+    ==== Adding a sibling
+    #adding-a-sibling#
+    
+    > ul_ </ li_ </ li_
+    
+    > <ul>
+    >   <li></li>
+    >   <li></li>
+    > </ul>
+    
+    ==== Appending a child to child
+    #appending-a-child-to-child#
+    
+    > body_ </ (section_ </ p_)
+    
+    > <body>
+    >   <section>
+    >     <p></p>
+    >   </section>
+    > </body>
+    
+    ==== Adding CDATA
+    #adding-cdata#
+    
+    > a_ <@ "click"
+    
+    > <a>click</a>
+    
+    ==== Adding a raw miso DOM chunk
+    #adding-a-raw-miso-dom-chunk#
+    
+    > import Miso.Html qualified as MH
+    > import Miso.Html.Property qualified as MH
+    >
+    > go = div_ =< MH.p_ [] [ "h" ]
+    
+    > <div>
+    >   <p>h</p>
+    > </div>
+    
+    ==== Adding tag attribute
+    #adding-tag-attribute#
+    
+    > a_ =<| atr @"href" "http://link.com"
+    
+    > <a href="http://link.com"></a>
+    
+    ==== Adding tag ID
+    #adding-tag-id#
+    
+    > div_ =# (Proxy @"footer")
+    
+    > <div id="footer"></div>
+    
+    ==== Applying CSS class
+    #applying-css-class#
+    
     > {-# LANGUAGE QuasiQuotes #-}
-    > module Css where
-    > import Miso.Css ( css )
+    > {-# OPTIONS_GHC -Wno-missing-signatures #-}
+    > [css|.red { color: red; }|]
+    >
+    > div_ =. red
+    
+    > <div class="red"></div>
+    
+    ==== Mix all at once
+    #mix-all-at-once#
+    
+    > {-# LANGUAGE QuasiQuotes #-}
+    > {-# OPTIONS_GHC -Wno-missing-signatures #-}
+    > [css|.form .red { color: red; }|]
+    >
+    > div_ =. form =# Proxy @"footer"
+    >   </ (a_ =. red =<| atr @"href" "/click.php?x=1"
+    >       </ (span_ <@ "Click me"))
+    
+    > <div class="form" id="footer>
+    >   <a class="red" href="/click.php?x=1">
+    >     <span>Click me</span>
+    >   </a>
+    > </div>
+    
+    === Breaking rules
+    #breaking-rules#
+    
+    Until now all above samples must be valid and should type check. This
+    section enumerates HTML snippets with ill-applied classes, expected
+    errors and comments.
+    
+    ==== There can be only one
+    #there-can-be-only-one#
+    
+    An element ID can be used once in a HTML document.
+    
+    > div_ =# (Proxy @"Duncan MacLeod")
+    >   </ div_ =# (Proxy @"Duncan MacLeod")
+    
+    > Couldn't match type: '[DuplicatedId "Duncan MacLeod"]
+    >                with: '[]
+    
+    ==== Parent class is missing
+    #parent-class-is-missing#
+    
+    > [css|.a .b {}|]
+    >
+    > div_ =. b
+    
+    The error message is a list of triples where first element is a list of
+    not applied classes, ids (hashes), tag names or attribute names.
+    
+    > [([C "a"], [], [])]
+    
+    Class __a__ and __b__ are missing:
+    
+    > [css|.a .b .c {}|]
+    >
+    > div_ =. c
+    
+    > [ ([C "b"], [], [])
+    > , ([C "a"], [], [])
+    > ]
+    
+    ==== B element
+    #b-element#
+    
+    When selector with a child relation is partially applied the triple
+    contains B element. It is a synthetic element preventing the failed rule
+    from matching later somewhere upper in DOM by an accident.
+    
+    > [css|.a > .b {}|]
+    >
+    > div_ </ div_ =. b
+    
+    > [([B, C "a"], [], [])]
+    
+    ==== One of classes is missing
+    #one-of-classes-is-missing#
+    
+    Second element of triple is a list of applied classes. It helps to
+    understand what worked out and what didn’t in a composite selector.
+    
+    > [css|.a.b > .c {}|]
+    >
+    > div_ =. a </ div_ =. c
+    
+    > [([B, C "b"], [C "a"], [])]
+    
+    ===== Sibling is missing
+    #sibling-is-missing#
+    
+    The third element of triple explains sibling errors.
+    
+    > [css|.a + .b {}|]
+    >
+    > div_ </ div_ =. b
+    
+    Class __a__ is not applied:
+    
+    > [([B], [], [[ [B], [C "a"]]])]
+    
+    === E type
+    #e-type#
+    
+    > data E
+    >      model
+    >      action
+    >      (en :: Symbol)
+    >      (es :: ElementStructure)
+    >      (re :: Maybe Root)
+    >      (ei :: Maybe Symbol)
+    >      (atrs :: [Symbol])
+    >      (knownIds :: KnownIDS)
+    >      (cls :: [Symbol])
+    >      (l :: [[[Seg]]])
+    >      (children :: [[SubSeg]])
+    
+    First two parameters __model__ and __action__ are forwarded to miso
+    <https://hackage-content.haskell.org/package/miso/docs/Miso-Types.html#t:View VNode>
+    type.
+    
+    ==== en - tag name
+    #en---tag-name#
+    
+    In ghci session:
+    
+    > :t div_
+    > div_
+    >   :: E model
+    >        action
+    >        "div"
+    > ...
+    
+    ==== es - element structure
+    #es---element-structure#
+    
+    Most often its value is __Composite__ which means that the element could
+    have children. /Es/ parameter of /CDATA/ element is __Atomic__.
+    
+    ==== re - root indicator
+    #re---root-indicator#
+    
+    It is a root tag indicator. A root tag cannot be adopted.
+    
+    > [css|:root > .a {}|]
+    
+    ==== ei - HTML tag hash
+    #ei---html-tag-hash#
+    
+    > div_ =# Proxy @"Duncan"
+    
+    ==== atrs - names of tag attributes
+    #atrs---names-of-tag-attributes#
+    
+    > :t a_ =# Proxy @"x" =<| atr @"href" "/click.php?x=1"
+    > ...
+    >        ["href", "id"]
+    > ...
+    
+    ==== knownIds - hashes used in tag descendants
+    #knownids---hashes-used-in-tag-descendants#
+    
+    > :t div_ =# Proxy @"x" </ div_ =# Proxy @"y" </ div_ =# Proxy @"z"
+    > ...
+    >        (KnownIds '[] ["x", "y", "z"])
+    > ...
+    
+    ==== cls - classes applied to tag
+    #cls---classes-applied-to-tag#
+    
+    Classes applied to children and descendants are not included.
+    
+    > :t div_ =. a =. b </ div_ =. c
+    > ...
+    >        ["b", "a"]
+    > ...
+    
+    ==== l - ancestor constraints
+    #l---ancestor-constraints#
+    
+    The parameter describes requirements to be satisfied in ancestors of the
+    tag.
+    
+    > [css|.a .b {}|]
+    
+    > :t div_ =. b
+    > ...
+    >        '[ '[['(AutoClean, '[], '[], '[]),
+    >              '(NowOrLater, '[C "a"], '[], '[])]]]
+    > ...
+    
+    ==== children
+    #children#
+    
+    List of lists of children subselectors in reverse order.
+    
+    > [css|.a {} .b {}|]
+    
+    > :t div_ </ ul_ =. a =. b </ ol_ =# Proxy @"x"
+    > ...
+    >        [[I "x", T "ol"], [T "ul", C "b", C "a"]]
+    > ...
+    
+    === Hello World
+    #hello-world#
+    
+    > module Main where
+    >
+    > import Miso
+    > import Miso.Css.Miso
+    >
+    > -- default name is "cssAsLiteralText"
+    > renameCssTextConst "cssFromQq"
     >
     > [css|
     > .c .b .a {
     >   color: #fc2c2c;
     > }
     > |]
-
-    > module Main where
     >
-    > import Css (a, b, c, cssAsLiteralText)
-    > import Miso
-    > import Miso.Css.Html (toView, div_, button_, class_)
+    > -- instead of quasi-quoted CSS
+    > -- the whole CSS file can be included with:
+    > --   includeCss "assets/style.css"
     >
     > app :: App Model Action
     > app = (component emptyModel updateModel viewModel)
-    >   { styles = [ Style cssAsLiteralText ] }
+    >   { styles = [ Style cssFromQq ] }
     >
     > viewModel :: Model -> View Model Action
     > viewModel _ =
     >   toView $
-    >     div_ [ class_ c ]
-    >       [ div_ [ class_ b ]
-    >         [ button_
-    >             [ class_ a ]
-    >             [ "Submit" ]
-    >         ]
-    >       ]
-
-    === File input
-    #file-input#
-
-    > {-# LANGUAGE TemplateHaskell #-}
-    > module Css where
-    > import Miso.Css ( includeCss )
-    >
-    > includeCss "assets/style.css"
-
-    > module Main where
-    >
-    > import Css (a, b, c, style)
-    > -- ...
-
+    >     html_
+    >       </ (body_
+    >         </ (div_ =. c
+    >           </ (div_ =. b
+    >             </ (button_ =. a
+    >               <@ "Submit"))))
+    
     == Development environment
     #development-environment#
-
+    
     HLS should be available inside the default dev shell.
-
+    
     > $ nix develop
     > $ emacs src/*/*/Qq.hs &
     > $ cabal build
+    > $ cabal test --test-option=--hide-successes
 homepage:      http://github.com/yaitskov/miso-css
 license:       BSD-3-Clause
 license-file:  LICENSE
@@ -127,8 +406,8 @@ library
     Miso.Css.Sibling
     Miso.Css.Style
     Miso.Css.Style.E
-    Miso.Css.Style.OrClass
     Miso.Css.Style.AncestorConstraint
+    Miso.Css.Style.OrClass
     Miso.Css.Style.PostAppend
     Miso.Css.Style.PreAppend
     Miso.Css.Tags
@@ -158,7 +437,6 @@ test-suite test
   ghc-options: -Wall -rtsopts -threaded -main-is Driver
   build-depends:
     , bytestring
-    , css-parser         < 1
     , miso
     , miso-css
     , QuickCheck
