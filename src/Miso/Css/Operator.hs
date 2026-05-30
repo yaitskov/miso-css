@@ -3,9 +3,8 @@ module Miso.Css.Operator where
 import Data.Proxy ( Proxy )
 import GHC.TypeLits ( KnownSymbol )
 import Miso ( View )
-import Miso.Css.List ( PrependMb, Append )
 import Miso.Css.Prelude ( Maybe(Just, Nothing) )
-import Miso.Css.Segment
+import Miso.Css.Segment ( SubSeg(A, T), ApplyClass )
 import Miso.Css.Style
 import Miso.JSON ( ToJSON )
 
@@ -13,14 +12,7 @@ import Miso.JSON ( ToJSON )
   E model action en Composite r ei atrs kids cls eacs children ->
   OrClass p c ->
   E model action en Composite r ei ("class" : atrs) kids (c:cls)
-    (ApplyClass
-      (ApplySubSegsToElem
-         (PrependMb
-           (MbSymToMbI ei)
-           (T en : A "class" : Append (SymsToAtrs atrs) (SymsToSubSeg cls)))
-         p)
-      (C c)
-      eacs)
+    (ConstraintsAfterClassApp ei en atrs cls p c eacs)
     children
 e =. c = AppClsE c e
 
@@ -55,7 +47,7 @@ infixl 3 =<|
     ("id" : catrs)
     (AddTagId ei kids)
     cls
-    (ApplyClass '[] (A "id") (ApplyClass '[] (I ei) eacs))
+    (ConstraintsAfteId ei eacs)
     children
 e =# i = IdE i e
 
@@ -69,9 +61,7 @@ infixl 3 =#
     (MergeKids cKids pKids)
     pcls
     (ConstraintsAfterAppend pchildren ceacs pi pen patrs pcls peacs)
-    (PrependMb
-        (MbSymToMbI ci)
-        (T cen : SymsToSubSeg ccls) : pchildren)
+    (ChildrenConstrAfterAppend ci cen ccls pchildren)
 
 p </ c = AppendChildE c p
 
@@ -91,7 +81,7 @@ infixl 2 </
     (MergeKids EmptyKids kids)
     pcls
     (ConstraintsAfterAppend pchildren '[] pi pen patrs pcls peacs)
-    ('[T CD] : pchildren)
+    (ChildrenConstrAfterAppend Nothing CD '[] pchildren)
 (<@) = (</)
 
 infixl 2 <@

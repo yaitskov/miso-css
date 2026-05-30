@@ -87,6 +87,24 @@ type family ConstraintsAfterAppend pchildren ceacs pi pe pAtrs pcls peacs where
         (T pe : Append (SymsToAtrs pAtrs) (SymsToSubSeg pcls)))
       peacs
 
+type family ChildrenConstrAfterAppend ci ce ccls pchildren where
+  ChildrenConstrAfterAppend ci ce ccls pchildren =
+    PrependMb (MbSymToMbI ci) (T ce : SymsToSubSeg ccls) : pchildren
+
+type family ConstraintsAfterClassApp ei en atrs cls p c eacs where
+  ConstraintsAfterClassApp ei en atrs cls p c eacs =
+    ApplyClass
+      (ApplySubSegsToElem
+        (PrependMb
+          (MbSymToMbI ei)
+          (T en : A "class" : Append (SymsToAtrs atrs) (SymsToSubSeg cls)))
+        p)
+      (C c)
+      eacs
+
+type family ConstraintsAfteId ei eacs where
+  ConstraintsAfteId ei eacs = ApplyClass '[] (A "id") (ApplyClass '[] (I ei) eacs)
+
 data E
      model
      action
@@ -121,20 +139,13 @@ data E
       E model action en Composite r (Just ei) ("id" : atrs)
         (AddTagId ei kids)
         cls
-        (ApplyClass '[] (A "id") (ApplyClass '[] (I ei) eacs))
+        (ConstraintsAfteId ei eacs)
         children
     AppClsE :: (KnownSymbol en, KnownSymbol c) =>
       OrClass p c ->
       E model action en Composite r ei atrs kIds cls eacs children ->
       E model action en Composite r ei ("class" : atrs) kIds (c : cls)
-        (ApplyClass
-          (ApplySubSegsToElem
-             (PrependMb
-               (MbSymToMbI ei)
-               (T en : A "class" : Append (SymsToAtrs atrs) (SymsToSubSeg cls)))
-             p)
-          (C c)
-          eacs)
+        (ConstraintsAfterClassApp ei en atrs cls p c eacs)
         children
     AppendChildE :: KnownSymbol ce =>
       E model action ce cs Nothing ci cAtrs ckIds ccls ceacs cchildren ->
@@ -143,9 +154,7 @@ data E
       (MergeKids ckIds pkIds)
       pcls
       (ConstraintsAfterAppend pchildren ceacs pi pe pAtrs pcls peacs)
-      (PrependMb
-        (MbSymToMbI ci)
-        (T ce : SymsToSubSeg ccls) : pchildren)
+      (ChildrenConstrAfterAppend ci ce ccls pchildren)
     -- Miso can render view up to body to support :root the library provide
     -- VirtualBodyE and SealDomE to emulate top DOM elements (body and html) without
     -- generating them because the already exist
