@@ -358,10 +358,14 @@ List of lists of children subselectors in reverse order.
 ``` haskell
 {-# LANGUAGE QuasiQuotes #-}
 {-# OPTIONS_GHC -Wno-missing-signatures #-}
-module Main where
+module Miso.Css.Test.HelloWorld where
 
-import Miso
+import Miso ( component, App, CSS(Style), Component(styles), View )
 import Miso.Css
+import Prelude
+
+type Model = ()
+type Action = ()
 
 -- default name is "cssAsLiteralText"
 renameCssTextConst "cssFromQq"
@@ -377,18 +381,28 @@ renameCssTextConst "cssFromQq"
 --   includeCss "assets/style.css"
 
 app :: App Model Action
-app = (component emptyModel updateModel viewModel)
+app = (component () pure viewModel)
   { styles = [ Style cssFromQq ] }
 
+{-
+<html>
+  <body>
+    <div class="c">
+      <div class="b">
+        <button class="a">
+          Submit
+        </button>
+      </div>
+    </div>
+  </body>
+</html>
+-}
 viewModel :: Model -> View Model Action
-viewModel _ =
-  toView $
-    html_
-      </ (body_
-        </ (div_ =. c
-          </ (div_ =. b
-            </ (button_ =. a
-              <@ "Submit"))))
+viewModel () = toView . html_ . body_ $
+  div_ =. c
+  </ (div_ =. b
+       </ (button_ =. a
+            <@ "Submit"))
 ```
 
 ## Development environment

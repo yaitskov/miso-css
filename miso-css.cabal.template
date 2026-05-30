@@ -83,6 +83,7 @@ test-suite test
     QuasiQuotes
   other-modules:
     Miso.Css.Test.BindEventHandlers
+    Miso.Css.Test.HelloWorld
     Miso.Css.Test.IncludeCssAsserts
     Miso.Css.Test.Prelude
     Miso.Css.Test.QqAsserts
