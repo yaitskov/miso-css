@@ -302,6 +302,16 @@ test_style =
               div_ </ p_ </ (span_ </ div_ =. p_genSib_span_dir_a </ div_)
             , go """<div><div></div><p></p><span><div class="a"></div><div></div></span></div>""" $
               div_ </ div_ </ p_ </ (span_ </ div_ =. div_dirSib_p_genSib_span_dir_a </ div_)
+            , """<div><div></div><p></p><span><div class="a"></div><div class="b"></div><div></div></span></div>"""
+              `go`
+              (div_
+               </ div_
+               </ p_
+               </ (span_
+                    </ div_ =. p_genSib_span_dir_a
+                    </ div_ =. div_dirSib_p_genSib_span_dir_a_dirSib_b
+                    </ div_
+                  ))
             ]
           , testGroup "mix2"
             [ go """<div><div></div><p></p><span><div class="a"></div><div class="b"></div></span></div>"""  $

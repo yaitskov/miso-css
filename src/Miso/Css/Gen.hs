@@ -115,15 +115,21 @@ foldShiftedTsTr tsFilter lastTs tsTrs =
       [| (CssOrphan jn & ($(tsTrsToAddSiblingBranchExp tsSrs) >>> $(lastSelectorToExp tsFilter lastTs))) |]
 
     (tsSrs, [(ts, Child)]) ->
-      [| (CssOrphan jn & ($(tsTrsToAddSiblingBranchExp tsSrs) >>> $(tagSelectorToExp passAll ts))) |]
+      [| (CssOrphan jn & (   $(tsTrsToAddSiblingBranchExp tsSrs)
+                         >>> NextAncestor jn
+                         >>> $(tagSelectorToExp passAll ts))) |]
     (tsSrs, [(ts, Descendant)]) ->
-      [| (CssOrphan nol & ($(tsTrsToAddSiblingBranchExp tsSrs) >>> $(tagSelectorToExp passAll ts))) |]
+      [| (CssOrphan nol & (   $(tsTrsToAddSiblingBranchExp tsSrs)
+                          >>> NextAncestor jn
+                          >>> $(tagSelectorToExp passAll ts))) |]
 
     (tsSrs, (ts, Child) : tsTrs') ->
       [| (CssOrphan jn & (   $(tsTrsToAddSiblingBranchExp tsSrs)
+                         >>> NextAncestor jn
                          >>> $(go (tagSelectorToExp passAll ts) tsTrs'))) |]
     (tsSrs, (ts, Descendant) : tsTrs') ->
       [| (CssOrphan nol & (   $(tsTrsToAddSiblingBranchExp tsSrs)
+                          >>> NextAncestor jn
                           >>> $(go (tagSelectorToExp passAll ts) tsTrs'))) |]
 
     o -> fail $ "Unexpected tsTrs" <> show tsTrs <>  " due case: " <> show o
