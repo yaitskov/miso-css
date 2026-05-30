@@ -298,6 +298,10 @@ test_style =
                                                    , (NowOrLater, [T "div"])]])]]] $
                 div_ </ div_ </ p_ </ (span_ </ (div_ </ div_ =. a </ div_ =. div_genSib_p_dirSib_span_dir_a_dirSib_b))
               ]
+            , go """<div><p></p><span><div class="a"></div><div></div></span></div>""" $
+              div_ </ p_ </ (span_ </ div_ =. p_genSib_span_dir_a </ div_)
+            , go """<div><div></div><p></p><span><div class="a"></div><div></div></span></div>""" $
+              div_ </ div_ </ p_ </ (span_ </ div_ =. div_dirSib_p_genSib_span_dir_a </ div_)
             ]
           , testGroup "mix2"
             [ go """<div><div></div><p></p><span><div class="a"></div><div class="b"></div></span></div>"""  $

@@ -118,9 +118,10 @@ page ::
       '[] (T HTML)
       (ApplyClass
        '[] R
-       (MapMaybeFilterOutFullyMatchedHead
-        '[]
-        (Append (ApplyClass '[] (T BODY) ceacs)
-         '[])))))
+       (Append
+        (MapMaybeFilterOutFullyMatchedHead
+          '[]
+          (ApplyClass '[] (T BODY) ceacs))
+         '[]))))
     '[ '[T BODY]]
 page x  = html_ (body_ x)

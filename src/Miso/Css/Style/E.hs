@@ -28,7 +28,7 @@ elAtrVal (ElAtr v) = v
 
 type family AppendChild children ceacs pcls peacs where
   AppendChild children ceacs '[] peacs =
-    Post.MapMaybeFilterOutFullyMatchedHead children (Append ceacs peacs)
+    (Append (Post.MapMaybeFilterOutFullyMatchedHead children ceacs) peacs)
   AppendChild children ceacs (pclsH : pcls') peacs =
     AppendChild children (ApplyClass '[] pclsH ceacs) pcls' peacs
 

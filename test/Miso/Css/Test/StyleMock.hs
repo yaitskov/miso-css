@@ -381,6 +381,32 @@ pspan = Proxy @"span"
 pp :: Proxy "p"
 pp = Proxy @"p"
 
+-- _ | p ~ span > .a
+p_genSib_span_dir_a =
+  AddAncestorBranch
+    (   CssOrphan jn    -- >
+    & ( AddSiblingBranch
+          (   AddSegToSibBranch (AddSib (Proxy @T) pp $ NilSib nol)
+              NilSibBranch )
+    >>> NextAncestor jn -- siblings
+    >>> AddSubSegConstraint (Proxy @T) pspan
+    >>> NextAncestor acn
+      ) )
+    a
+
+-- _ | div + p ~ span > .a
+div_dirSib_p_genSib_span_dir_a =
+  AddAncestorBranch
+    (   CssOrphan jn    -- >
+    & ( AddSiblingBranch
+          (   AddSegToSibBranch (AddSib (Proxy @T) pdiv $ NilSib jn)
+          >>> AddSegToSibBranch (AddSib (Proxy @T) pp $ NilSib nol)
+          $   NilSibBranch )
+    >>> NextAncestor jn -- siblings
+    >>> AddSubSegConstraint (Proxy @T) pspan
+    >>> NextAncestor acn) )
+    a
+
 -- _ | div + p ~ span > .a + .b
 div_dirSib_p_genSib_span_dir_a_dirSib_b :: OrClass
   '[ [ '(AutoClean, '[], '[], '[])
