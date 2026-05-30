@@ -1,6 +1,8 @@
 module Miso.Css.Test.Prelude (module X) where
 
+import Miso as X (MisoString, ms)
 import Miso.Css as X ( includeCss )
+import Miso.Css.Event as X
 import Miso.Css.Gen as X
 import Miso.Css.Miso as X
 import Miso.Css.Operator as X

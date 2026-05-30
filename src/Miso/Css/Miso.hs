@@ -11,13 +11,13 @@ import Miso
 import Miso.JSON ( ToJSON(..) )
 import Miso.Html ( nodeHtml )
 import Miso.Html.Property (id_)
+import Miso.Css.Event ( EventFactory(mkActionAttribute) )
 import Miso.Css.List ( PrependMb, Append )
 import Miso.Css.Segment ( SubSeg(T, R), ApplyClass, MbSymToMbI )
 import Miso.Css.Style
 import Miso.Css.Style.PostAppend
     ( MapMaybeFilterOutFullyMatchedHead )
 import Miso.Css.Prelude
-
 
 injectClass :: MisoString -> View model action -> View model action
 injectClass cn = \case
@@ -54,6 +54,13 @@ injectElementAtr ik v = \case
         | otherwise -> Property pn pnv : injId atrs'
       o : atrs' -> o : injId atrs'
 
+injectEventHandler :: EventFactory ef action =>
+  ef -> View model action -> View model action
+injectEventHandler ef = \case
+  VNode ns tg atrs children ->
+    VNode ns tg (mkActionAttribute ef : atrs) children
+  o -> o
+
 className :: forall p c. KnownSymbol c => OrClass p c -> MisoString
 className _ =
   ms $ symbolVal $ Proxy @c
@@ -74,6 +81,7 @@ eToView = \case
   AppClsE orCls e -> injectClass (className orCls) (eToView e)
   AppendChildE ce pe -> appChild (Tagged @Child (eToView ce)) (eToView pe)
   AddAtrE a e -> injectElementAtr (elAtrKey a) (elAtrVal a) (eToView e)
+  BindEventE ef e -> injectEventHandler ef (eToView e)
   SealDomE e -> eToView e
   VirtualBodyE b -> eToView b
 

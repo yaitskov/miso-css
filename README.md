@@ -109,6 +109,11 @@ div_ =# (Proxy @"footer")
 <div id="footer"></div>
 ```
 
+#### Binding event handler
+```haskell
+button_ =! onClick YourActionDc
+```
+
 #### Applying CSS class
 ```haskell
 {-# LANGUAGE QuasiQuotes #-}

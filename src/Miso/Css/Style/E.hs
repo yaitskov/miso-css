@@ -4,19 +4,26 @@
 
 module Miso.Css.Style.E where
 
-import Data.Proxy ( Proxy(..) )
 import Data.String ( IsString(..) )
 import Data.Type.Bool ( If )
 import GHC.Generics (Generic)
 import GHC.TypeLits ( KnownSymbol, Symbol, symbolVal )
 import Miso ( MisoString, ms, View )
-import Miso.JSON ( ToJSON )
-import Miso.Css.List
+import Miso.Css.Event (EventFactory)
+import Miso.Css.List ( MergeUniq, Elem, PrependMb, Append )
+import Miso.Css.Prelude
 import Miso.Css.Segment
+    ( SubSeg(C, R, I, T, A),
+      ApplySubSegsToElem,
+      ApplyClass,
+      Seg,
+      MbSymToMbI )
 import Miso.Css.Style.OrClass ( OrClass )
 import Miso.Css.Style.PostAppend qualified as Post
 import Miso.Css.Style.PreAppend qualified as Pre
-import Prelude
+import Miso.JSON ( ToJSON )
+
+
 
 newtype ElAtr k v = ElAtr v deriving newtype (Eq, Ord, Show, ToJSON) deriving (Generic)
 
@@ -133,7 +140,7 @@ data E
       E model action en Composite r ei (k : atrs) kids cls
         (ApplyClass '[] (A k) eacs)
         children
-    IdE :: (KnownSymbol ei) =>
+    IdE :: KnownSymbol ei =>
       Proxy ei ->
       E model action en Composite r Nothing atrs kids cls eacs children ->
       E model action en Composite r (Just ei) ("id" : atrs)
@@ -141,6 +148,10 @@ data E
         cls
         (ConstraintsAfteId ei eacs)
         children
+    BindEventE :: EventFactory ef action =>
+      ef ->
+      E model action en es r ei atrs kids cls eacs children ->
+      E model action en es r ei atrs kids cls eacs children
     AppClsE :: (KnownSymbol en, KnownSymbol c) =>
       OrClass p c ->
       E model action en Composite r ei atrs kIds cls eacs children ->

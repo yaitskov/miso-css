@@ -1,7 +1,6 @@
 {-# LANGUAGE BlockArguments #-}
 module Miso.Css.Test.Style where
 
-import Miso (MisoString)
 import Miso.Css.Test.StyleMock
 import Miso.Html qualified as MH
 import Miso.Html.Property qualified as MH

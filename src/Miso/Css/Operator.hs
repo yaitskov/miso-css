@@ -3,10 +3,12 @@ module Miso.Css.Operator where
 import Data.Proxy ( Proxy )
 import GHC.TypeLits ( KnownSymbol )
 import Miso ( View )
+import Miso.Css.Event
 import Miso.Css.Prelude ( Maybe(Just, Nothing) )
 import Miso.Css.Segment ( SubSeg(A, T), ApplyClass )
 import Miso.Css.Style
 import Miso.JSON ( ToJSON )
+
 
 (=.) :: (KnownSymbol en, KnownSymbol c) =>
   E model action en Composite r ei atrs kids cls eacs children ->
@@ -52,6 +54,15 @@ infixl 3 =<|
 e =# i = IdE i e
 
 infixl 3 =#
+
+(=!) ::
+  EventFactory ef action =>
+  E model action en es r ei atrs kids cls eacs children ->
+  ef ->
+  E model action en es r ei atrs kids cls eacs children
+e =! ef = BindEventE ef e
+
+infixl 3 =!
 
 (</) ::
   KnownSymbol cen =>

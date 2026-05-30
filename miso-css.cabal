@@ -101,6 +101,11 @@ description:
     
     > <div id="footer"></div>
     
+    ==== Binding event handler
+    #binding-event-handler#
+    
+    > button_ =! onClick YourActionDc
+    
     ==== Applying CSS class
     #applying-css-class#
     
@@ -396,6 +401,7 @@ library
   exposed-modules:
     Miso.Css
     Miso.Css.Escape
+    Miso.Css.Event
     Miso.Css.Gen
     Miso.Css.IncludeCss
     Miso.Css.List
@@ -432,6 +438,7 @@ test-suite test
     MultilineStrings
     QuasiQuotes
   other-modules:
+    Miso.Css.Test.BindEventHandlers
     Miso.Css.Test.IncludeCssAsserts
     Miso.Css.Test.Prelude
     Miso.Css.Test.QqAsserts
