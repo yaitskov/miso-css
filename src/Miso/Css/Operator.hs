@@ -3,13 +3,11 @@ module Miso.Css.Operator where
 import Data.Proxy ( Proxy )
 import GHC.TypeLits ( KnownSymbol )
 import Miso ( View )
-import Miso.JSON ( ToJSON )
 import Miso.Css.List ( PrependMb, Append )
+import Miso.Css.Prelude ( Maybe(Just, Nothing) )
 import Miso.Css.Segment
 import Miso.Css.Style
-
-import Miso.Css.Style.PreAppend qualified as Pre
-import Miso.Css.Prelude ( Maybe(Just, Nothing) )
+import Miso.JSON ( ToJSON )
 
 (=.) :: (KnownSymbol en, KnownSymbol c) =>
   E model action en Composite r ei atrs kids cls eacs children ->
@@ -70,13 +68,7 @@ infixl 3 =#
   E model action pen Composite r       pi patrs
     (MergeKids cKids pKids)
     pcls
-    (AppendChild
-     pchildren
-     (Pre.MapMaybeFilterOutFullyMatchedHead '[] ceacs)
-     (PrependMb
-       (MbSymToMbI pi)
-       (T pen : Append (SymsToAtrs patrs) (SymsToSubSeg pcls)))
-     peacs)
+    (ConstraintsAfterAppend pchildren ceacs pi pen patrs pcls peacs)
     (PrependMb
         (MbSymToMbI ci)
         (T cen : SymsToSubSeg ccls) : pchildren)
@@ -98,13 +90,7 @@ infixl 2 </
     patrs
     (MergeKids EmptyKids kids)
     pcls
-    (AppendChild
-     pchildren
-     '[]
-     (PrependMb
-       (MbSymToMbI pi)
-       (T pen : Append (SymsToAtrs patrs) (SymsToSubSeg pcls)))
-     peacs)
+    (ConstraintsAfterAppend pchildren '[] pi pen patrs pcls peacs)
     ('[T CD] : pchildren)
 (<@) = (</)
 
@@ -123,13 +109,7 @@ infixl 2 <@
     atrs
     (MergeKids EmptyKids kids)
     pcls
-    (AppendChild
-     pchildren
-     '[]
-     (PrependMb
-       (MbSymToMbI pi)
-       (T pen : Append (SymsToAtrs atrs) (SymsToSubSeg pcls)))
-     peacs)
+    (ConstraintsAfterAppend pchildren '[] pi pen atrs pcls peacs)
     ('[T RMV] : pchildren)
 p =< rmv = p </ RawMisoView rmv
 

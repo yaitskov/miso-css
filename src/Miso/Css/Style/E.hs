@@ -77,6 +77,16 @@ type HTML = "html"
 type BODY = "body"
 data Root = Root deriving (Show, Eq)
 
+type family ConstraintsAfterAppend pchildren ceacs pi pe pAtrs pcls peacs where
+  ConstraintsAfterAppend pchildren ceacs pi pe pAtrs pcls peacs =
+    AppendChild
+      pchildren
+      (Pre.MapMaybeFilterOutFullyMatchedHead '[] ceacs)
+      (PrependMb
+        (MbSymToMbI pi)
+        (T pe : Append (SymsToAtrs pAtrs) (SymsToSubSeg pcls)))
+      peacs
+
 data E
      model
      action
@@ -132,13 +142,7 @@ data E
       E model action pe Composite r pi pAtrs
       (MergeKids ckIds pkIds)
       pcls
-      (AppendChild
-       pchildren
-       (Pre.MapMaybeFilterOutFullyMatchedHead '[] ceacs)
-       (PrependMb
-        (MbSymToMbI pi)
-        (T pe : Append (SymsToAtrs pAtrs) (SymsToSubSeg pcls)))
-       peacs)
+      (ConstraintsAfterAppend pchildren ceacs pi pe pAtrs pcls peacs)
       (PrependMb
         (MbSymToMbI ci)
         (T ce : SymsToSubSeg ccls) : pchildren)

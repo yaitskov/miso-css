@@ -19,8 +19,6 @@ import Miso.Css.Style.PostAppend
 import Miso.Css.Prelude
 
 
-
-
 injectClass :: MisoString -> View model action -> View model action
 injectClass cn = \case
   VNode ns tg atrs children -> VNode ns tg (injClass atrs) children
