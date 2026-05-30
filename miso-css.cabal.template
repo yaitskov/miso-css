@@ -90,6 +90,7 @@ test-suite test
     Miso.Css.Test.Th.AplusBplusC
     Miso.Css.Test.Th.DivPlusPtildeSpanMoreAplusB
     Miso.Css.Test.Th.DotAdotB
+    Miso.Css.Test.Th.PmoreXplusYplusZmoreAspaceBmoreC
     Discovery
   hs-source-dirs:
     test
