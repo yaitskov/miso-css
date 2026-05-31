@@ -356,8 +356,8 @@ description:
     >   { styles = [ Style cssFromQq ] }
     >
     > {-
-    > <html>
-    >   <body>
+    > viewModel produce following HTML snippet:
+    >
     >     <div class="c">
     >       <div class="b">
     >         <button class="a">
@@ -365,8 +365,13 @@ description:
     >         </button>
     >       </div>
     >     </div>
-    >   </body>
-    > </html>
+    >
+    > html_ and body_ don't produce tags,
+    > because miso mount cannot be higher than body tag.
+    >
+    > they serve just for type checking purpose
+    > (e.g. html_ satisfies :root pseudo class)
+    >
     > -}
     > viewModel :: Model -> View Model Action
     > viewModel () = toView . html_ . body_ $
@@ -384,6 +389,8 @@ description:
     > $ emacs src/*/*/Qq.hs &
     > $ cabal build
     > $ cabal test --test-option=--hide-successes
+    
+    miso-css was developed with miso v1.9
 homepage:      http://github.com/yaitskov/miso-css
 license:       BSD-3-Clause
 license-file:  LICENSE
@@ -474,6 +481,7 @@ test-suite test
     Miso.Css.Test.Th.DivPlusPtildeSpanMoreAplusB
     Miso.Css.Test.Th.DotAdotB
     Miso.Css.Test.Th.PmoreXplusYplusZmoreAspaceBmoreC
+    Miso.Css.Test.Th.RootMoreA
     Discovery
   hs-source-dirs:
     test

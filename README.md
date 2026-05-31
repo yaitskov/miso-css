@@ -396,8 +396,8 @@ app = (component () pure viewModel)
   { styles = [ Style cssFromQq ] }
 
 {-
-<html>
-  <body>
+viewModel produce following HTML snippet:
+
     <div class="c">
       <div class="b">
         <button class="a">
@@ -405,8 +405,13 @@ app = (component () pure viewModel)
         </button>
       </div>
     </div>
-  </body>
-</html>
+
+html_ and body_ don't produce tags,
+because miso mount cannot be higher than body tag.
+
+they serve just for type checking purpose
+(e.g. html_ satisfies :root pseudo class)
+
 -}
 viewModel :: Model -> View Model Action
 viewModel () = toView . html_ . body_ $
@@ -426,3 +431,5 @@ $ emacs src/*/*/Qq.hs &
 $ cabal build
 $ cabal test --test-option=--hide-successes
 ```
+
+miso-css was developed with miso v1.9

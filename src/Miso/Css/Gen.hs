@@ -2,12 +2,7 @@ module Miso.Css.Gen where
 
 import Control.Monad.State ( MonadState(put), runState, State )
 import CssParser
-    ( TagSubSelector(Hash, AtomicClass, HasAttr),
-      TagRelation(..),
-      TagSelector(tagSubSelectors, tagName),
-      Ident(..),
-      AttrName(attrName),
-      TagName(AmpersandTag, TagName) )
+import CssParser.Rule.Pseudo as P
 import Data.Map.Strict qualified as M
 import Data.Text (unpack)
 import Language.Haskell.TH.Syntax
@@ -81,6 +76,8 @@ tagSubSelectorToExp = \case
     fmap (:[]) [| AddSubSegConstraint (Proxy @A) $(identToSymbol an.attrName) |]
   Hash i ->
     fmap (:[]) [| AddSubSegConstraint (Proxy @A) $(identToSymbol i) |]
+  AtomicPseudoClass P.Root ->
+    fmap (:[]) [| AddRoot |]
   _ -> pure []
 
 -- every Exp represents a function :: AncestorConstraint -> AncestorConstraint
