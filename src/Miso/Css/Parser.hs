@@ -2,6 +2,7 @@ module Miso.Css.Parser where
 
 import CssParser as CP
 import Data.Map.Strict qualified as M
+import Data.Set qualified as S
 import Miso.Css.Prelude
 
 type RelTag = [ (TagRelation, TagSelector) ]
@@ -23,8 +24,31 @@ atomicClassName = \case
   AtomicClass x -> Just x
   _ -> Nothing
 
-indexFile :: CssFile -> SelIdxByLeafClass
-indexFile = foldl' indexByLeafClass mempty . fmap reverse . fileToSelectors
+hashOnly :: TagSubSelector -> Maybe Ident
+hashOnly = \case
+  Hash i -> pure i
+  _ -> Nothing
+
+hashesOfTagSelector  :: TagSelector -> [ Ident ]
+hashesOfTagSelector ts = mapMaybe hashOnly ts.tagSubSelectors
+
+hashIndex :: Selectors -> S.Set Ident
+hashIndex = S.fromList . concatMap (hashesOfTagSelector . snd) . concat
+
+data CssIndex
+  = CssIndex
+  { byClass :: SelIdxByLeafClass
+  , hashSet :: [Ident]
+  }
+
+indexFile :: CssFile -> CssIndex
+indexFile cf =
+  CssIndex
+  { byClass = foldl' indexByLeafClass mempty $ fmap reverse sels
+  , hashSet = S.toList $ hashIndex sels
+  }
+  where
+    sels = fileToSelectors cf
 
 fileToSelectors :: CssFile -> Selectors
 fileToSelectors cf = concatMap ruleToSelectors cf.rules
@@ -38,7 +62,6 @@ selectorToTagRelSel = \case
   Selector ftr fts os -> (fromMaybe Descendant ftr, fts) : os
   PeSelector ftr fts os _ -> (fromMaybe Descendant ftr, fts) : os
   PeSelectorOnly {} -> []
-
 
 extractSelectors :: CssRule -> [[Selector]]
 extractSelectors = \case

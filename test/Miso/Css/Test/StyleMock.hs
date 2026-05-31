@@ -64,6 +64,11 @@ pc = Proxy @"c"
 pd :: Proxy "d"
 pd = Proxy @"d"
 
+type Ai = ElementId "a"
+type Bi = ElementId "b"
+type Ci = ElementId "c"
+type Di = ElementId "d"
+
 nol_c :: OrClass '[ '[ '(NowOrLater, '[], '[], '[])]] "c"
 nol_c = AddAncestorBranch (CssOrphan nol) c
 jn_c :: OrClass '[ '[ '(JustNow, '[], '[], '[])]] "c"

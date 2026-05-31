@@ -331,14 +331,14 @@ test_style =
             ]
           ]
         , testGroup "id"
-          [ go """<div id="a"></div>""" $ div_ =# pa
-          , go """<div id="a"><div id="b"></div></div>""" $ div_ =# pa </ div_ =# pb
+          [ go """<div id="a"></div>""" $ div_ =# Ai
+          , go """<div id="a"><div id="b"></div></div>""" $ div_ =# Ai </ div_ =# Bi
           , testGroup "duplicated ID"
-            [ doNotTc [DuplicatedId "b"] []  $ div_ =# pb </ div_ =# pb
-            , doNotTc [DuplicatedId "b"] []  $ div_ </ div_ =# pb </ div_ =# pb
-            , doNotTc [DuplicatedId "b"] []  $ div_ </ div_ =# pb </ div_ </ div_ =# pb
-            , doNotTc [DuplicatedId "b"] []  $ div_ =# pb </ (div_ </ (div_ </ div_ =# pb))
-            , doNotTc [DuplicatedId "b"] []  $ div_ =# pb </ (div_ =# pc </ (div_ =# pa </ div_ =# pb))
+            [ doNotTc [DuplicatedId "b"] []  $ div_ =# Bi </ div_ =# Bi
+            , doNotTc [DuplicatedId "b"] []  $ div_ </ div_ =# Bi </ div_ =# Bi
+            , doNotTc [DuplicatedId "b"] []  $ div_ </ div_ =# Bi </ div_ </ div_ =# Bi
+            , doNotTc [DuplicatedId "b"] []  $ div_ =# Bi </ (div_ </ (div_ </ div_ =# Bi))
+            , doNotTc [DuplicatedId "b"] []  $ div_ =# Bi </ (div_ =# Ci </ (div_ =# Ai </ div_ =# Bi))
             ]
           ]
         , testGroup "attr"
@@ -351,23 +351,23 @@ test_style =
           ]
         , testGroup "id+class+raw"
           [ go """<div id="a" class="a"><p>h</p></div>""" $
-            div_ =# pa =. a =< MH.p_ [] [ "h" ]
+            div_ =# Ai =. a =< MH.p_ [] [ "h" ]
           , go """<div id="b"><div class="a"><i class="rc">aaa</i></div></div>""" $
-            div_ =# pb </ (div_ =. id_a =<  MH.i_ [ MH.class_ "rc" ] [ "aaa" ])
+            div_ =# Bi </ (div_ =. id_a =<  MH.i_ [ MH.class_ "rc" ] [ "aaa" ])
           ]
         , testGroup "id+class"
-          [ go """<div id="a" class="a"></div>""" $ div_ =# pa =. a_id_a
-          , go """<div class="a" id="a"></div>""" $ div_ =. a_id_a =# pa
+          [ go """<div id="a" class="a"></div>""" $ div_ =# Ai =. a_id_a
+          , go """<div class="a" id="a"></div>""" $ div_ =. a_id_a =# Ai
           , testGroup "#a is on parent but required to be in tag with class"
             [ doNotTc [] [[[(AutoClean, [B], [I "a"], [])]]] $
-              div_ =# pa </ (div_  =. a_id_a )
+              div_ =# Ai </ (div_  =. a_id_a )
             ]
           , go """<div id="a"><div class="b"></div></div>""" $
-            div_ =# pa </ div_ =. b
+            div_ =# Ai </ div_ =. b
           , go """<div id="b"><div class="a"></div></div>""" $
-            div_ =# pb </ div_ =. id_a
+            div_ =# Bi </ div_ =. id_a
           , go """<div id="c" class="a"><div class="b"></div></div>""" $
-            div_ =# pc =. a </ div_ =. idC_and_a_b
+            div_ =# Ci =. a </ div_ =. idC_and_a_b
           ]
         , testGroup "class"
           [ go """<div class="a"><div class="b"></div></div>""" $

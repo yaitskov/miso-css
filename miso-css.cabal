@@ -94,13 +94,6 @@ description:
     
     > <a href="http://link.com"></a>
     
-    ==== Adding tag ID
-    #adding-tag-id#
-    
-    > div_ =# (Proxy @"footer")
-    
-    > <div id="footer"></div>
-    
     ==== Binding event handler
     #binding-event-handler#
     
@@ -117,6 +110,23 @@ description:
     
     > <div class="red"></div>
     
+    ==== Adding tag ID
+    #adding-tag-id#
+    
+    Handmade tag id:
+    
+    > div_ =# ElementId "footer"
+    
+    Generated tag id:
+    
+    > {-# LANGUAGE QuasiQuotes #-}
+    > {-# OPTIONS_GHC -Wno-missing-signatures #-}
+    > [css|#footer { color: red; }|]
+    >
+    > div_ =# Footer
+    
+    > <div id="footer"></div>
+    
     ==== Mix all at once
     #mix-all-at-once#
     
@@ -124,7 +134,7 @@ description:
     > {-# OPTIONS_GHC -Wno-missing-signatures #-}
     > [css|.form .red { color: red; }|]
     >
-    > div_ =. form =# Proxy @"footer"
+    > div_ =. form =# ElementId "footer"
     >   </ (a_ =. red =<| atr @"href" "/click.php?x=1"
     >       </ (span_ <@ "Click me"))
     
@@ -146,8 +156,8 @@ description:
     
     An element ID can be used once in a HTML document.
     
-    > div_ =# (Proxy @"Duncan MacLeod")
-    >   </ div_ =# (Proxy @"Duncan MacLeod")
+    > div_ =# ElementId "Duncan MacLeod"
+    >   </ div_ =# ElementId "Duncan MacLeod"
     
     > Couldn't match type: '[DuplicatedId "Duncan MacLeod"]
     >                with: '[]
@@ -260,12 +270,12 @@ description:
     ==== ei - HTML tag hash
     #ei---html-tag-hash#
     
-    > div_ =# Proxy @"Duncan"
+    > div_ =# ElementId "Duncan"
     
     ==== atrs - names of tag attributes
     #atrs---names-of-tag-attributes#
     
-    > :t a_ =# Proxy @"x" =<| atr @"href" "/click.php?x=1"
+    > :t a_ =# ElementId "x" =<| atr @"href" "/click.php?x=1"
     > ...
     >        ["href", "id"]
     > ...
@@ -273,7 +283,7 @@ description:
     ==== knownIds - hashes used in tag descendants
     #knownids---hashes-used-in-tag-descendants#
     
-    > :t div_ =# Proxy @"x" </ div_ =# Proxy @"y" </ div_ =# Proxy @"z"
+    > :t div_ =# ElementId "x" </ div_ =# ElementId "y" </ div_ =# ElementId "z"
     > ...
     >        (KnownIds '[] ["x", "y", "z"])
     > ...
@@ -309,7 +319,7 @@ description:
     
     > [css|.a {} .b {}|]
     
-    > :t div_ </ ul_ =. a =. b </ ol_ =# Proxy @"x"
+    > :t div_ </ ul_ =. a =. b </ ol_ =# ElementId "x"
     > ...
     >        [[I "x", T "ol"], [T "ul", C "b", C "a"]]
     > ...

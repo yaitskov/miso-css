@@ -6,8 +6,6 @@ module Miso.Css.Style.E where
 
 import Data.String ( IsString(..) )
 import Data.Type.Bool ( If )
-import GHC.Generics (Generic)
-import GHC.TypeLits ( KnownSymbol, Symbol, symbolVal )
 import Miso ( MisoString, ms, View )
 import Miso.Css.Event (EventFactory)
 import Miso.Css.List ( MergeUniq, Elem, PrependMb, Append )
@@ -23,7 +21,7 @@ import Miso.Css.Style.PostAppend qualified as Post
 import Miso.Css.Style.PreAppend qualified as Pre
 import Miso.JSON ( ToJSON )
 
-
+data ElementId (ei :: Symbol)
 
 newtype ElAtr k v = ElAtr v deriving newtype (Eq, Ord, Show, ToJSON) deriving (Generic)
 

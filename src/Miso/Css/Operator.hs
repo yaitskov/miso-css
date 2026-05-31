@@ -1,10 +1,10 @@
+{-# LANGUAGE RequiredTypeArguments #-}
+{-# LANGUAGE UndecidableInstances #-}
 module Miso.Css.Operator where
 
-import Data.Proxy ( Proxy )
-import GHC.TypeLits ( KnownSymbol )
 import Miso ( View )
-import Miso.Css.Event
-import Miso.Css.Prelude ( Maybe(Just, Nothing) )
+import Miso.Css.Event ( EventFactory )
+import Miso.Css.Prelude ( Proxy(..), Maybe(Just, Nothing), KnownSymbol, type (~) )
 import Miso.Css.Segment ( SubSeg(A, T), ApplyClass )
 import Miso.Css.Style
 import Miso.JSON ( ToJSON )
@@ -33,25 +33,22 @@ e =<| a = AddAtrE a e
 
 infixl 3 =<|
 
-(=#) ::
-  ( KnownSymbol en
-  , KnownSymbol ei
-  ) =>
+(=#) :: forall model action en r catrs kids cls eacs children ee.
+  (KnownSymbol en, KnownSymbol ee) =>
   E model action en Composite r Nothing catrs kids cls eacs children ->
-  Proxy ei ->
-  E
-    model
+  forall ei -> (ei ~ ElementId ee) =>
+  E model
     action
     en
     Composite
     r
-    (Just ei)
+    (Just ee)
     ("id" : catrs)
-    (AddTagId ei kids)
+    (AddTagId ee kids)
     cls
-    (ConstraintsAfteId ei eacs)
+    (ConstraintsAfteId ee eacs)
     children
-e =# i = IdE i e
+e =# _ = IdE (Proxy @ee) e
 
 infixl 3 =#
 

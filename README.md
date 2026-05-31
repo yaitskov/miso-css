@@ -100,15 +100,6 @@ a_ =<| atr @"href" "http://link.com"
 <a href="http://link.com"></a>
 ```
 
-#### Adding tag ID
-```haskell
-div_ =# (Proxy @"footer")
-```
-
-``` html
-<div id="footer"></div>
-```
-
 #### Binding event handler
 ```haskell
 button_ =! onClick YourActionDc
@@ -127,13 +118,33 @@ div_ =. red
 <div class="red"></div>
 ```
 
+#### Adding tag ID
+
+Handmade tag id:
+```haskell
+div_ =# ElementId "footer"
+```
+
+Generated tag id:
+```haskell
+{-# LANGUAGE QuasiQuotes #-}
+{-# OPTIONS_GHC -Wno-missing-signatures #-}
+[css|#footer { color: red; }|]
+
+div_ =# Footer
+```
+
+``` html
+<div id="footer"></div>
+```
+
 #### Mix all at once
 ```haskell
 {-# LANGUAGE QuasiQuotes #-}
 {-# OPTIONS_GHC -Wno-missing-signatures #-}
 [css|.form .red { color: red; }|]
 
-div_ =. form =# Proxy @"footer"
+div_ =. form =# ElementId "footer"
   </ (a_ =. red =<| atr @"href" "/click.php?x=1"
       </ (span_ <@ "Click me"))
 ```
@@ -157,8 +168,8 @@ classes, expected errors and comments.
 An element ID can be used once in a HTML document.
 
 ```haskell
-div_ =# (Proxy @"Duncan MacLeod")
-  </ div_ =# (Proxy @"Duncan MacLeod")
+div_ =# ElementId "Duncan MacLeod"
+  </ div_ =# ElementId "Duncan MacLeod"
 ```
 
 ```
@@ -291,13 +302,13 @@ It is a root tag indicator. A root tag cannot be adopted.
 #### ei - HTML tag hash
 
 ```haskell
-div_ =# Proxy @"Duncan"
+div_ =# ElementId "Duncan"
 ```
 
 #### atrs - names of tag attributes
 
 ```
-:t a_ =# Proxy @"x" =<| atr @"href" "/click.php?x=1"
+:t a_ =# ElementId "x" =<| atr @"href" "/click.php?x=1"
 ...
        ["href", "id"]
 ...
@@ -305,7 +316,7 @@ div_ =# Proxy @"Duncan"
 #### knownIds - hashes used in tag descendants
 
 ```
-:t div_ =# Proxy @"x" </ div_ =# Proxy @"y" </ div_ =# Proxy @"z"
+:t div_ =# ElementId "x" </ div_ =# ElementId "y" </ div_ =# ElementId "z"
 ...
        (KnownIds '[] ["x", "y", "z"])
 ...
@@ -347,7 +358,7 @@ List of lists of children subselectors in reverse order.
 ```
 
 ```
-:t div_ </ ul_ =. a =. b </ ol_ =# Proxy @"x"
+:t div_ </ ul_ =. a =. b </ ol_ =# ElementId "x"
 ...
        [[I "x", T "ol"], [T "ul", C "b", C "a"]]
 ...

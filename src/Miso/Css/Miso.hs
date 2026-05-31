@@ -1,6 +1,5 @@
 module Miso.Css.Miso where
 
-import GHC.TypeLits ( KnownSymbol, symbolVal )
 import Miso
     ( ms,
       vtext,

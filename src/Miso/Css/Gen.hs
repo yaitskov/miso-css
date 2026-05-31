@@ -11,9 +11,9 @@ import CssParser
 import Data.Map.Strict qualified as M
 import Data.Text (unpack)
 import Language.Haskell.TH.Syntax
-import Miso.Css.Escape ( escapeValIden )
+import Miso.Css.Escape ( escapeTypeIden, escapeValIden )
 import Miso.Css.List ( spanMaybe )
-import Miso.Css.Parser ( SelIdxByLeafClass, Selectors )
+import Miso.Css.Parser ( CssIndex(byClass, hashSet), Selectors )
 import Miso.Css.Prelude
 import Miso.Css.Segment
     ( MatchScope(NowOrLater, AutoClean, JustNow), SubSeg(A, T, C) )
@@ -28,8 +28,15 @@ type TsHierRel = (TagSelector, HierRel)
 data SibRel = SibDir | SibGen deriving (Show, Eq, Ord)
 data HierRel = HierChild | HierDescendant deriving (Show, Eq, Ord)
 
-selectorsToDecs :: SelIdxByLeafClass -> Q [ Dec ]
-selectorsToDecs m = concat <$> mapM go (M.toList m)
+cssIdentToTypeDec :: Ident -> Dec
+cssIdentToTypeDec (Ident i) = TySynD n [] (AppT (ConT ''ElementId) (LitT (StrTyLit ns)))
+  where
+    ns = unpack i
+    n = mkName $ escapeTypeIden ns
+
+selectorsToDecs :: CssIndex -> Q [ Dec ]
+selectorsToDecs cidx =
+  ((cssIdentToTypeDec <$> cidx.hashSet ) <>) . concat <$> mapM go (M.toList cidx.byClass)
   where
     go (i, sels) =
       [d|$(pure . VarP $ identToName i) = $(selectorsToExp i sels)|]

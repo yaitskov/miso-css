@@ -20,9 +20,9 @@ body > div[x] {}
 test_qq :: TestTree
 test_qq =
   testGroup "QQ"
-  [ go """<div class="foo"></div>""" $ div_ =. foo
-  , go """<div class="foo"><div class="bar"></div></div>""" $
-    div_ =. foo </ div_ =.bar
+  [ """<div class="foo"></div>""" `go` div_ =. foo
+  , """<div class="foo"><div class="bar"></div></div>""" `go` div_ =. foo </ div_ =.bar
+  , """<div id="xxx"></div>""" `go` div_ =# Xxx
   , testGroup "bad"
     [ doNotTc [] [[[(JustNow, [C "foo"], [], [])]]] $ div_ =. bar
     ]

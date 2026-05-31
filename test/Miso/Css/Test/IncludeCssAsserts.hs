@@ -3,21 +3,13 @@ module Miso.Css.Test.IncludeCssAsserts where
 
 import Miso.Css.Test.StyleMock
 
--- following imports just simplify output of dumped slices
--- import Miso.Css.Gen
--- import Miso.Css.Segment
--- import Miso.Css.Style
--- import Miso.Css.Style.OrClass
--- import Miso.Css.Prelude
-
 includeCss "test/style.css"
 
 test_include_css :: TestTree
 test_include_css =
   testGroup "IncludeCss"
-  [ go """<div class="foo"></div>""" $ div_ =. foo
-  , go """<div class="foo"><div class="bar"></div></div>""" $
-    div_ =. foo </ div_ =. bar
+  [ """<div class="foo"></div>""" `go` div_ =. foo
+  , """<div class="foo"><div class="bar"></div></div>""" `go` div_ =. foo </ div_ =. bar
   , testGroup "bad"
     [ doNotTc [] [[[(JustNow, [C "foo"], [], [])]]] $ div_ =. bar
     ]
