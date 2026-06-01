@@ -50,12 +50,11 @@ type Seg =
 --     <p class="b">
 -- The solution is to fork a branch if its head segment is JN when it matches
 -- current element and match scope of previous segment in the branch is NL
-data BRANCH = Branch { revSegs :: [Seg], previousMs :: MatchScope }
-type EmptyBranch = Branch '[] NowOrLater
+newtype BRANCH = Branch [Seg]
 
 type SegsOfBranch :: BRANCH -> [Seg]
 type family SegsOfBranch b where
-  SegsOfBranch (Branch sgs _) = sgs
+  SegsOfBranch (Branch sgs) = sgs
 type family UnwrapBranchesInElem e where
   UnwrapBranchesInElem '[] = '[]
   UnwrapBranchesInElem (b : bs) = SegsOfBranch b : UnwrapBranchesInElem bs
@@ -65,7 +64,7 @@ type family UnwrapBranches es where
 
 type SegsToBranch :: [Seg] -> BRANCH
 type family SegsToBranch segs where
-  SegsToBranch sgs = Branch sgs NowOrLater
+  SegsToBranch sgs = Branch sgs
 type MkListOfranches :: [[Seg]] -> [BRANCH]
 type family MkListOfranches segsList where
   MkListOfranches '[] = '[]
@@ -87,11 +86,11 @@ type family ApplySubSegToSeg removed ss sg where
 
 type ApplyClassToBranch :: SubSeg -> BRANCH -> BRANCH
 type family ApplyClassToBranch subSeg sgs where
-  ApplyClassToBranch _ (Branch '[] pms) = (Branch '[] pms)
-  ApplyClassToBranch ss (Branch ( '( mts, um, m, sib) : t) pms) =
+  ApplyClassToBranch _ (Branch '[]) = Branch '[]
+  ApplyClassToBranch ss (Branch ( '( mts, um, m, sib) : t)) =
     Branch
       (ApplySubSegToSeg (RemoveElem '[] ss um) ss '( mts, um, m, sib) : t)
-      pms
+
 
 type ApplyClassToElem :: SubSeg -> [BRANCH]-> [BRANCH]
 type family ApplyClassToElem c bs where
