@@ -12,6 +12,7 @@ import Miso.Css.IncludeCss ( includeCss )
 import Miso.Css.Miso as X
 import Miso.Css.Operator as X
 import Miso.Css.Qq ( css, cssToDecs, renameCssTextConst )
+import Miso.Css.Segment as X (SubSeg (..), MatchScope (..))
 import Miso.Css.Style as X
   ( ElementId, E(..), ElementStructure (..), KnownIDS (..)
   , CD, HTML, BODY, Root, RMV)

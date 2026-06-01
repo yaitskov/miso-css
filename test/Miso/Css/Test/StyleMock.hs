@@ -12,7 +12,7 @@ import Miso.Css.Style.PostAppend as Post
 import Miso.Css.Test.Prelude as X
 
 domLbs :: forall m a en es r ei atrs kids cls ecs children.
-  ( MapMaybeFilterOutFullyMatchedHead '[] ecs ~ '[]
+  ( UnwrapBranches (MapMaybeFilterOutFullyMatchedHead '[] ecs) ~ '[]
   , DuplicatedIds kids ~ '[]
   ) =>
   E m a en es r ei atrs kids cls ecs children ->
@@ -38,7 +38,7 @@ doNotTc _ _ _ =
     () @?= ()
 
 go :: forall m a en es r ei atrs kids cls ecs children.
-  ( MapMaybeFilterOutFullyMatchedHead '[] ecs ~ '[]
+  ( UnwrapBranches (MapMaybeFilterOutFullyMatchedHead '[] ecs) ~ '[]
   , DuplicatedIds kids ~ '[]
   ) =>
   L.ByteString -> E m a en es r ei atrs kids cls ecs children -> TestTree

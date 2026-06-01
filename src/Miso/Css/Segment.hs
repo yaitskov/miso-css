@@ -62,6 +62,33 @@ type family UnwrapBranches es where
   UnwrapBranches '[] = '[]
   UnwrapBranches (e : es) = UnwrapBranchesInElem e : UnwrapBranches es
 
+
+type RemoveMatchScopeInSubSibling :: (MatchScope, [SubSeg]) -> [SubSeg]
+type family RemoveMatchScopeInSubSibling sib where
+  RemoveMatchScopeInSubSibling '( _, sb) = sb
+type RemoveMatchScopeInSibling :: [(MatchScope, [SubSeg])] -> [[SubSeg]]
+type family RemoveMatchScopeInSibling sib where
+  RemoveMatchScopeInSibling '[] = '[]
+  RemoveMatchScopeInSibling (x : xs) =
+    RemoveMatchScopeInSubSibling x : RemoveMatchScopeInSibling xs
+type family RemoveMatchScopeInSiblings sibs where
+  RemoveMatchScopeInSiblings '[] = '[]
+  RemoveMatchScopeInSiblings (s : ss) =
+    RemoveMatchScopeInSibling s : RemoveMatchScopeInSiblings ss
+type family RemoveMatchScopeSegments e where
+  RemoveMatchScopeSegments '[] = '[]
+  RemoveMatchScopeSegments ( '(_, um, m, sibs) : bs) =
+    '(um, m, RemoveMatchScopeInSiblings sibs) : RemoveMatchScopeSegments bs
+
+type family RemoveMatchScopeInBranch b where
+  RemoveMatchScopeInBranch sgs = RemoveMatchScopeSegments sgs
+type family RemoveMatchScopeInElem e where
+  RemoveMatchScopeInElem '[] = '[]
+  RemoveMatchScopeInElem (b : bs) = RemoveMatchScopeInBranch b : RemoveMatchScopeInElem bs
+type family RemoveMatchScope es where
+  RemoveMatchScope '[] = '[]
+  RemoveMatchScope (e : es) = RemoveMatchScopeInElem e : RemoveMatchScope es
+
 type SegsToBranch :: [Seg] -> BRANCH
 type family SegsToBranch segs where
   SegsToBranch sgs = Branch sgs

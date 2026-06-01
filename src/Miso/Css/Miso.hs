@@ -12,7 +12,12 @@ import Miso.Html ( nodeHtml )
 import Miso.Html.Property (id_)
 import Miso.Css.Event ( EventFactory(mkActionAttribute) )
 import Miso.Css.List ( PrependMb, Append )
-import Miso.Css.Segment ( SubSeg(T, R), ApplyClass, MbSymToMbI )
+import Miso.Css.Segment
+    ( ApplyClass,
+      MbSymToMbI,
+      SubSeg(T, R),
+      UnwrapBranches,
+      RemoveMatchScope )
 import Miso.Css.Style
 import Miso.Css.Style.PostAppend
     ( MapMaybeFilterOutFullyMatchedHead )
@@ -85,11 +90,19 @@ eToView = \case
   VirtualBodyE b -> eToView b
 
 toView :: forall m a en es r ei atrs kids cls ecs children.
-  ( MapMaybeFilterOutFullyMatchedHead '[] ecs ~ '[]
+  ( RemoveMatchScope (UnwrapBranches (MapMaybeFilterOutFullyMatchedHead '[] ecs)) ~ '[]
   , DuplicatedIds kids ~ '[]
   ) =>
   E m a en es r ei atrs kids cls ecs children -> View m a
 toView = eToView
+
+-- | More detailed types that 'toView'
+toView' :: forall m a en es r ei atrs kids cls ecs children.
+  ( UnwrapBranches (MapMaybeFilterOutFullyMatchedHead '[] ecs) ~ '[]
+  , DuplicatedIds kids ~ '[]
+  ) =>
+  E m a en es r ei atrs kids cls ecs children -> View m a
+toView' = eToView
 
 body_ ::
   E model action ce   cs        Nothing      ci atrs knownIds ccls ceacs cchildren ->

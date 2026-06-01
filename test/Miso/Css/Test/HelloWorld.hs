@@ -13,7 +13,7 @@ type Action = ()
 renameCssTextConst "cssFromQq"
 
 [css|
-.c .b .a {
+.a .b .c {
   color: #fc2c2c;
 }
 |]
@@ -27,21 +27,17 @@ app = (component () pure viewModel)
   { styles = [ Style cssFromQq ] }
 
 {-
-<html>
-  <body>
-    <div class="c">
+    <div class="a">
       <div class="b">
-        <button class="a">
+        <button class="b">
           Submit
         </button>
       </div>
     </div>
-  </body>
-</html>
 -}
 viewModel :: Model -> View Model Action
 viewModel () = toView . html_ . body_ $
-  div_ =. c
+  div_ =. a
   </ (div_ =. b
-       </ (button_ =. a
+       </ (button_ =. c
             <@ "Submit"))

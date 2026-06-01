@@ -4,7 +4,7 @@
 module Miso.Css.Style.PreAppend where
 
 import Miso.Css.Segment
-    ( BRANCH(Branch), MatchScope(NowOrLater, AutoClean), SubSeg(B) )
+    ( BRANCH(Branch), MatchScope(AutoClean), SubSeg(B) )
 import Miso.Css.Sibling ( MatchSiblings )
 
 
