@@ -1,7 +1,8 @@
 module Miso.Css.Prelude (module X) where
 
 import Control.Arrow as X ((>>>))
-import Control.Monad as X ((<=<))
+import Control.Monad as X ((<=<), foldM, join)
+import Control.Monad.Reader as X
 import Data.Function as X ((&))
 import Data.Functor as X ((<&>))
 import Data.List.NonEmpty as X (toList)

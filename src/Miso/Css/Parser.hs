@@ -9,15 +9,32 @@ type RelTag = [ (TagRelation, TagSelector) ]
 type Selectors = [ RelTag ]
 type SelIdxByLeafClass = M.Map Ident Selectors
 
-indexByLeafClass :: SelIdxByLeafClass -> RelTag -> SelIdxByLeafClass
+data RulesForNonLeafClasses = RulesForNonLeafClasses deriving (Show, Eq, Ord)
+
+type ParserM = Reader (Maybe RulesForNonLeafClasses)
+
+indexByLeafClass :: SelIdxByLeafClass -> RelTag -> ParserM SelIdxByLeafClass
 indexByLeafClass m = \case
-  [] -> m
+  [] -> pure m
   reversedSels@((_, lastTs) : t) ->
     case mapMaybe atomicClassName lastTs.tagSubSelectors of
       [] -> indexByLeafClass m t
-      clsNames -> indexByLeafClass (foldr (go $ reverse reversedSels) m clsNames) t
+      clsNames ->
+        ask >>= \case
+          Just RulesForNonLeafClasses ->
+            indexByLeafClass (foldr (go $ reverse reversedSels) m clsNames) t
+          Nothing ->
+            pure $ addNonLeafClasses (foldr (go $ reverse reversedSels) m clsNames) t
   where
     go rrs i = M.insertWith (<>) i [rrs]
+    addNonLeafClasses m' = \case
+      [] -> m'
+      (_, ts) : t ->
+        addNonLeafClasses
+          (foldl' (\m'' clsName -> M.insertWith (<>) clsName [] m'')
+                  m'
+                  (mapMaybe atomicClassName ts.tagSubSelectors))
+          t
 
 atomicClassName :: TagSubSelector -> Maybe Ident
 atomicClassName = \case
@@ -41,12 +58,10 @@ data CssIndex
   , hashSet :: [Ident]
   }
 
-indexFile :: CssFile -> CssIndex
+indexFile :: CssFile -> ParserM CssIndex
 indexFile cf =
-  CssIndex
-  { byClass = foldl' indexByLeafClass mempty $ fmap reverse sels
-  , hashSet = S.toList $ hashIndex sels
-  }
+  (`CssIndex` S.toList (hashIndex sels)) <$>
+    foldM indexByLeafClass mempty (fmap reverse sels)
   where
     sels = fileToSelectors cf
 

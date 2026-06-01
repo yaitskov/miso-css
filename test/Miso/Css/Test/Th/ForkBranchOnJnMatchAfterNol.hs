@@ -3,12 +3,16 @@ module Miso.Css.Test.Th.ForkBranchOnJnMatchAfterNol where
 
 import Miso.Css.Test.StyleMock hiding (a, b, c, d)
 
+
 [css|/* ForkBranchOnJn */
 .a > .b {}
 .x > .y .z {}
 p > b .e {}
 |]
 
+renameCssTextConst "withNonLeafRules"
+enableRulesForNonLeafClasses
+[css|.xx > .yy .zz {}|]
 test_t = testGroup cssAsLiteralText
   [ """<div class="a"><div class="b"></div></div>"""
     `go` page (div_ =. a </ div_ =. b)
@@ -41,4 +45,10 @@ test_t = testGroup cssAsLiteralText
     $  div_ =. y </ (div_ =. y </ (div_ =. y </ div_ =. z))
   , """<p><b><b><div class="e"></div></b></b></p>"""
     `go` p_ </ (b_ </ (b_ </ div_ =. e))
+  , testGroup withNonLeafRules
+    [ """<div class="xx"><div class="yy"><div class="zz"></div></div></div>"""
+      `go` div_ =. xx </ (div_ =. yy </ div_ =. zz)
+    , doNotTcNoBr [] [[[(JustNow, [B], [C "xx"], [])]]] $
+      div_ =. xx </ (div_ =. yy </ (div_ =. yy </ div_ =. zz))
+    ]
   ]

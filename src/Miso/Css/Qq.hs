@@ -3,7 +3,8 @@ module Miso.Css.Qq where
 
 import CssParser as CP ( parseCssP, P(Failed, Ok) )
 import Miso.Css.Gen ( selectorsToDecs )
-import Miso.Css.Parser ( indexFile )
+import Miso.Css.Parser
+    ( indexFile, RulesForNonLeafClasses(RulesForNonLeafClasses) )
 import Miso.Css.Prelude
 import Language.Haskell.TH.Quote ( QuasiQuoter(..) )
 import Language.Haskell.TH.Syntax
@@ -54,11 +55,21 @@ cssToDecs fileNameMb s = do
   inputExportName <- getInputExportName
   cssToDecs' inputExportName fileNameMb s
 
+enableRulesForNonLeafClasses :: Q [Dec]
+enableRulesForNonLeafClasses =
+  putQ (Just RulesForNonLeafClasses) >> pure []
+
+disableRulesForNonLeafClasses :: Q [Dec]
+disableRulesForNonLeafClasses =
+  putQ (Nothing :: Maybe RulesForNonLeafClasses) >> pure []
+
 cssToDecs' :: Name -> Maybe FilePath -> String -> Q [Dec]
 cssToDecs' inputExportName fileNameMb s =
   case parseCssP s of
-    Ok cssFile ->
-      (cssAsLiteralTextD inputExportName s <>) <$> selectorsToDecs (indexFile cssFile)
+    Ok cssFile -> do
+      parserConfig :: Maybe (Maybe RulesForNonLeafClasses) <- getQ
+      (cssAsLiteralTextD inputExportName s <>) <$>
+        selectorsToDecs (runReader (indexFile cssFile) (join parserConfig))
     Failed cssErr ->
       case fileNameMb of
         Nothing -> fail $ "Failed to parse QuasiQuoted CSS due: " <> cssErr
