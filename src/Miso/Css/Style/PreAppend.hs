@@ -3,7 +3,8 @@
 
 module Miso.Css.Style.PreAppend where
 
-import Miso.Css.Segment ( MatchScope(AutoClean), SubSeg(B), Seg )
+import Miso.Css.Segment
+    ( BRANCH(Branch), MatchScope(NowOrLater, AutoClean), SubSeg(B) )
 import Miso.Css.Sibling ( MatchSiblings )
 
 
@@ -11,39 +12,53 @@ type family FilterOutFullyMatchedHeadCaseSibling
   siblingBranches siblings firstBranchTail r mts matched bs
   where
     FilterOutFullyMatchedHeadCaseSibling '[] siblings firstBranchTail r  _mts _matched bs =
-      FilterOutFullyMatchedHead siblings (firstBranchTail:r) bs
+      FilterOutFullyMatchedHead siblings (Branch firstBranchTail NowOrLater : r) bs
     FilterOutFullyMatchedHeadCaseSibling unmatchedSiblingBranches siblings firstBranchTail r mts matched bs =
       FilterOutFullyMatchedHead
         siblings
-        (( '(mts, '[ B], matched, unmatchedSiblingBranches) : firstBranchTail) : r)
+        (Branch ( '(mts, '[ B], matched, unmatchedSiblingBranches) : firstBranchTail) NowOrLater : r)
+
         bs
 
-type family FilterOutFullyMatchedHead (siblings :: [[SubSeg]]) (r :: [[Seg]]) (bs :: [[Seg]]) where
+type FilterOutFullyMatchedHead :: [[SubSeg]] -> [BRANCH] -> [BRANCH] -> [BRANCH]
+type family FilterOutFullyMatchedHead siblings r bs where
   FilterOutFullyMatchedHead _siblings r '[] = r
   -- empty branch
-  FilterOutFullyMatchedHead _siblings _r ('[] : _t) = '[]
+  FilterOutFullyMatchedHead _siblings _r (Branch '[] _ : _t) = '[]
   -- matched last branch segment
-  FilterOutFullyMatchedHead _siblings _r ( '[ '(AutoClean, '[], _matched, '[]) ] : _bs) = '[]
+  FilterOutFullyMatchedHead _siblings _r
+    (Branch '[ '(AutoClean, '[], _matched, '[]) ] _pms : _bs) = '[]
   -- matched head seg in branch
-  FilterOutFullyMatchedHead siblings r (( '(AutoClean, '[], _matched, '[]) : firstBranchTail) : bs) =
-    FilterOutFullyMatchedHead siblings (firstBranchTail:r) bs
+  FilterOutFullyMatchedHead siblings r
+    (Branch ( '(AutoClean, '[], _matched, '[]) : firstBranchTail) pms : bs) =
+      FilterOutFullyMatchedHead siblings (Branch firstBranchTail pms : r) bs
   -- filter siblings after all
-  FilterOutFullyMatchedHead siblings r (( '(AutoClean, '[], matched, siblingBranches) : firstBranchTail) : bs) =
-    FilterOutFullyMatchedHeadCaseSibling
-      (MatchSiblings '[] siblings siblingBranches)
-      siblings firstBranchTail r AutoClean matched bs
+  FilterOutFullyMatchedHead siblings r
+    (Branch ( '(AutoClean, '[], matched, siblingBranches) : firstBranchTail) pms : bs) =
+      FilterOutFullyMatchedHeadCaseSibling
+        (MatchSiblings '[] siblings siblingBranches)
+        siblings firstBranchTail r AutoClean matched bs
 
   -- skip locked
-  FilterOutFullyMatchedHead _siblings r (( '(mts, B : unMatched, matched, sib) : firstBranchTail) : bs) =
-    FilterOutFullyMatchedHead _siblings (( '(mts, B : unMatched, matched, sib) : firstBranchTail) : r) bs
+  FilterOutFullyMatchedHead siblings r
+    (Branch ( '(mts, B : unMatched, matched, sib) : firstBranchTail) pms : bs) =
+      FilterOutFullyMatchedHead
+        siblings
+        (Branch ( '(mts, B : unMatched, matched, sib) : firstBranchTail) pms : r) bs
 
   -- lock
-  FilterOutFullyMatchedHead _siblings r (( '(AutoClean, unMatched, matched, sib) : firstBranchTail) : bs) =
-    FilterOutFullyMatchedHead _siblings (( '(AutoClean, B : unMatched, matched, sib) : firstBranchTail) : r) bs
+  FilterOutFullyMatchedHead siblings r
+    (Branch ( '(AutoClean, unMatched, matched, sib) : firstBranchTail) pms : bs) =
+      FilterOutFullyMatchedHead
+        siblings
+        (Branch ( '(AutoClean, B : unMatched, matched, sib) : firstBranchTail) pms : r) bs
 
   -- skip the rest (ie non AutoClean)
-  FilterOutFullyMatchedHead _siblings r (( '(mts, unMatched, matched, sib) : firstBranchTail) : bs) =
-    FilterOutFullyMatchedHead _siblings (( '(mts, unMatched, matched, sib) : firstBranchTail) : r) bs
+  FilterOutFullyMatchedHead siblings r
+    (Branch ( '(mts, unMatched, matched, sib) : firstBranchTail) pms : bs) =
+      FilterOutFullyMatchedHead
+        siblings
+        (Branch ( '(mts, unMatched, matched, sib) : firstBranchTail) pms : r) bs
 
 
 type family MapMaybeFilterOutFullyMatchedHeadCase elems children t where

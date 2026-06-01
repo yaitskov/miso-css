@@ -5,14 +5,13 @@
 
 module Miso.Css.Sibling where
 
-import Data.Proxy ( Proxy )
-import GHC.TypeLits (KnownSymbol)
 import GHC.TypeError
     ( TypeError, ErrorMessage(Text, (:<>:), ShowType) )
 import Miso.Css.List ( IsSubSet )
+import Miso.Css.Prelude
+    ( KnownSymbol, Bool(False, True), Maybe(Nothing, Just), Proxy )
 import Miso.Css.Segment
-    ( SubSeg(B), Seg, MatchScope(NowOrLater, JustNow) )
-import Prelude
+    ( MatchScope(JustNow, NowOrLater), Seg, SubSeg(B) )
 
 
 type family MatchSiblingElemCaseMts mts p where
@@ -56,7 +55,8 @@ data SiblingBranch (sgs :: [(MatchScope, [SubSeg])]) where
   NilSibBranch :: SiblingBranch '[]
   AddSegToSibBranch :: Sibling ms ss -> SiblingBranch sgs -> SiblingBranch ( '( ms, ss) : sgs)
 
-type family AddSiblingBr (sgs :: [(MatchScope, [SubSeg])]) (ac :: [Seg]) where
+type AddSiblingBr :: [(MatchScope, [SubSeg])] -> [Seg] -> [Seg]
+type family AddSiblingBr sgs ac where
   AddSiblingBr sgs '[] =
     -- unreachable
     TypeError (Text "AddSiblingBr " :<>: ShowType sgs :<>: Text " to empty list")

@@ -1,8 +1,7 @@
 module Miso.Css.Style.OrClass where
 
-import Data.Proxy ( Proxy )
-import GHC.TypeLits ( KnownSymbol, Symbol )
-import Miso.Css.Segment ( Seg )
+import Miso.Css.Prelude
+import Miso.Css.Segment
 import Miso.Css.Style.AncestorConstraint ( AncestorConstraint )
 
 -- | 'OrClass' describes all selector prefixes

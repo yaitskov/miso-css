@@ -10,5 +10,5 @@ import Data.Proxy as X ( Proxy(Proxy) )
 import Data.String as X ( IsString )
 import Data.Tagged as X ( Tagged(Tagged) )
 import GHC.Generics as X (Generic)
-import GHC.TypeLits as X ( KnownSymbol, Symbol, symbolVal )
+import GHC.TypeLits as X ( KnownSymbol, Symbol, TypeError, ErrorMessage(Text, (:<>:), ShowType), symbolVal )
 import Prelude as X

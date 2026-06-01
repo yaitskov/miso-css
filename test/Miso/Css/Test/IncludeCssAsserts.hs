@@ -11,7 +11,7 @@ test_include_css =
   [ """<div class="foo"></div>""" `go` div_ =. foo
   , """<div class="foo"><div class="bar"></div></div>""" `go` div_ =. foo </ div_ =. bar
   , testGroup "bad"
-    [ doNotTc [] [[[(JustNow, [C "foo"], [], [])]]] $ div_ =. bar
+    [ doNotTcNoBr [] [[[(JustNow, [C "foo"], [], [])]]] $ div_ =. bar
     ]
   , testCase "golden" (expectedCss @=? style)
   ]

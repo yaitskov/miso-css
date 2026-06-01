@@ -1,8 +1,7 @@
 module Miso.Css.Style.AncestorConstraint where
 
-import Data.Proxy ( Proxy )
-import GHC.TypeLits ( KnownSymbol )
-import Miso.Css.Segment ( SubSeg(R), Seg, AddSubSeg )
+import Miso.Css.Prelude ( KnownSymbol, Proxy )
+import Miso.Css.Segment
 import Miso.Css.Sibling ( AddSiblingBr, SiblingBranch )
 
 

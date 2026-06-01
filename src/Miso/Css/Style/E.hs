@@ -11,11 +11,12 @@ import Miso.Css.Event (EventFactory)
 import Miso.Css.List ( MergeUniq, Elem, PrependMb, Append )
 import Miso.Css.Prelude
 import Miso.Css.Segment
-    ( SubSeg(C, R, I, T, A),
+    ( ApplyClass,
       ApplySubSegsToElem,
-      ApplyClass,
-      Seg,
-      MbSymToMbI )
+      BRANCH,
+      MbSymToMbI,
+      SubSeg(C, R, I, T, A) )
+
 import Miso.Css.Style.OrClass ( OrClass )
 import Miso.Css.Style.PostAppend qualified as Post
 import Miso.Css.Style.PreAppend qualified as Pre
@@ -120,7 +121,7 @@ data E
      (atrs :: [Symbol])
      (knownIds :: KnownIDS)
      (cls :: [Symbol])
-     (l :: [[[Seg]]])
+     (l :: [[BRANCH]])
      (children :: [[SubSeg]])
   where
     RawMisoView ::

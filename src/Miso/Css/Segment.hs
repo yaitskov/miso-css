@@ -4,11 +4,8 @@
 
 module Miso.Css.Segment where
 
-import GHC.TypeError
-    ( TypeError, ErrorMessage(Text, (:<>:), ShowType) )
-import GHC.TypeLits ( Symbol )
 import Miso.Css.List ( RemoveElem )
-import Prelude
+import Miso.Css.Prelude
 
 data SubSeg
   = C Symbol -- ^ Element Class
@@ -46,7 +43,37 @@ type Seg =
   , [[(MatchScope, [SubSeg])]] -- siblings
   )
 
-type family AddSubSeg (c :: SubSeg) (ac :: [Seg]) where
+-- Initially Branch was [Seg] but it turned out that
+-- selector ".a > .b" fails on hierarchy:
+-- <p class="a">
+--   <p class="b">
+--     <p class="b">
+-- The solution is to fork a branch if its head segment is JN when it matches
+-- current element and match scope of previous segment in the branch is NL
+data BRANCH = Branch { revSegs :: [Seg], previousMs :: MatchScope }
+type EmptyBranch = Branch '[] NowOrLater
+
+type SegsOfBranch :: BRANCH -> [Seg]
+type family SegsOfBranch b where
+  SegsOfBranch (Branch sgs _) = sgs
+type family UnwrapBranchesInElem e where
+  UnwrapBranchesInElem '[] = '[]
+  UnwrapBranchesInElem (b : bs) = SegsOfBranch b : UnwrapBranchesInElem bs
+type family UnwrapBranches es where
+  UnwrapBranches '[] = '[]
+  UnwrapBranches (e : es) = UnwrapBranchesInElem e : UnwrapBranches es
+
+type SegsToBranch :: [Seg] -> BRANCH
+type family SegsToBranch segs where
+  SegsToBranch sgs = Branch sgs NowOrLater
+type MkListOfranches :: [[Seg]] -> [BRANCH]
+type family MkListOfranches segsList where
+  MkListOfranches '[] = '[]
+  MkListOfranches (segs : t) = SegsToBranch segs : MkListOfranches t
+
+
+type AddSubSeg :: SubSeg -> [Seg] -> [Seg]
+type family AddSubSeg c ac where
   AddSubSeg c '[] =
     -- unreachable
     TypeError (Text "AddSubSeg " :<>: ShowType c :<>: Text " to empty list")
@@ -58,33 +85,40 @@ type family ApplySubSegToSeg removed ss sg where
   ApplySubSegToSeg (Just '(k, um')) _ss '( mts, um, m, sib) =
     '( mts, um', k : m, sib)
 
+type ApplyClassToBranch :: SubSeg -> BRANCH -> BRANCH
 type family ApplyClassToBranch subSeg sgs where
-  ApplyClassToBranch _ '[] = '[]
-  ApplyClassToBranch ss ( '( mts, um, m, sib) : t) =
-    ApplySubSegToSeg (RemoveElem '[] ss um) ss '( mts, um, m, sib) : t
+  ApplyClassToBranch _ (Branch '[] pms) = (Branch '[] pms)
+  ApplyClassToBranch ss (Branch ( '( mts, um, m, sib) : t) pms) =
+    Branch
+      (ApplySubSegToSeg (RemoveElem '[] ss um) ss '( mts, um, m, sib) : t)
+      pms
 
+type ApplyClassToElem :: SubSeg -> [BRANCH]-> [BRANCH]
 type family ApplyClassToElem c bs where
   ApplyClassToElem _ '[] = '[]
   ApplyClassToElem c  (b : bs) = ApplyClassToBranch c b : ApplyClassToElem c bs
 
+type ApplyClass :: [[Seg]] -> SubSeg -> [[BRANCH]] -> [[BRANCH]]
 type family ApplyClass acs c eacs where
   ApplyClass '[] _ '[] = '[]
-  ApplyClass acs _ '[] = '[ acs]
+  ApplyClass acs _ '[] = '[MkListOfranches acs]
   ApplyClass acs c (h : eacs) = ApplyClassToElem c h : ApplyClass acs c eacs
 
-type family ApplySubSegToBranch subSeg (sgs :: [ Seg ]) where
+type ApplySubSegToBranch :: SubSeg -> [Seg] -> [Seg]
+type family ApplySubSegToBranch subSeg sgs where
   ApplySubSegToBranch _ '[] = '[]
   ApplySubSegToBranch ss ( '( mts, um, m, sib) : t) =
-      (ApplySubSegToSeg
-        (RemoveElem '[] ss um)
-        ss
-        '( mts, um, m, sib) : t)
+    (ApplySubSegToSeg
+      (RemoveElem '[] ss um)
+      ss
+      '( mts, um, m, sib) : t)
 
 type family ApplySubSegToElem c bs where
   ApplySubSegToElem _ '[] = '[]
   ApplySubSegToElem c  (b : bs) =
     ApplySubSegToBranch c b : ApplySubSegToElem c bs
 
+type ApplySubSegsToElem :: [SubSeg] -> [[Seg]] -> [[Seg]]
 type family ApplySubSegsToElem ss bs where
   ApplySubSegsToElem '[] bs = bs
   ApplySubSegsToElem (h : t) bs = ApplySubSegsToElem t (ApplySubSegToElem h bs)

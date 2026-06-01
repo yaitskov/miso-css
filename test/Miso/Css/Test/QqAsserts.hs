@@ -24,7 +24,7 @@ test_qq =
   , """<div class="foo"><div class="bar"></div></div>""" `go` div_ =. foo </ div_ =.bar
   , """<div id="xxx"></div>""" `go` div_ =# Xxx
   , testGroup "bad"
-    [ doNotTc [] [[[(JustNow, [C "foo"], [], [])]]] $ div_ =. bar
+    [ doNotTcNoBr [] [[[(JustNow, [C "foo"], [], [])]]] $ div_ =. bar
     ]
   , testCase "golden" (expectedCss @=? cssAsLiteralText)
   , testCase "golden2" ((".x {}\n" :: String) @=? css2)

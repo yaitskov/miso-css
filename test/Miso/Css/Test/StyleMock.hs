@@ -19,6 +19,15 @@ domLbs :: forall m a en es r ei atrs kids cls ecs children.
   L.ByteString
 domLbs = toHtml . toView
 
+doNotTcNoBr :: forall m a en es r ei atrs kids cls ecs children.
+  forall exDids -> (DuplicatedIds kids ~ exDids) =>
+  forall exEcs -> (UnwrapBranches (MapMaybeFilterOutFullyMatchedHead '[] ecs) ~ exEcs) =>
+  E m a en es r ei atrs kids cls ecs children ->
+  TestTree
+doNotTcNoBr _ _ _ =
+  testCase "see type message from the checker" do
+    () @?= ()
+
 doNotTc :: forall m a en es r ei atrs kids cls ecs children.
   forall exDids -> (DuplicatedIds kids ~ exDids) =>
   forall exEcs -> (MapMaybeFilterOutFullyMatchedHead '[] ecs ~ exEcs) =>
