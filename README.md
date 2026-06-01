@@ -17,10 +17,10 @@ elements.
 
 miso-css runs a css parser to extract CSS selectors and generates
 Haskell constants for every CSS class with correspondent name that is
-found in the input.  A type of such constant describes all possible
+found in the input. A type of such constant describes all possible
 ways the class can used in DOM.
 
-Besides that the library ships **E** type represting an HTML element
+Besides that the library ships **E** type representing an HTML element
 and a set of operators for constructing tags and combining them in DOM
 tree.  E is miso
 [VNode](https://hackage-content.haskell.org/package/miso/docs/Miso-Types.html#t:View)
@@ -251,6 +251,29 @@ Class **a** is not applied:
 
 ```haskell
 [([B], [], [[ [B], [C "a"]]])]
+```
+
+### Non-leaf classes constraints
+
+By default non-leaf classes in selector don't contribute to constraints.
+e.g.
+
+``` haskell
+.a > .b .c
+```
+`b` doesn't require `a` as immediate parent it is handled by constraints form `c`.
+
+It is possible to generate constraints for `b` to make checking even
+stricter, though in such mode following DOM can't pass type check:
+
+``` haskell
+enableRulesForNonLeafClasses
+
+[css|.a > .b .c {}|]
+test_t = testGroup cssAsLiteralText
+  [ doNotTcNoBr [] [[[(JustNow, [B], [C "a"], [])]]] $
+      div_ =. a </ (div_ =. b </ (div_ =. b </ div_ =. c))
+  ]
 ```
 
 ### E type

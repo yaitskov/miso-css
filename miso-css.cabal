@@ -25,9 +25,9 @@ description:
     found in the input. A type of such constant describes all possible ways
     the class can used in DOM.
     
-    Besides that the library ships __E__ type represting an HTML element and
-    a set of operators for constructing tags and combining them in DOM tree.
-    E is miso
+    Besides that the library ships __E__ type representing an HTML element
+    and a set of operators for constructing tags and combining them in DOM
+    tree. E is miso
     <https://hackage-content.haskell.org/package/miso/docs/Miso-Types.html#t:View VNode>
     type protected with a few type parameters.
     
@@ -221,6 +221,28 @@ description:
     Class __a__ is not applied:
     
     > [([B], [], [[ [B], [C "a"]]])]
+    
+    === Non-leaf classes constraints
+    #non-leaf-classes-constraints#
+    
+    By default non-leaf classes in selector don’t contribute to constraints.
+    e.g.
+    
+    > .a > .b .c
+    
+    @b@ doesn’t require @a@ as immediate parent it is handled by constraints
+    form @c@.
+    
+    It is possible to generate constraints for @b@ to make checking even
+    stricter, though in such mode following DOM can’t pass type check:
+    
+    > enableRulesForNonLeafClasses
+    >
+    > [css|.a > .b .c {}|]
+    > test_t = testGroup cssAsLiteralText
+    >   [ doNotTcNoBr [] [[[(JustNow, [B], [C "a"], [])]]] $
+    >       div_ =. a </ (div_ =. b </ (div_ =. b </ div_ =. c))
+    >   ]
     
     === E type
     #e-type#
