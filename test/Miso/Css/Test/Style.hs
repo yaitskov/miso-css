@@ -124,7 +124,7 @@ test_style =
                 div_ </ div_ </ (div_ =. b </ div_ =. a_dirSib_b_dir_c)
               ]
             , testGroup "a and b are flipped"
-              [ doNotTcNoBr [] [[[ (JustNow, [B], [], [[(JustNow, [B]), (JustNow, [C "a"])]])]]] $
+              [ doNotTcNoBr [] [[[(JustNow, [B], [], [[(JustNow, [B]), (JustNow, [C "a"])]])]]] $
                 div_ </ (div_ =. b </ div_ =. a_dirSib_b_dir_c) </ div_ =. a
               ]
             , testGroup "b missing"
@@ -132,7 +132,7 @@ test_style =
                 div_ </ div_ =. a </ (div_ </ div_ =. a_dirSib_b_dir_c)
               ]
             , testGroup "b in root 1"
-              [ doNotTcNoBr [] [[[ (JustNow, [B], [], [[(JustNow, [B]), (JustNow, [C "a"])]])]]] $
+              [ doNotTcNoBr [] [[[(JustNow, [B], [], [[(JustNow, [B]), (JustNow, [C "a"])]])]]] $
                 div_ =. b </ div_ =. a </ div_ =. a_dirSib_b_dir_c
               ]
             , testGroup "b in root 2"
@@ -202,11 +202,19 @@ test_style =
                 div_ =. c </ (div_ </ (div_ =. a </ div_ =. c_dir_a_dirSib_b))
               ]
             , testGroup "a and b wrapped into extra div"
-              [ doNotTcNoBr [] [[[(JustNow, [B], [C "c"], [[(JustNow, [C "a"])]])]]] $
+              [ doNotTcNoBr []
+                [[ [ (NowOrLater, [C "b"], [], [])
+                   , (JustNow, [C "c"], [], [ [ (JustNow, [C "a"])]]) ]
+                 , [ (JustNow, [B], [C "c"], [ [ (JustNow, [C "a"])]]) ]
+                 ]] $
                 div_ =. c  </ (div_ </ div_ =. a </ (div_ =. b </ div_ =. c_dir_a_dirSib_b_spc_d))
               ]
             , testGroup "parent c is missing"
-              [ doNotTcNoBr [] [[[(JustNow, [B, C "c"], [], [[(JustNow, [C "a"])]])]]] $
+              [ doNotTcNoBr []
+                [[ [ (NowOrLater, [C "b"], [], [])
+                   , (JustNow, [C "c"], [], [ [ (JustNow, [C "a"])]]) ]
+                 , [ (JustNow, [B, C "c"], [], [ [ (JustNow, [C "a"])]]) ]
+                 ]] $
                 div_  </ div_ =. a </ (div_ =. b </ div_ =. c_dir_a_dirSib_b_spc_d)
               ]
             , go """<div><div class="a b"></div><div class="c"></div></div>""" $

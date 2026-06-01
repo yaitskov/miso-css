@@ -83,6 +83,10 @@ type HTML = "html"
 type BODY = "body"
 data Root = Root deriving (Show, Eq)
 
+type ConstraintsAfterAppend ::
+  [[SubSeg]] -> [[BRANCH]] ->
+  Maybe Symbol -> Symbol -> [Symbol] -> [Symbol] ->
+  [[BRANCH]] -> [[BRANCH]]
 type family ConstraintsAfterAppend pchildren ceacs pi pe pAtrs pcls peacs where
   ConstraintsAfterAppend pchildren ceacs pi pe pAtrs pcls peacs =
     AppendChild
