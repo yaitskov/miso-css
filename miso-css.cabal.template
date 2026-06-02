@@ -1,6 +1,6 @@
 cabal-version: 3.0
 name:          miso-css
-version:       0.0.1
+version:       0.0.2
 
 synopsis:      wrapper over miso checking CSS classes applicability through dependent types
 description:
@@ -68,7 +68,7 @@ library
     , containers         < 1
     , css-parser         < 1
     , filepath           < 2
-    , miso               >= 1.9 && < 2
+    , miso               >= 1.11 && < 1.12
     , mtl                < 3
     , tagged             < 1
     , template-haskell   < 3

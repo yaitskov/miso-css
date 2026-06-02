@@ -35,8 +35,8 @@ app = (component () pure viewModel)
       </div>
     </div>
 -}
-viewModel :: Model -> View Model Action
-viewModel () = toView . html_ . body_ $
+viewModel :: Model -> () -> View Model Action
+viewModel () () = toView . html_ . body_ $
   div_ =. a
   </ (div_ =. b
        </ (button_ =. c
