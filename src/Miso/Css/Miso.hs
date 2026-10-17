@@ -24,9 +24,12 @@ import Miso.Css.Style.PostAppend
     ( MapMaybeFilterOutFullyMatchedHead )
 import Miso.Css.Prelude
 
-injectClass :: MisoString -> View model action -> View model action
+injectClass :: MisoString
+  -> View ctx props model action
+  -> View ctx props model action
 injectClass cn = \case
-  VNode ns tg atrs children -> VNode ns tg (injClass atrs) children
+  VNode ns tg atrs children dirEvents ->
+    VNode ns tg (injClass atrs) children dirEvents
   o -> o
   where
     injClass = \case
@@ -34,9 +37,12 @@ injectClass cn = \case
       ClassList cls : atrs' -> ClassList (cls <> [cn]) : atrs'
       o : atrs' -> o : injClass atrs'
 
-injectElementId :: MisoString -> View model action -> View model action
+injectElementId :: MisoString
+  -> View ctx props model action
+  -> View ctx props model action
 injectElementId ik = \case
-  VNode ns tg atrs children -> VNode ns tg (injId atrs) children
+  VNode ns tg atrs children dirEvents ->
+    VNode ns tg (injId atrs) children dirEvents
   o -> o
   where
     injId = \case
@@ -45,9 +51,14 @@ injectElementId ik = \case
       Property "id" _v : atrs' -> id_ ik : atrs'
       o : atrs' -> o : injId atrs'
 
-injectElementAtr :: ToJSON v => MisoString -> v -> View model action -> View model action
+injectElementAtr :: ToJSON v
+  => MisoString
+  -> v
+  -> View ctx props model action
+  -> View ctx props model action
 injectElementAtr ik v = \case
-  VNode ns tg atrs children -> VNode ns tg (injId atrs) children
+  VNode ns tg atrs children dirEvents ->
+    VNode ns tg (injId atrs) children dirEvents
   o -> o
   where
     p = prop ik v
@@ -60,9 +71,13 @@ injectElementAtr ik v = \case
       o : atrs' -> o : injId atrs'
 
 
-injAppElemAtr :: ToJSON v => MisoString -> v -> View model action -> View model action
+injAppElemAtr :: ToJSON v
+  => MisoString -> v
+  -> View ctx props model action
+  -> View ctx props model action
 injAppElemAtr ik v = \case
-  VNode ns tg atrs children -> VNode ns tg (injId atrs) children
+  VNode ns tg atrs children dirEvents ->
+    VNode ns tg (injId atrs) children dirEvents
   o -> o
   where
     p = prop ik v
@@ -79,11 +94,13 @@ injAppElemAtr ik v = \case
         | otherwise -> Property pn pnv : injId atrs'
       o : atrs' -> o : injId atrs'
 
-injectEventHandler :: EventFactory ef action =>
-  ef -> View model action -> View model action
+injectEventHandler :: EventFactory ef model action
+  => ef
+  -> View ctx props model action
+  -> View ctx props model action
 injectEventHandler ef = \case
-  VNode ns tg atrs children ->
-    VNode ns tg (mkActionAttribute ef : atrs) children
+  VNode ns tg atrs children dirEvents ->
+    VNode ns tg (mkActionAttribute ef : atrs) children dirEvents
   o -> o
 
 className :: forall p c. KnownSymbol c => OrClass p c -> MisoString
@@ -92,12 +109,15 @@ className _ =
 
 data Child
 
-appChild :: Tagged Child (View model action) -> View model action -> View model action
+appChild :: Tagged Child (View ctx props model action)
+  -> View ctx props model action
+  -> View ctx props model action
 appChild (Tagged c) = \case
-  VNode ns tg atrs children -> VNode ns tg atrs $ children <> [c]
+  VNode ns tg atrs children dirEvents -> VNode ns tg atrs (children <> [c]) dirEvents
   o -> o
 
-eToView :: E model action en es r ei atrs knownIds cls eacs children for tabx ak -> View model action
+eToView :: E ctx props model action en es r ei atrs knownIds cls eacs children for tabx ak
+  -> View ctx props model action
 eToView = \case
   RawMisoView rmv -> rmv
   CDataE txt -> vtext txt
@@ -115,31 +135,34 @@ eToView = \case
   SealDomE e -> eToView e
   VirtualBodyE b -> eToView b
 
-toView :: forall m a en es r ei atrs kids cls ecs children for tabx ak.
+toView :: forall ctx prs m a en es r ei atrs kids cls ecs children for tabx ak.
   ( RemoveMatchScope (UnwrapBranches (MapMaybeFilterOutFullyMatchedHead '[] ecs)) ~ '[]
   , DuplicatedIds kids ~ '[]
   , for ~ '[]
   , TabIndexesConsistent tabx ~ '[]
   , AccessKeyConsistent ak ~ '[]
-  ) =>
-  E m a en es r ei atrs kids cls ecs children for tabx ak -> View m a
+  )
+  => E ctx prs m a en es r ei atrs kids cls ecs children for tabx ak
+  -> View ctx prs m a
 toView = eToView
 
 -- | More detailed types that 'toView'
-toView' :: forall m a en es r ei atrs kids cls ecs children for tabx ak.
+toView' :: forall ctx prs m a en es r ei atrs kids cls ecs children for tabx ak.
   ( UnwrapBranches (MapMaybeFilterOutFullyMatchedHead '[] ecs) ~ '[]
   , DuplicatedIds kids ~ '[]
   , for ~ '[]
   , TabIndexesConsistent tabx ~ '[]
   , AccessKeyConsistent ak ~ '[]
-  ) =>
-  E m a en es r ei atrs kids cls ecs children for tabx ak -> View m a
+  )
+  => E ctx prs m a en es r ei atrs kids cls ecs children for tabx ak
+  -> View ctx prs m a
 toView' = eToView
 
 body_ ::
-  E model action ce   cs        Nothing      ci atrs knownIds ccls ceacs cchildren cfor tabx ak ->
-  E model action BODY Composite Nothing Nothing atrs knownIds
-    '[] -- classes
+  E ctx props model action
+      ce   cs        Nothing      ci atrs knownIds ccls ceacs cchildren cfor tabx ak ->
+  E ctx props model action
+      BODY Composite Nothing Nothing atrs knownIds '[]
     (AppendChild
           '[]  -- pchildren
           ceacs
@@ -150,10 +173,10 @@ body_ ::
 body_ = VirtualBodyE
 
 html_ ::
-  E model action ce   cs        Nothing      ci      catrs ckids ccls ceacs cchildren cfor tabx ak ->
-  E model action HTML Composite (Just 'Root) Nothing
-    catrs ckids
-    '[]
+  E ctx props model action
+      ce   cs        Nothing      ci      catrs ckids ccls ceacs cchildren cfor tabx ak ->
+  E ctx props model action
+      HTML Composite (Just 'Root) Nothing catrs ckids '[]
     (MapMaybeFilterOutFullyMatchedHead
       '[]
       (ApplyClass '[] (T HTML) (ApplyClass '[] R ceacs)))
@@ -162,8 +185,10 @@ html_ ::
 html_ = SealDomE
 
 page ::
-  E model action ce   cs         Nothing      ci      catrs ckids ccls ceacs cchildren cfor tabx ak ->
-  E model action HTML Composite  (Just 'Root) Nothing catrs ckids '[]
+  E ctx props model action
+      ce   cs         Nothing      ci      catrs ckids ccls ceacs cchildren cfor tabx ak ->
+  E ctx props model action
+      HTML Composite  (Just 'Root) Nothing catrs ckids '[]
     (MapMaybeFilterOutFullyMatchedHead
      '[]
      (ApplyClass

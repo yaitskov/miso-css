@@ -14,9 +14,9 @@ import Miso.JSON ( ToJSON )
 
 
 (=.) :: (KnownSymbol en, KnownSymbol c) =>
-  E model action en Composite r ei atrs kids cls eacs children cfor tabx ak ->
+  E ctx props model action en Composite r ei atrs kids cls eacs children cfor tabx ak ->
   OrClass p c ->
-  E model action en Composite r ei ("class" : atrs) kids (c:cls)
+  E ctx props model action en Composite r ei ("class" : atrs) kids (c:cls)
     (ConstraintsAfterClassApp ei en atrs cls p c eacs)
     children cfor tabx ak
 e =. c = AppClsE c e
@@ -27,69 +27,68 @@ atr :: forall k v. (KnownSymbol k, ToJSON v) => v -> ElAtr k v
 atr = ElAtr
 
 (=<|) :: (KnownSymbol k, ToJSON v, RegularAtr k ~ "") =>
-  E model action en Composite r ei atrs kids cls eacs children cfor tabx ak ->
+  E ctx props model action en Composite r ei atrs kids cls eacs children cfor tabx ak ->
   ElAtr k v ->
-  E model action en Composite r ei (k : atrs) kids cls
+  E ctx props model action en Composite r ei (k : atrs) kids cls
     (ApplyClass '[] (A k) eacs) -- eacs
     children cfor tabx ak
 e =<| a = AddAtrE a e
 
 infixl 3 =<|
 
-for :: forall model action en r ei catrs kids cls eacs children ee cfor tabx ak.
+for :: forall ctx props model action en r ei catrs kids cls eacs children ee cfor tabx ak.
   (KnownSymbol en, KnownSymbol ee) =>
-  E model action en Composite r ei catrs kids cls eacs children cfor tabx ak ->
+  E ctx props model action en Composite r ei catrs kids cls eacs children cfor tabx ak ->
   forall fi -> (fi ~ ElementId ee) =>
-  E model action en Composite r ei catrs kids cls eacs children
+  E ctx props model action en Composite r ei catrs kids cls eacs children
   (AddForId ee cfor kids) tabx ak
 e `for` _ = AddForAtrE (Proxy @ee) e
 infixl 3 `for`
 
-tabIndex :: forall model action en r ei catrs kids cls eacs children cfor tabx ak.
+tabIndex :: forall ctx props model action en r ei catrs kids cls eacs children cfor tabx ak.
   (KnownSymbol en) =>
-  E model action en Composite r ei catrs kids cls eacs children cfor tabx ak ->
+  E ctx props model action en Composite r ei catrs kids cls eacs children cfor tabx ak ->
   forall (ti :: Nat) -> KnownNat ti =>
-  E model action en Composite r ei catrs kids cls eacs children cfor (Just ti : tabx) ak
+  E ctx props model action en Composite r ei catrs kids cls eacs children cfor (Just ti : tabx) ak
 e `tabIndex` _ = TabIndexE (Proxy ) e
 infixl 3 `tabIndex`
 
-accessKey :: forall model action en r ei catrs kids cls eacs children cfor tabx ak.
+accessKey :: forall ctx props model action en r ei catrs kids cls eacs children cfor tabx ak.
   (KnownSymbol en) =>
-  E model action en Composite r ei catrs kids cls eacs children cfor tabx ak ->
+  E ctx props model action en Composite r ei catrs kids cls eacs children cfor tabx ak ->
   forall (nc :: Char) -> KnownChar nc =>
-  E model action en Composite r ei catrs kids cls eacs children cfor tabx (nc : ak)
+  E ctx props model action en Composite r ei catrs kids cls eacs children cfor tabx (nc : ak)
 e `accessKey` _ = AccessKeyE Proxy e
 infixl 3 `accessKey`
 
 tabIndexMinus1 ::
-  E model action en Composite r ei atrs kids cls eacs children cfor tabx ak ->
-  E model action en Composite r ei atrs kids cls eacs children cfor (Nothing : tabx) ak
+  E ctx props model action en Composite r ei atrs kids cls eacs children cfor tabx ak ->
+  E ctx props model action en Composite r ei atrs kids cls eacs children cfor (Nothing : tabx) ak
 tabIndexMinus1 e = TabIndexMinus1E e
 
-ariaLabelledBy :: forall model action en r ei catrs kids cls eacs children ee cfor tabx ak.
+ariaLabelledBy :: forall ctx props model action en r ei catrs kids cls eacs children ee cfor tabx ak.
   (KnownSymbol en, KnownSymbol ee) =>
-  E model action en Composite r ei catrs kids cls eacs children cfor tabx ak ->
+  E ctx props model action en Composite r ei catrs kids cls eacs children cfor tabx ak ->
   forall fi -> (fi ~ ElementId ee) =>
-  E model action en Composite r ei catrs kids cls eacs children
+  E ctx props model action en Composite r ei catrs kids cls eacs children
   (AddForId ee cfor kids) tabx ak
 e `ariaLabelledBy` _ = AddAriaIdAtrE (Proxy @"aria-labelledby") (Proxy @ee) e
 infixl 3 `ariaLabelledBy`
 
-ariaDescribedBy :: forall model action en r ei catrs kids cls eacs children ee cfor tabx ak.
+ariaDescribedBy :: forall ctx props model action en r ei catrs kids cls eacs children ee cfor tabx ak.
   (KnownSymbol en, KnownSymbol ee) =>
-  E model action en Composite r ei catrs kids cls eacs children cfor tabx ak ->
+  E ctx props model action en Composite r ei catrs kids cls eacs children cfor tabx ak ->
   forall fi -> (fi ~ ElementId ee) =>
-  E model action en Composite r ei catrs kids cls eacs children
+  E ctx props model action en Composite r ei catrs kids cls eacs children
   (AddForId ee cfor kids) tabx ak
 e `ariaDescribedBy` _ = AddAriaIdAtrE (Proxy @"aria-describedby") (Proxy @ee) e
 infixl 3 `ariaDescribedBy`
 
-(=#) :: forall model action en r catrs kids cls eacs children ee cfor tabx ak.
+(=#) :: forall ctx props model action en r catrs kids cls eacs children ee cfor tabx ak.
   (KnownSymbol en, KnownSymbol ee) =>
-  E model action en Composite r Nothing catrs kids cls eacs children cfor tabx ak ->
+  E ctx props model action en Composite r Nothing catrs kids cls eacs children cfor tabx ak ->
   forall ei -> (ei ~ ElementId ee) =>
-  E model
-    action
+  E ctx props model action
     en
     Composite
     r
@@ -106,19 +105,19 @@ e =# _ = IdE (Proxy @ee) e
 infixl 3 =#
 
 (=!) ::
-  EventFactory ef action =>
-  E model action en es r ei atrs kids cls eacs children cfor tabx ak ->
+  EventFactory ef model action =>
+  E ctx props model action en es r ei atrs kids cls eacs children cfor tabx ak ->
   ef ->
-  E model action en es r ei atrs kids cls eacs children cfor tabx ak
+  E ctx props model action en es r ei atrs kids cls eacs children cfor tabx ak
 e =! ef = BindEventE ef e
 
 infixl 3 =!
 
 (</) ::
   KnownSymbol cen =>
-  E model action pen Composite r       pi patrs pKids pcls peacs pchildren pfor ptabx pak ->
-  E model action cen cs        Nothing ci catrs cKids ccls ceacs cchildren cfor ctabx cak ->
-  E model action pen Composite r       pi patrs
+  E ctx props model action pen Composite r       pi patrs pKids pcls peacs pchildren pfor ptabx pak ->
+  E ctx props model action cen cs        Nothing ci catrs cKids ccls ceacs cchildren cfor ctabx cak ->
+  E ctx props model action pen Composite r       pi patrs
     (MergeKids cKids pKids)
     pcls
     (ConstraintsAfterAppend pchildren ceacs pi pen patrs pcls peacs)
@@ -131,11 +130,9 @@ p </ c = AppendChildE c p
 infixl 2 </
 
 (<@) ::
-  E model action pen Composite r pi patrs kids pcls peacs pchildren pfor tabx ak ->
-  E model action CD Atomic Nothing Nothing '[] EmptyKids '[] '[] '[] '[] '[] '[] ->
-  E
-    model
-    action
+  E ctx props model action pen Composite r pi patrs kids pcls peacs pchildren pfor tabx ak ->
+  E ctx props model action CD Atomic Nothing Nothing '[] EmptyKids '[] '[] '[] '[] '[] '[] ->
+  E ctx props model action
     pen
     Composite
     r
@@ -153,11 +150,9 @@ infixl 2 </
 infixl 2 <@
 
 (=<) ::
-  E model action pen Composite r pi atrs kids pcls peacs pchildren pfor tabx ak ->
-  View model action ->
-  E
-    model
-    action
+  E ctx props model action pen Composite r pi atrs kids pcls peacs pchildren pfor tabx ak ->
+  View ctx props model action ->
+  E ctx props model action
     pen
     Composite
     r

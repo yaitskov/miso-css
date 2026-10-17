@@ -5,38 +5,38 @@ import Miso
 import Miso.Event as E
 import Miso.Css.Prelude
 
-class EventFactory ef a | ef -> a where
+class EventFactory ef m a | ef -> m a where
   eventName :: ef -> MisoString
-  mkActionAttribute :: ef -> Attribute a
+  mkActionAttribute :: ef -> Attribute m a
 
-data AtomicEvent a = AtomicEvent MisoString a deriving (Show, Eq, Ord)
+data AtomicEvent m a = AtomicEvent MisoString a deriving (Show, Eq, Ord)
 
-instance EventFactory (AtomicEvent a) a where
+instance EventFactory (AtomicEvent m a) m a where
   eventName (AtomicEvent e _) = e
   mkActionAttribute (AtomicEvent e a) =
-    E.on e emptyDecoder $ \() _ -> a
+    E.on e emptyDecoder $ \() _ _ -> a
 
-data VarEvent a = forall r. VarEvent MisoString (Decoder r) (r -> DOMRef -> a)
+data VarEvent m a = forall r. VarEvent MisoString (Decoder r) (r -> m -> DOMRef -> a)
 
-instance EventFactory (VarEvent a) a where
+instance EventFactory (VarEvent m a) m a where
   eventName (VarEvent en _ _) = en
   mkActionAttribute (VarEvent en decoder af) =
     on en decoder af
 
-onClick :: a -> AtomicEvent a
+onClick :: forall m a. a -> AtomicEvent m a
 onClick = AtomicEvent "click"
 
-onVar :: Decoder r -> MisoString -> (r -> a) -> VarEvent a
-onVar d n f = VarEvent n d (\a _ -> f a)
+onVar :: Decoder r -> MisoString -> (r -> a) -> VarEvent m a
+onVar d n f = VarEvent n d (\a _ _ -> f a)
 
-onInput :: (MisoString -> a) -> VarEvent a
+onInput :: forall m a. (MisoString -> a) -> VarEvent m a
 onInput = onVar valueDecoder "input"
 
-onChange :: (MisoString -> a) -> VarEvent a
+onChange :: forall m a. (MisoString -> a) -> VarEvent m a
 onChange = onVar valueDecoder "change"
 
-onKeyPress :: (KeyCode -> a) -> VarEvent a
+onKeyPress :: forall m a. (KeyCode -> a) -> VarEvent m a
 onKeyPress = onVar keycodeDecoder "keypress"
 
-onKeyUp :: (KeyCode -> a) -> VarEvent a
+onKeyUp :: (KeyCode -> a) -> VarEvent m a
 onKeyUp = onVar keycodeDecoder "keyup"

@@ -280,6 +280,8 @@ test_t = testGroup cssAsLiteralText
 
 ```haskell
 data E
+     context
+     props
      model
      action
      (en :: Symbol)
@@ -291,9 +293,12 @@ data E
      (cls :: [Symbol])
      (l :: [[[Seg]]])
      (children :: [[SubSeg]])
+     (wantedIds :: [Symbol])
+     (usedTabIndexes :: [Maybe Natural])
+     (usedAccessKey :: [Char])
 ```
 
-First two parameters **model** and **action** are forwarded to miso
+First 4 parameters **context**, **props**, **model** and **action** are forwarded to miso
 [VNode](https://hackage-content.haskell.org/package/miso/docs/Miso-Types.html#t:View)
 type.
 
@@ -387,6 +392,39 @@ List of lists of children subselectors in reverse order.
 ...
 ```
 
+#### wantedIds
+List of tag ids that are referenced somewhere by other tags through
+[ARIA](https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA)
+attributes:
+- `<label for=""/>`
+- aria-labelledby
+- aria-describedby
+
+``` haskell
+"""<div>
+     <span id="aa">hi</span>
+     <span id="bb">bye</span>
+     <input aria-describedby="aa bb"/>
+   </div>"""
+`go` div_ </ (span_ =# Aa <@ "hi") </ (span_ =# Bb <@ "bye")
+          </ input_ `ariaDescribedBy` Aa `ariaDescribedBy` Bb
+```
+#### usedTabIndexes
+Tab indexes are global and should be unique as tag ids. Except values **-1*** and **0**.
+
+``` haskell
+"""<div tabindex="-1">x</div>""" `go` tabIndexMinus1 (div_ <@ "x")
+
+"""<div tabindex="1">x</div>""" `go` div_ `tabIndex` 1 <@ "x"
+```
+
+#### accessKey
+Access keys are global too.
+
+``` haskell
+"""<div accesskey="a">x</div>""" `go` div_ `accessKey` 'a' <@ "x"
+```
+
 ### Hello World
 
 ``` haskell
@@ -436,7 +474,7 @@ they serve just for type checking purpose
 (e.g. html_ satisfies :root pseudo class)
 
 -}
-viewModel :: Model -> View Model Action
+viewModel :: Model -> View () () Model Action
 viewModel () = toView . html_ . body_ $
   div_ =. c
   </ (div_ =. b

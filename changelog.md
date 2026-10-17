@@ -1,5 +1,13 @@
 # miso-css changelog
 
+## Version 0.0.3 2026-10-17
+  * upgrade to miso-1.14
+  * aria-labelledby
+  * aria-describedby
+  * label for
+  * accesskey
+  * tabindex
+
 ## Version 0.0.2 2026-06-02
   * upgrade to miso-1.11
 
