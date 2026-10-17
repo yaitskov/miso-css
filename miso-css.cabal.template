@@ -99,6 +99,7 @@ test-suite test
     Miso.Css.Test.Th.ForkBranchSibling
     Miso.Css.Test.Th.PmoreXplusYplusZmoreAspaceBmoreC
     Miso.Css.Test.Th.RootMoreA
+    Miso.Css.Test.Th.TabIndex
     Discovery
   hs-source-dirs:
     test

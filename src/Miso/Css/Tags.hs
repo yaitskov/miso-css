@@ -1,94 +1,98 @@
+{-# LANGUAGE TypeFamilies #-}
 module Miso.Css.Tags where
 
 import Miso.Css.Prelude ( Maybe(Nothing), Proxy(Proxy) )
 import Miso.Css.Style ( E(NilE), ElementStructure(Composite), EmptyKids )
 
-div_ :: E model action "div" Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[]
+type family Help model action tag where
+  Help model action tag = E model action tag Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[] '[]
+
+div_ :: Help model action "div"
 div_ = NilE (Proxy @"div")
 
-span_ :: E model action "span" Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[]
+span_ :: Help model action "span"
 span_ = NilE (Proxy @"span")
 
-p_ :: E model action "p" Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[]
+p_ :: Help model action "p"
 p_ = NilE (Proxy @"p")
 
-b_ :: E model action "b" Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[]
+b_ :: Help model action "b"
 b_ = NilE (Proxy @"b")
 
-i_ :: E model action "i" Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[]
+i_ :: Help model action "i"
 i_ = NilE (Proxy @"i")
 
-th_ :: E model action "th" Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[]
+th_ :: Help model action "th"
 th_ = NilE (Proxy @"th")
 
-td_ :: E model action "td" Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[]
+td_ :: Help model action "td"
 td_ = NilE (Proxy @"td")
 
-table_ :: E model action "table" Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[]
+table_ :: Help model action "table"
 table_ = NilE (Proxy @"table")
 
-thead_ :: E model action "thead" Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[]
+thead_ :: Help model action "thead"
 thead_ = NilE (Proxy @"thead")
 
-tbody_ :: E model action "tbody" Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[]
+tbody_ :: Help model action "tbody"
 tbody_ = NilE (Proxy @"tbody")
 
-tr_ :: E model action "tr" Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[]
+tr_ :: Help model action "tr"
 tr_ = NilE (Proxy @"tr")
 
-h1_ :: E model action "h1" Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[]
+h1_ :: Help model action "h1"
 h1_ = NilE (Proxy @"h1")
 
-img_ :: E model action "img" Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[]
+img_ :: Help model action "img"
 img_ = NilE (Proxy @"img")
 
-br_ :: E model action "br" Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[]
+br_ :: Help model action "br"
 br_ = NilE (Proxy @"br")
 
-hr_ :: E model action "hr" Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[]
+hr_ :: Help model action "hr"
 hr_ = NilE (Proxy @"hr")
 
-ul_ :: E model action "ul" Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[]
+ul_ :: Help model action "ul"
 ul_ = NilE (Proxy @"ul")
 
-ol_ :: E model action "ol" Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[]
+ol_ :: Help model action "ol"
 ol_ = NilE (Proxy @"ol")
 
-li_ :: E model action "li" Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[]
+li_ :: Help model action "li"
 li_ = NilE (Proxy @"li")
 
-a_ :: E model action "a" Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[]
+a_ :: Help model action "a"
 a_ = NilE (Proxy @"a")
 
-article_ :: E model action "article" Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[]
+article_ :: Help model action "article"
 article_ = NilE (Proxy @"article")
 
-section_ :: E model action "section" Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[]
+section_ :: Help model action "section"
 section_ = NilE (Proxy @"section")
 
-h2_ :: E model action "h2" Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[]
+h2_ :: Help model action "h2"
 h2_ = NilE (Proxy @"h2")
 
-h3_ :: E model action "h3" Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[]
+h3_ :: Help model action "h3"
 h3_ = NilE (Proxy @"h3")
 
-h4_ :: E model action "h4" Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[]
+h4_ :: Help model action "h4"
 h4_ = NilE (Proxy @"h4")
 
-h5_ :: E model action "h5" Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[]
+h5_ :: Help model action "h5"
 h5_ = NilE (Proxy @"h5")
 
-h6_ :: E model action "h6" Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[]
+h6_ :: Help model action "h6"
 h6_ = NilE (Proxy @"h6")
 
-form_ :: E model action "form" Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[]
+form_ :: Help model action "form"
 form_ = NilE (Proxy @"form")
 
-input_ :: E model action "input" Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[]
+input_ :: Help model action "input"
 input_ = NilE (Proxy @"input")
 
-button_ :: E model action "button" Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[]
+button_ :: Help model action "button"
 button_ = NilE (Proxy @"button")
 
-label_ :: E model action "label" Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[]
+label_ :: Help model action "label"
 label_ = NilE (Proxy @"label")

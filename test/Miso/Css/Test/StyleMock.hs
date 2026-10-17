@@ -11,52 +11,69 @@ import Data.ByteString.Char8 qualified as C8
 import Miso.Css.Style.PostAppend as Post
 import Miso.Css.Test.Prelude as X
 
-domLbs :: forall m a en es r ei atrs kids cls ecs children for.
+domLbs :: forall m a en es r ei atrs kids cls ecs children for tabx.
   ( UnwrapBranches (MapMaybeFilterOutFullyMatchedHead '[] ecs) ~ '[]
   , DuplicatedIds kids ~ '[]
   , for ~ '[]
+  , TabIndexesConsistent tabx ~ '[]
   ) =>
-  E m a en es r ei atrs kids cls ecs children for ->
+  E m a en es r ei atrs kids cls ecs children for tabx ->
   L.ByteString
 domLbs = toHtml . toView
 
-doNotTcNoBr :: forall m a en es r ei atrs kids cls ecs children for.
+doNotTcNoBr :: forall m a en es r ei atrs kids cls ecs children for tabx.
   forall exDids -> (DuplicatedIds kids ~ exDids) =>
   forall exEcs -> (UnwrapBranches (MapMaybeFilterOutFullyMatchedHead '[] ecs) ~ exEcs
+                  , TabIndexesConsistent tabx ~ '[]
                   , for ~ '[]) =>
-  E m a en es r ei atrs kids cls ecs children for ->
+  E m a en es r ei atrs kids cls ecs children for tabx ->
   TestTree
 doNotTcNoBr _ _ _ =
   testCase "see type message from the checker" do
     () @?= ()
 
-doNotTc :: forall m a en es r ei atrs kids cls ecs children for.
+doNotTc :: forall m a en es r ei atrs kids cls ecs children for tabx .
   forall exDids -> (DuplicatedIds kids ~ exDids) =>
   forall exEcs -> (MapMaybeFilterOutFullyMatchedHead '[] ecs ~ exEcs
+                  , TabIndexesConsistent tabx ~ '[]
                   , for ~ '[]) =>
-  E m a en es r ei atrs kids cls ecs children for ->
+  E m a en es r ei atrs kids cls ecs children for tabx ->
   TestTree
 doNotTc _ _ _ =
   testCase "see type message from the checker" do
     () @?= ()
 
-ariaDoNotTc :: forall m a en es r ei atrs kids cls ecs children for.
+ariaDoNotTc :: forall m a en es r ei atrs kids cls ecs children for tabx.
   forall exFors ->
   ( UnwrapBranches (MapMaybeFilterOutFullyMatchedHead '[] ecs) ~ '[]
   , DuplicatedIds kids ~ '[]
+  , TabIndexesConsistent tabx ~ '[]
   , for ~ exFors) =>
-  E m a en es r ei atrs kids cls ecs children for ->
+  E m a en es r ei atrs kids cls ecs children for tabx ->
   TestTree
 ariaDoNotTc _ _ =
   testCase "see type message from the checker" do
     () @?= ()
 
-go :: forall m a en es r ei atrs kids cls ecs children for.
+tabIdxDoNotTc :: forall m a en es r ei atrs kids cls ecs children for tabx.
+  forall ex ->
+  ( UnwrapBranches (MapMaybeFilterOutFullyMatchedHead '[] ecs) ~ '[]
+  , DuplicatedIds kids ~ '[]
+  , TabIndexesConsistent tabx ~ ex
+  , for ~ '[]) =>
+  E m a en es r ei atrs kids cls ecs children for tabx ->
+  TestTree
+tabIdxDoNotTc _ _ =
+  testCase "see type message from the checker" do
+    () @?= ()
+
+go :: forall m a en es r ei atrs kids cls ecs children for tabx.
   ( UnwrapBranches (MapMaybeFilterOutFullyMatchedHead '[] ecs) ~ '[]
   , DuplicatedIds kids ~ '[]
   , for ~ '[]
+  , TabIndexesConsistent tabx ~ '[]
   ) =>
-  L.ByteString -> E m a en es r ei atrs kids cls ecs children for -> TestTree
+  L.ByteString -> E m a en es r ei atrs kids cls ecs children for tabx -> TestTree
 go ex el =
   testCase (C8.unpack $ C8.toStrict ex) do
     domLbs el @?= ex

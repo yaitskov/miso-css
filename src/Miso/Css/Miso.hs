@@ -1,5 +1,6 @@
 module Miso.Css.Miso where
 
+import GHC.TypeLits (natVal)
 import Miso
     ( ms,
       vtext,
@@ -96,7 +97,7 @@ appChild (Tagged c) = \case
   VNode ns tg atrs children -> VNode ns tg atrs $ children <> [c]
   o -> o
 
-eToView :: E model action en es r ei atrs knownIds cls eacs children for -> View model action
+eToView :: E model action en es r ei atrs knownIds cls eacs children for tabx -> View model action
 eToView = \case
   RawMisoView rmv -> rmv
   CDataE txt -> vtext txt
@@ -104,6 +105,8 @@ eToView = \case
   IdE eni e -> injectElementId (ms $ symbolVal eni) (eToView e)
   AppClsE orCls e -> injectClass (className orCls) (eToView e)
   AppendChildE ce pe -> appChild (Tagged @Child (eToView ce)) (eToView pe)
+  TabIndexMinus1E e -> injectElementAtr "tabindex" ("-1" :: MisoString) (eToView e)
+  TabIndexE ti e -> injectElementAtr "tabindex" (show $ natVal ti) (eToView e)
   AddAtrE a e -> injectElementAtr (elAtrKey a) (elAtrVal a) (eToView e)
   AddForAtrE f e -> injectElementAtr "for" (ms $ symbolVal f) (eToView e)
   AddAriaIdAtrE aria fi e -> injAppElemAtr (ms $ symbolVal aria) (ms $ symbolVal fi) (eToView e)
@@ -111,25 +114,27 @@ eToView = \case
   SealDomE e -> eToView e
   VirtualBodyE b -> eToView b
 
-toView :: forall m a en es r ei atrs kids cls ecs children for.
+toView :: forall m a en es r ei atrs kids cls ecs children for tabx.
   ( RemoveMatchScope (UnwrapBranches (MapMaybeFilterOutFullyMatchedHead '[] ecs)) ~ '[]
   , DuplicatedIds kids ~ '[]
   , for ~ '[]
+  , TabIndexesConsistent tabx ~ '[]
   ) =>
-  E m a en es r ei atrs kids cls ecs children for -> View m a
+  E m a en es r ei atrs kids cls ecs children for tabx -> View m a
 toView = eToView
 
 -- | More detailed types that 'toView'
-toView' :: forall m a en es r ei atrs kids cls ecs children for.
+toView' :: forall m a en es r ei atrs kids cls ecs children for tabx.
   ( UnwrapBranches (MapMaybeFilterOutFullyMatchedHead '[] ecs) ~ '[]
   , DuplicatedIds kids ~ '[]
   , for ~ '[]
+  , TabIndexesConsistent tabx ~ '[]
   ) =>
-  E m a en es r ei atrs kids cls ecs children for -> View m a
+  E m a en es r ei atrs kids cls ecs children for tabx -> View m a
 toView' = eToView
 
 body_ ::
-  E model action ce   cs        Nothing      ci atrs knownIds ccls ceacs cchildren cfor ->
+  E model action ce   cs        Nothing      ci atrs knownIds ccls ceacs cchildren cfor tabx ->
   E model action BODY Composite Nothing Nothing atrs knownIds
     '[] -- classes
     (AppendChild
@@ -138,11 +143,11 @@ body_ ::
           '[ T BODY ]
           '[])
     '[ PrependMb (MbSymToMbI ci) (T ce : SymsToSubSeg ccls) ]
-    cfor
+    cfor tabx
 body_ = VirtualBodyE
 
 html_ ::
-  E model action ce   cs        Nothing      ci      catrs ckids ccls ceacs cchildren cfor ->
+  E model action ce   cs        Nothing      ci      catrs ckids ccls ceacs cchildren cfor tabx ->
   E model action HTML Composite (Just 'Root) Nothing
     catrs ckids
     '[]
@@ -150,11 +155,11 @@ html_ ::
       '[]
       (ApplyClass '[] (T HTML) (ApplyClass '[] R ceacs)))
     '[ PrependMb (MbSymToMbI ci) (T ce : SymsToSubSeg ccls) ]
-    cfor
+    cfor tabx
 html_ = SealDomE
 
 page ::
-  E model action ce   cs         Nothing      ci      catrs ckids ccls ceacs cchildren cfor ->
+  E model action ce   cs         Nothing      ci      catrs ckids ccls ceacs cchildren cfor tabx ->
   E model action HTML Composite  (Just 'Root) Nothing catrs ckids '[]
     (MapMaybeFilterOutFullyMatchedHead
      '[]
@@ -169,4 +174,5 @@ page ::
          '[]))))
     '[ '[T BODY]]
     cfor
+    tabx
 page x  = html_ (body_ x)

@@ -22,6 +22,11 @@ type family FilterOut x l where
   FilterOut x '[] = '[]
   FilterOut x (h:t) = If (x == h) (FilterOut x t) (h : FilterOut x t)
 
+type family CatMaybes l where
+  CatMaybes '[] = '[]
+  CatMaybes (Just h : t) = h : CatMaybes t
+  CatMaybes (Nothing : t) = CatMaybes t
+
 type family Diff l1 l2 where
   Diff l1 '[] = l1
   Diff '[] _ = '[]
@@ -49,6 +54,13 @@ type family MergeDedup a b s where
     If (Elem ah b)
       (MergeDedup at b s)
       (MergeDedup at b (ah : s))
+
+type family FindDuplicates s where
+  FindDuplicates '[] = '[]
+  FindDuplicates (ah : at) =
+    If (Elem ah at)
+      (ah : FindDuplicates at)
+      (FindDuplicates at)
 
 type family IsSubSetCase rer t where
   IsSubSetCase Nothing         _t = False
