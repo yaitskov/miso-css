@@ -18,6 +18,15 @@ type family RemoveElem s l x where
       (Just '( k, Append s t))
       (RemoveElem (h : s) k t)
 
+type family FilterOut x l where
+  FilterOut x '[] = '[]
+  FilterOut x (h:t) = If (x == h) (FilterOut x t) (h : FilterOut x t)
+
+type family Diff l1 l2 where
+  Diff l1 '[] = l1
+  Diff '[] _ = '[]
+  Diff t1 (h2:t2) = Diff (FilterOut h2 t1) t2
+
 type family PrependMb mb l where
   PrependMb Nothing l = l
   PrependMb (Just x) l = x : l
@@ -33,6 +42,13 @@ type family MergeUniq a b s where
     If (Elem ah b)
       (Left ah)
       (MergeUniq at b (ah : s))
+
+type family MergeDedup a b s where
+  MergeDedup '[] b s = Append b s
+  MergeDedup (ah : at) b s =
+    If (Elem ah b)
+      (MergeDedup at b s)
+      (MergeDedup at b (ah : s))
 
 type family IsSubSetCase rer t where
   IsSubSetCase Nothing         _t = False

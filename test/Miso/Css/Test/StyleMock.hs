@@ -11,37 +11,39 @@ import Data.ByteString.Char8 qualified as C8
 import Miso.Css.Style.PostAppend as Post
 import Miso.Css.Test.Prelude as X
 
-domLbs :: forall m a en es r ei atrs kids cls ecs children.
+domLbs :: forall m a en es r ei atrs kids cls ecs children for.
   ( UnwrapBranches (MapMaybeFilterOutFullyMatchedHead '[] ecs) ~ '[]
   , DuplicatedIds kids ~ '[]
+  , for ~ '[]
   ) =>
-  E m a en es r ei atrs kids cls ecs children ->
+  E m a en es r ei atrs kids cls ecs children for ->
   L.ByteString
 domLbs = toHtml . toView
 
-doNotTcNoBr :: forall m a en es r ei atrs kids cls ecs children.
+doNotTcNoBr :: forall m a en es r ei atrs kids cls ecs children for.
   forall exDids -> (DuplicatedIds kids ~ exDids) =>
   forall exEcs -> (UnwrapBranches (MapMaybeFilterOutFullyMatchedHead '[] ecs) ~ exEcs) =>
-  E m a en es r ei atrs kids cls ecs children ->
+  E m a en es r ei atrs kids cls ecs children for ->
   TestTree
 doNotTcNoBr _ _ _ =
   testCase "see type message from the checker" do
     () @?= ()
 
-doNotTc :: forall m a en es r ei atrs kids cls ecs children.
+doNotTc :: forall m a en es r ei atrs kids cls ecs children for.
   forall exDids -> (DuplicatedIds kids ~ exDids) =>
   forall exEcs -> (MapMaybeFilterOutFullyMatchedHead '[] ecs ~ exEcs) =>
-  E m a en es r ei atrs kids cls ecs children ->
+  E m a en es r ei atrs kids cls ecs children for ->
   TestTree
 doNotTc _ _ _ =
   testCase "see type message from the checker" do
     () @?= ()
 
-go :: forall m a en es r ei atrs kids cls ecs children.
+go :: forall m a en es r ei atrs kids cls ecs children for.
   ( UnwrapBranches (MapMaybeFilterOutFullyMatchedHead '[] ecs) ~ '[]
   , DuplicatedIds kids ~ '[]
+  , for ~ '[]
   ) =>
-  L.ByteString -> E m a en es r ei atrs kids cls ecs children -> TestTree
+  L.ByteString -> E m a en es r ei atrs kids cls ecs children for -> TestTree
 go ex el =
   testCase (C8.unpack $ C8.toStrict ex) do
     domLbs el @?= ex
