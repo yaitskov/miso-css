@@ -162,7 +162,7 @@ data E
       Proxy fi ->
       E model action en Composite r ei atrs kids cls eacs children for ->
       E model action en Composite r ei atrs kids cls eacs children
-      (AddForId fi for kids) -- (knownIds kids)) -- ( add fi to for not in kids
+      (AddForId fi for kids)
     IdE :: KnownSymbol ei =>
       Proxy ei ->
       E model action en Composite r Nothing atrs kids cls eacs children for ->

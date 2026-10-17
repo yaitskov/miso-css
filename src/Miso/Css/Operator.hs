@@ -12,11 +12,11 @@ import Miso.JSON ( ToJSON )
 
 
 (=.) :: (KnownSymbol en, KnownSymbol c) =>
-  E model action en Composite r ei atrs kids cls eacs children for ->
+  E model action en Composite r ei atrs kids cls eacs children cfor ->
   OrClass p c ->
   E model action en Composite r ei ("class" : atrs) kids (c:cls)
     (ConstraintsAfterClassApp ei en atrs cls p c eacs)
-    children for
+    children cfor
 e =. c = AppClsE c e
 
 infixl 3 =.
@@ -25,18 +25,27 @@ atr :: forall k v. (KnownSymbol k, ToJSON v) => v -> ElAtr k v
 atr = ElAtr
 
 (=<|) :: (KnownSymbol k, ToJSON v) =>
-  E model action en Composite r ei atrs kids cls eacs children for ->
+  E model action en Composite r ei atrs kids cls eacs children cfor ->
   ElAtr k v ->
   E model action en Composite r ei (k : atrs) kids cls
     (ApplyClass '[] (A k) eacs) -- eacs
-    children for
+    children cfor
 e =<| a = AddAtrE a e
 
 infixl 3 =<|
 
-(=#) :: forall model action en r catrs kids cls eacs children ee for.
+for :: forall model action en r ei catrs kids cls eacs children ee cfor.
   (KnownSymbol en, KnownSymbol ee) =>
-  E model action en Composite r Nothing catrs kids cls eacs children for ->
+  E model action en Composite r ei catrs kids cls eacs children cfor ->
+  forall fi -> (fi ~ ElementId ee) =>
+  E model action en Composite r ei catrs kids cls eacs children
+  (AddForId ee cfor kids)
+e `for` _ = AddForAtrE (Proxy @ee) e
+infixl 3 `for`
+
+(=#) :: forall model action en r catrs kids cls eacs children ee cfor.
+  (KnownSymbol en, KnownSymbol ee) =>
+  E model action en Composite r Nothing catrs kids cls eacs children cfor ->
   forall ei -> (ei ~ ElementId ee) =>
   E model
     action
@@ -49,16 +58,16 @@ infixl 3 =<|
     cls
     (ConstraintsAfteId ee eacs)
     children
-    (FilterOut ee for)
+    (FilterOut ee cfor)
 e =# _ = IdE (Proxy @ee) e
 
 infixl 3 =#
 
 (=!) ::
   EventFactory ef action =>
-  E model action en es r ei atrs kids cls eacs children for ->
+  E model action en es r ei atrs kids cls eacs children cfor ->
   ef ->
-  E model action en es r ei atrs kids cls eacs children for
+  E model action en es r ei atrs kids cls eacs children cfor
 e =! ef = BindEventE ef e
 
 infixl 3 =!
@@ -99,7 +108,7 @@ infixl 2 </
 infixl 2 <@
 
 (=<) ::
-  E model action pen Composite r pi atrs kids pcls peacs pchildren for ->
+  E model action pen Composite r pi atrs kids pcls peacs pchildren pfor ->
   View model action ->
   E
     model
@@ -113,7 +122,7 @@ infixl 2 <@
     pcls
     (ConstraintsAfterAppend pchildren '[] pi pen atrs pcls peacs)
     ('[T RMV] : pchildren)
-    (MergeFors kids EmptyKids for '[])
+    (MergeFors kids EmptyKids pfor '[])
 p =< rmv = p </ RawMisoView rmv
 
 infixl 2 =<
