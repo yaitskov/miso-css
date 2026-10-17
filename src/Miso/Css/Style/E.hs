@@ -4,8 +4,10 @@
 
 module Miso.Css.Style.E where
 
+
 import Data.String ( IsString(..) )
 import Data.Type.Bool ( If )
+import GHC.TypeLits (AppendSymbol)
 import Miso ( MisoString, ms, View )
 import Miso.Css.Event (EventFactory)
 import Miso.Css.List ( MergeUniq, Elem, PrependMb, Append, Diff, FilterOut, MergeDedup )
@@ -127,6 +129,20 @@ type family ConstraintsAfterClassApp ei en atrs cls p c eacs where
 type family ConstraintsAfteId ei eacs where
   ConstraintsAfteId ei eacs = ApplyClass '[] (A "id") (ApplyClass '[] (I ei) eacs)
 
+type family AttributeIsReserved a f where
+  AttributeIsReserved a f =
+    "Tag attribue [" `AppendSymbol` a `AppendSymbol` "] is reserved - use ("
+      `AppendSymbol` f `AppendSymbol` ") function for it"
+
+type family RegularAtr a where
+  RegularAtr "id" = AttributeIsReserved "id" "=#"
+  RegularAtr "for" = AttributeIsReserved "for" "`for`"
+  RegularAtr "aria-labelledby" =
+    AttributeIsReserved "aria-labelledby" "`ariaLabelledBy`"
+  RegularAtr "aria-discribedby" =
+    AttributeIsReserved "aria-discribedby" "`ariaDiscribedBy`"
+  RegularAtr a = ""
+
 data E
      model
      action
@@ -151,7 +167,7 @@ data E
       Proxy en ->
       E model action en Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[]
     -- cannot be aria-labelledby nor aria-describedby no for
-    AddAtrE :: (KnownSymbol k, ToJSON v) =>
+    AddAtrE :: (KnownSymbol k, ToJSON v, RegularAtr k ~ "") =>
       ElAtr k v ->
       E model action en Composite r ei atrs kids cls eacs children for ->
       E model action en Composite r ei (k : atrs) kids cls

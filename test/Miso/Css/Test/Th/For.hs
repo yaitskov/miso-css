@@ -10,7 +10,7 @@ test_t = testGroup cssAsLiteralText
   [ """<div><label for="a">l</label><input id="a"/></div>""" `go`
     div_ </ ((label_ `for` Ai) <@ "l") </ input_ =# Ai
   , """<div><label for="xx">l</label><input id="xx"/></div>""" `go`
-    div_ </ (label_ `for` Xx <@ "l") </ input_ =# Xx
+    div_ </ (label_ {-=<| atr @"for" 3-} `for` Xx <@ "l") </ input_ =# Xx
   , """<label for="xx">l<input id="xx"/></label>""" `go`
     label_ `for` Xx <@ "l" </ input_ =# Xx
   , ariaDoNotTc ["xx"] $ label_ `for` Xx <@ "l" </ input_ =# Ai

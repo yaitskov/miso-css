@@ -24,7 +24,7 @@ infixl 3 =.
 atr :: forall k v. (KnownSymbol k, ToJSON v) => v -> ElAtr k v
 atr = ElAtr
 
-(=<|) :: (KnownSymbol k, ToJSON v) =>
+(=<|) :: (KnownSymbol k, ToJSON v, RegularAtr k ~ "") =>
   E model action en Composite r ei atrs kids cls eacs children cfor ->
   ElAtr k v ->
   E model action en Composite r ei (k : atrs) kids cls
