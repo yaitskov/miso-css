@@ -43,6 +43,24 @@ for :: forall model action en r ei catrs kids cls eacs children ee cfor.
 e `for` _ = AddForAtrE (Proxy @ee) e
 infixl 3 `for`
 
+ariaLabelledBy :: forall model action en r ei catrs kids cls eacs children ee cfor.
+  (KnownSymbol en, KnownSymbol ee) =>
+  E model action en Composite r ei catrs kids cls eacs children cfor ->
+  forall fi -> (fi ~ ElementId ee) =>
+  E model action en Composite r ei catrs kids cls eacs children
+  (AddForId ee cfor kids)
+e `ariaLabelledBy` _ = AddAriaIdAtrE (Proxy @"aria-labelledby") (Proxy @ee) e
+infixl 3 `ariaLabelledBy`
+
+ariaDescribedBy :: forall model action en r ei catrs kids cls eacs children ee cfor.
+  (KnownSymbol en, KnownSymbol ee) =>
+  E model action en Composite r ei catrs kids cls eacs children cfor ->
+  forall fi -> (fi ~ ElementId ee) =>
+  E model action en Composite r ei catrs kids cls eacs children
+  (AddForId ee cfor kids)
+e `ariaDescribedBy` _ = AddAriaIdAtrE (Proxy @"aria-describedby") (Proxy @ee) e
+infixl 3 `ariaDescribedBy`
+
 (=#) :: forall model action en r catrs kids cls eacs children ee cfor.
   (KnownSymbol en, KnownSymbol ee) =>
   E model action en Composite r Nothing catrs kids cls eacs children cfor ->

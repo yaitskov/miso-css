@@ -7,7 +7,7 @@ import Miso
       MisoString,
       Attribute(Property, ClassList),
       View(VNode) )
-import Miso.JSON ( ToJSON(..) )
+import Miso.JSON ( ToJSON(..), Value(String) )
 import Miso.Html ( nodeHtml )
 import Miso.Html.Property (id_)
 import Miso.Css.Event ( EventFactory(mkActionAttribute) )
@@ -58,6 +58,26 @@ injectElementAtr ik v = \case
         | otherwise -> Property pn pnv : injId atrs'
       o : atrs' -> o : injId atrs'
 
+
+injAppElemAtr :: ToJSON v => MisoString -> v -> View model action -> View model action
+injAppElemAtr ik v = \case
+  VNode ns tg atrs children -> VNode ns tg (injId atrs) children
+  o -> o
+  where
+    p = prop ik v
+    injId = \case
+      [] -> [p]
+      Property pn (String pnv) : atrs'
+        | pn == ik ->
+          case toJSON v of
+            String vs -> Property pn (String $ pnv <> " " <> vs) : atrs'
+            o -> error $ "expected String but: " <> show o <> "; " <> show ik
+        | otherwise -> Property pn (String pnv) : injId atrs'
+      Property pn pnv : atrs'
+        | pn == ik -> Property pn (toJSON v) : atrs'
+        | otherwise -> Property pn pnv : injId atrs'
+      o : atrs' -> o : injId atrs'
+
 injectEventHandler :: EventFactory ef action =>
   ef -> View model action -> View model action
 injectEventHandler ef = \case
@@ -86,6 +106,7 @@ eToView = \case
   AppendChildE ce pe -> appChild (Tagged @Child (eToView ce)) (eToView pe)
   AddAtrE a e -> injectElementAtr (elAtrKey a) (elAtrVal a) (eToView e)
   AddForAtrE f e -> injectElementAtr "for" (ms $ symbolVal f) (eToView e)
+  AddAriaIdAtrE aria fi e -> injAppElemAtr (ms $ symbolVal aria) (ms $ symbolVal fi) (eToView e)
   BindEventE ef e -> injectEventHandler ef (eToView e)
   SealDomE e -> eToView e
   VirtualBodyE b -> eToView b

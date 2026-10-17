@@ -158,6 +158,12 @@ data E
         (ApplyClass '[] (A k) eacs)
         children
         for
+    AddAriaIdAtrE :: (KnownSymbol a, KnownSymbol fi) =>
+      Proxy a ->
+      Proxy fi ->
+      E model action en Composite r ei atrs kids cls eacs children for ->
+      E model action en Composite r ei atrs kids cls eacs children
+      (AddForId fi for kids)
     AddForAtrE :: KnownSymbol fi =>
       Proxy fi ->
       E model action en Composite r ei atrs kids cls eacs children for ->
