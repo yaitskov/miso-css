@@ -7,7 +7,7 @@ module Miso.Css.Style.E where
 
 import Data.String ( IsString(..) )
 import Data.Type.Bool ( If )
-import GHC.TypeLits (Natural, KnownNat, AppendSymbol)
+import GHC.TypeLits (Natural, KnownNat, AppendSymbol, KnownChar)
 import Miso ( MisoString, ms, View )
 import Miso.Css.Event (EventFactory)
 import Miso.Css.List ( MergeUniq, Elem, PrependMb, Append, Diff, FilterOut
@@ -93,6 +93,8 @@ type family MergeKids a b where
 
 type family TabIndexesConsistent tis where
  TabIndexesConsistent tis = FindDuplicates (FilterOut 0 (CatMaybes tis))
+type family AccessKeyConsistent aks where
+  AccessKeyConsistent aks = FindDuplicates aks
 
 type EmptyKids = KnownIds '[] '[]
 
@@ -164,64 +166,69 @@ data E
      (children :: [[SubSeg]])
      (wantedIds :: [Symbol])
      (usedTabIndexes :: [Maybe Natural])
+     (usedAccessKey :: [Char])
   where
     RawMisoView ::
       View model action ->
-      E model action RMV Atomic Nothing Nothing '[] EmptyKids '[] '[] '[] '[] '[]
+      E model action RMV Atomic Nothing Nothing '[] EmptyKids '[] '[] '[] '[] '[] '[]
     CDataE ::
       MisoString ->
-      E model action CD Atomic Nothing Nothing '[] EmptyKids '[] '[] '[] '[] '[]
+      E model action CD Atomic Nothing Nothing '[] EmptyKids '[] '[] '[] '[] '[] '[]
     NilE :: KnownSymbol en =>
       Proxy en ->
-      E model action en Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[] '[]
+      E model action en Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[] '[] '[]
     AddAtrE :: (KnownSymbol k, ToJSON v, RegularAtr k ~ "") =>
       ElAtr k v ->
-      E model action en Composite r ei atrs kids cls eacs children for tabx ->
+      E model action en Composite r ei atrs kids cls eacs children for tabx ak ->
       E model action en Composite r ei (k : atrs) kids cls
         (ApplyClass '[] (A k) eacs)
         children
-        for tabx
+        for tabx ak
     AddAriaIdAtrE :: (KnownSymbol a, KnownSymbol fi) =>
       Proxy a ->
       Proxy fi ->
-      E model action en Composite r ei atrs kids cls eacs children for tabx ->
+      E model action en Composite r ei atrs kids cls eacs children for tabx ak ->
       E model action en Composite r ei atrs kids cls eacs children
-      (AddForId fi for kids) tabx
+      (AddForId fi for kids) tabx ak
     AddForAtrE :: KnownSymbol fi =>
       Proxy fi ->
-      E model action en Composite r ei atrs kids cls eacs children for tabx ->
+      E model action en Composite r ei atrs kids cls eacs children for tabx ak ->
       E model action en Composite r ei atrs kids cls eacs children
-      (AddForId fi for kids) tabx
+      (AddForId fi for kids) tabx ak
+    AccessKeyE :: KnownChar nc =>
+      Proxy nc ->
+      E model action en Composite r ei atrs kids cls eacs children for tabx ak ->
+      E model action en Composite r ei atrs kids cls eacs children for tabx (nc : ak)
     TabIndexE :: KnownNat ti =>
       Proxy ti ->
-      E model action en Composite r ei atrs kids cls eacs children for tabx ->
-      E model action en Composite r ei atrs kids cls eacs children for (Just ti : tabx)
+      E model action en Composite r ei atrs kids cls eacs children for tabx ak ->
+      E model action en Composite r ei atrs kids cls eacs children for (Just ti : tabx) ak
     TabIndexMinus1E ::
-      E model action en Composite r ei atrs kids cls eacs children for tabx ->
-      E model action en Composite r ei atrs kids cls eacs children for (Nothing : tabx)
+      E model action en Composite r ei atrs kids cls eacs children for tabx ak ->
+      E model action en Composite r ei atrs kids cls eacs children for (Nothing : tabx) ak
     IdE :: KnownSymbol ei =>
       Proxy ei ->
-      E model action en Composite r Nothing atrs kids cls eacs children for tabx ->
+      E model action en Composite r Nothing atrs kids cls eacs children for tabx ak ->
       E model action en Composite r (Just ei) ("id" : atrs)
         (AddTagId ei kids)
         cls
         (ConstraintsAfteId ei eacs)
         children
         (FilterOut ei for)
-        tabx
+        tabx ak
     BindEventE :: EventFactory ef action =>
       ef ->
-      E model action en es r ei atrs kids cls eacs children for tabx ->
-      E model action en es r ei atrs kids cls eacs children for tabx
+      E model action en es r ei atrs kids cls eacs children for tabx ak ->
+      E model action en es r ei atrs kids cls eacs children for tabx ak
     AppClsE :: (KnownSymbol en, KnownSymbol c) =>
       OrClass p c ->
-      E model action en Composite r ei atrs kIds cls eacs children for tabx ->
+      E model action en Composite r ei atrs kIds cls eacs children for tabx ak ->
       E model action en Composite r ei ("class" : atrs) kIds (c : cls)
         (ConstraintsAfterClassApp ei en atrs cls p c eacs)
-        children for tabx
+        children for tabx ak
     AppendChildE :: KnownSymbol ce =>
-      E model action ce cs Nothing ci cAtrs ckIds ccls ceacs cchildren cfor ctabx ->
-      E model action pe Composite r pi pAtrs pkIds pcls peacs pchildren pfor ptabx ->
+      E model action ce cs Nothing ci cAtrs ckIds ccls ceacs cchildren cfor ctabx cak ->
+      E model action pe Composite r pi pAtrs pkIds pcls peacs pchildren pfor ptabx pak ->
       E model action pe Composite r pi pAtrs
       (MergeKids ckIds pkIds)
       pcls
@@ -229,11 +236,12 @@ data E
       (ChildrenConstrAfterAppend ci ce ccls pchildren)
       (MergeFors pkIds ckIds pfor cfor)
       (Append ptabx ctabx)
+      (Append pak cak)
     -- Miso can render view up to body to support :root the library provide
     -- VirtualBodyE and SealDomE to emulate top DOM elements (body and html) without
     -- generating them because the already exist
     VirtualBodyE ::
-      E model action ce cs Nothing ci catrs ckids ccls ceacs cchildren for tabx ->
+      E model action ce cs Nothing ci catrs ckids ccls ceacs cchildren for tabx ak ->
       E model action BODY Composite Nothing Nothing catrs
         ckids
         '[]
@@ -243,10 +251,9 @@ data E
           '[ T BODY ]
           '[])
         '[ PrependMb (MbSymToMbI ci) (T ce : SymsToSubSeg ccls) ]
-        for
-        tabx
+        for tabx ak
     SealDomE ::
-      E model action ce   cs        Nothing      ci      catrs ckids ccls ceacs cchildren for tabx ->
+      E model action ce   cs        Nothing      ci      catrs ckids ccls ceacs cchildren for tabx ak ->
       E model action HTML Composite (Just 'Root) Nothing catrs
         ckids
         '[]
@@ -254,7 +261,7 @@ data E
           '[]
           (ApplyClass '[] (T HTML) (ApplyClass '[] R ceacs)))
         '[ PrependMb (MbSymToMbI ci) (T ce : SymsToSubSeg ccls) ]
-        for tabx
+        for tabx ak
 
-instance IsString (E model action CD Atomic Nothing Nothing '[] EmptyKids '[] '[] '[] '[] '[]) where
+instance IsString (E model action CD Atomic Nothing Nothing '[] EmptyKids '[] '[] '[] '[] '[] '[]) where
   fromString = CDataE . ms

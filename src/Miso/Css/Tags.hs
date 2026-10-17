@@ -5,7 +5,8 @@ import Miso.Css.Prelude ( Maybe(Nothing), Proxy(Proxy) )
 import Miso.Css.Style ( E(NilE), ElementStructure(Composite), EmptyKids )
 
 type family Help model action tag where
-  Help model action tag = E model action tag Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[] '[]
+  Help model action tag =
+    E model action tag Composite Nothing Nothing '[] EmptyKids '[] '[] '[] '[] '[] '[]
 
 div_ :: Help model action "div"
 div_ = NilE (Proxy @"div")

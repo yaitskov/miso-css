@@ -11,69 +11,88 @@ import Data.ByteString.Char8 qualified as C8
 import Miso.Css.Style.PostAppend as Post
 import Miso.Css.Test.Prelude as X
 
-domLbs :: forall m a en es r ei atrs kids cls ecs children for tabx.
+domLbs :: forall m a en es r ei atrs kids cls ecs children for tabx ak.
   ( UnwrapBranches (MapMaybeFilterOutFullyMatchedHead '[] ecs) ~ '[]
   , DuplicatedIds kids ~ '[]
   , for ~ '[]
   , TabIndexesConsistent tabx ~ '[]
+  , AccessKeyConsistent ak ~ '[]
   ) =>
-  E m a en es r ei atrs kids cls ecs children for tabx ->
+  E m a en es r ei atrs kids cls ecs children for tabx ak ->
   L.ByteString
 domLbs = toHtml . toView
 
-doNotTcNoBr :: forall m a en es r ei atrs kids cls ecs children for tabx.
+doNotTcNoBr :: forall m a en es r ei atrs kids cls ecs children for tabx ak.
   forall exDids -> (DuplicatedIds kids ~ exDids) =>
   forall exEcs -> (UnwrapBranches (MapMaybeFilterOutFullyMatchedHead '[] ecs) ~ exEcs
                   , TabIndexesConsistent tabx ~ '[]
+                  , AccessKeyConsistent ak ~ '[]
                   , for ~ '[]) =>
-  E m a en es r ei atrs kids cls ecs children for tabx ->
+  E m a en es r ei atrs kids cls ecs children for tabx ak ->
   TestTree
 doNotTcNoBr _ _ _ =
   testCase "see type message from the checker" do
     () @?= ()
 
-doNotTc :: forall m a en es r ei atrs kids cls ecs children for tabx .
+doNotTc :: forall m a en es r ei atrs kids cls ecs children for tabx ak.
   forall exDids -> (DuplicatedIds kids ~ exDids) =>
   forall exEcs -> (MapMaybeFilterOutFullyMatchedHead '[] ecs ~ exEcs
                   , TabIndexesConsistent tabx ~ '[]
+                  , AccessKeyConsistent ak ~ '[]
                   , for ~ '[]) =>
-  E m a en es r ei atrs kids cls ecs children for tabx ->
+  E m a en es r ei atrs kids cls ecs children for tabx ak ->
   TestTree
 doNotTc _ _ _ =
   testCase "see type message from the checker" do
     () @?= ()
 
-ariaDoNotTc :: forall m a en es r ei atrs kids cls ecs children for tabx.
+ariaDoNotTc :: forall m a en es r ei atrs kids cls ecs children for tabx ak.
   forall exFors ->
   ( UnwrapBranches (MapMaybeFilterOutFullyMatchedHead '[] ecs) ~ '[]
   , DuplicatedIds kids ~ '[]
   , TabIndexesConsistent tabx ~ '[]
+  , AccessKeyConsistent ak ~ '[]
   , for ~ exFors) =>
-  E m a en es r ei atrs kids cls ecs children for tabx ->
+  E m a en es r ei atrs kids cls ecs children for tabx ak ->
   TestTree
 ariaDoNotTc _ _ =
   testCase "see type message from the checker" do
     () @?= ()
 
-tabIdxDoNotTc :: forall m a en es r ei atrs kids cls ecs children for tabx.
+tabIdxDoNotTc :: forall m a en es r ei atrs kids cls ecs children for tabx ak.
   forall ex ->
   ( UnwrapBranches (MapMaybeFilterOutFullyMatchedHead '[] ecs) ~ '[]
   , DuplicatedIds kids ~ '[]
   , TabIndexesConsistent tabx ~ ex
+  , AccessKeyConsistent ak ~ '[]
   , for ~ '[]) =>
-  E m a en es r ei atrs kids cls ecs children for tabx ->
+  E m a en es r ei atrs kids cls ecs children for tabx ak ->
   TestTree
 tabIdxDoNotTc _ _ =
   testCase "see type message from the checker" do
     () @?= ()
 
-go :: forall m a en es r ei atrs kids cls ecs children for tabx.
+accessKeyDoNotTc :: forall m a en es r ei atrs kids cls ecs children for tabx ak.
+  forall ex ->
+  ( UnwrapBranches (MapMaybeFilterOutFullyMatchedHead '[] ecs) ~ '[]
+  , DuplicatedIds kids ~ '[]
+  , TabIndexesConsistent tabx ~ '[]
+  , AccessKeyConsistent ak ~ ex
+  , for ~ '[]) =>
+  E m a en es r ei atrs kids cls ecs children for tabx ak ->
+  TestTree
+accessKeyDoNotTc _ _ =
+  testCase "see type message from the checker" do
+    () @?= ()
+
+go :: forall m a en es r ei atrs kids cls ecs children for tabx ak.
   ( UnwrapBranches (MapMaybeFilterOutFullyMatchedHead '[] ecs) ~ '[]
   , DuplicatedIds kids ~ '[]
   , for ~ '[]
   , TabIndexesConsistent tabx ~ '[]
+  , AccessKeyConsistent ak ~ '[]
   ) =>
-  L.ByteString -> E m a en es r ei atrs kids cls ecs children for tabx -> TestTree
+  L.ByteString -> E m a en es r ei atrs kids cls ecs children for tabx ak -> TestTree
 go ex el =
   testCase (C8.unpack $ C8.toStrict ex) do
     domLbs el @?= ex

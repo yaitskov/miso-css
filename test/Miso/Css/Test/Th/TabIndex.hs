@@ -1,18 +1,8 @@
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE NegativeLiterals #-}
-{-# LANGUAGE RequiredTypeArguments #-}
-{-# LANGUAGE TypeFamilies #-}
--- {-# LANGUAGE UndecidableInstances #-}
-
 module Miso.Css.Test.Th.TabIndex where
 
 import Miso.Css.Test.StyleMock
 
-[css|
-#xx {}
-|]
-
-test_t = testGroup cssAsLiteralText
+test_t = testGroup "tabindex"
   [ """<div tabindex="-1">x</div>""" `go`
     tabIndexMinus1 (div_ <@ "x")
   , """<div tabindex="-1"><div tabindex="-1">x</div></div>""" `go`
