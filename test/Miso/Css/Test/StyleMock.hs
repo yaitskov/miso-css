@@ -22,7 +22,8 @@ domLbs = toHtml . toView
 
 doNotTcNoBr :: forall m a en es r ei atrs kids cls ecs children for.
   forall exDids -> (DuplicatedIds kids ~ exDids) =>
-  forall exEcs -> (UnwrapBranches (MapMaybeFilterOutFullyMatchedHead '[] ecs) ~ exEcs) =>
+  forall exEcs -> (UnwrapBranches (MapMaybeFilterOutFullyMatchedHead '[] ecs) ~ exEcs
+                  , for ~ '[]) =>
   E m a en es r ei atrs kids cls ecs children for ->
   TestTree
 doNotTcNoBr _ _ _ =
@@ -31,10 +32,22 @@ doNotTcNoBr _ _ _ =
 
 doNotTc :: forall m a en es r ei atrs kids cls ecs children for.
   forall exDids -> (DuplicatedIds kids ~ exDids) =>
-  forall exEcs -> (MapMaybeFilterOutFullyMatchedHead '[] ecs ~ exEcs) =>
+  forall exEcs -> (MapMaybeFilterOutFullyMatchedHead '[] ecs ~ exEcs
+                  , for ~ '[]) =>
   E m a en es r ei atrs kids cls ecs children for ->
   TestTree
 doNotTc _ _ _ =
+  testCase "see type message from the checker" do
+    () @?= ()
+
+ariaDoNotTc :: forall m a en es r ei atrs kids cls ecs children for.
+  forall exFors ->
+  ( UnwrapBranches (MapMaybeFilterOutFullyMatchedHead '[] ecs) ~ '[]
+  , DuplicatedIds kids ~ '[]
+  , for ~ exFors) =>
+  E m a en es r ei atrs kids cls ecs children for ->
+  TestTree
+ariaDoNotTc _ _ =
   testCase "see type message from the checker" do
     () @?= ()
 
